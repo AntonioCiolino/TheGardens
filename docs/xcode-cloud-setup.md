@@ -10,9 +10,24 @@ Project path: `Gardens/Gardens.xcodeproj`
 ## Before you start
 
 1. **Apple Developer Program** membership (paid).
-2. Mac with **Xcode 15+** (one-time workflow creation is easiest from Xcode).
+2. Mac with **Xcode 15+** — **required once** to turn on Xcode Cloud for this project (Apple’s rule).
 3. GitHub repo access (already public/private as you prefer).
 4. In Developer portal: App ID `com.gardens.intake` with **iCloud → CloudKit** and container `iCloud.com.gardens.intake`.
+
+### No Mac right now? (web-only)
+
+Apple: the **first** Xcode Cloud setup must be done in **Xcode on a Mac**. After that, you can start builds and edit workflows in **App Store Connect on the web** (Safari on iPhone is fine).
+
+What you can do from the phone **today**:
+
+1. Safari → [App Store Connect](https://appstoreconnect.apple.com/) → **My Apps** → **+** → New App  
+   - Platform: iOS  
+   - Bundle ID: `com.gardens.intake` (create the ID under Certificates, Identifiers & Profiles if needed)  
+   - Name: Gardens  
+2. Keep using the **web UI demo** for layout/Sync flows until you can borrow a Mac for ~15 minutes to run **Product → Xcode Cloud → Create Workflow**.
+3. After that one Mac session, return to App Store Connect → your app → **Xcode Cloud** to start builds / TestFlight from the web.
+
+There is no supported way to finish the *first* Xcode Cloud grant entirely in the browser.
 
 ## 1. Open the project
 
