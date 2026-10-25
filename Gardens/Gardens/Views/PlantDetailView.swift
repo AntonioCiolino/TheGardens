@@ -107,7 +107,7 @@ struct PlantDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Label QR")
                 .font(.headline)
-            Text("Encodes this instance’s ID plus a compact name. Full care history loads from the store by ID.")
+            Text("Deep link starts with gardens:// so Camera can open Gardens. Full care history loads from the store by ID.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
