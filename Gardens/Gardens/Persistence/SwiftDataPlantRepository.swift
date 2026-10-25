@@ -149,7 +149,7 @@ enum RepositoryError: LocalizedError {
         case .saveFailed: return "Couldn’t save plant records."
         case .instanceNotFound: return "That plant instance wasn’t found."
         case .catalogNotFound: return "That plant type wasn’t found in the catalog."
-        case .notSignedIn: return "Sign in with Google to sync shared inventory."
+        case .notSignedIn: return "Sign in with Apple to sync shared inventory."
         }
     }
 }

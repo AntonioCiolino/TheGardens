@@ -1,4 +1,5 @@
 import SwiftUI
+import AuthenticationServices
 
 struct SignInView: View {
     @EnvironmentObject private var session: GardensSession
@@ -7,7 +8,7 @@ struct SignInView: View {
     var body: some View {
         Form {
             Section {
-                Text("Gardens inventory syncs record-by-record in Firestore so everyone on your Google Workspace team sees the same plants and care history.")
+                Text("Inventory syncs plant-by-plant in the cloud so every iPhone on the team sees the same catalog, arrivals, and care history. Access uses Sign in with Apple — you need an Apple ID (iCloud), not a Google login.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -15,9 +16,12 @@ struct SignInView: View {
             if session.isCloudEnabled {
                 if let user = session.user {
                     Section("Signed in") {
-                        Text(user.displayName ?? "Gardens user")
+                        Text(user.displayName ?? "Apple ID")
                         if let email = user.email {
                             Text(email)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text("Apple ID connected (email may be hidden)")
                                 .foregroundStyle(.secondary)
                         }
                         Button("Sign out", role: .destructive) {
@@ -27,17 +31,17 @@ struct SignInView: View {
                 } else {
                     Section {
                         Button {
-                            Task { await session.signInWithGoogle() }
+                            Task { await session.signInWithApple() }
                         } label: {
-                            Label("Continue with Google", systemImage: "person.crop.circle.badge.checkmark")
+                            Label("Sign in with Apple", systemImage: "apple.logo")
                         }
                     } footer: {
-                        Text("Use your Workspace Google account. After sign-in, adds and care logs sync live to everyone signed into this Firebase project.")
+                        Text("Each teammate signs in once with their Apple ID / iCloud account. After that, adds and care logs sync live. This app is built for iPhone.")
                     }
                 }
             } else {
                 Section("Cloud sync not configured") {
-                    Text("Add your Firebase `GoogleService-Info.plist` (see docs/firestore-setup.md), enable Google Sign-In, then rebuild. Until then the app keeps using on-device SwiftData only.")
+                    Text("Add your Firebase `GoogleService-Info.plist` and enable Sign in with Apple (see docs/firestore-setup.md). Until then the app keeps using on-device SwiftData only.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }

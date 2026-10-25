@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | Domain | `GardensCore` | Pure Swift + Foundation. Models, matching, compact QR, repository protocols. No UIKit/SwiftUI/SwiftData/Firebase. |
 | Persistence (iOS) | `Gardens/…/Persistence` | SwiftData entities map to/from domain types. Local-only `PlantRepository` fallback. |
-| Sync (iOS) | `Gardens/…/Sync` | Firestore + Storage + Google Sign-In. Shared multi-user `PlantRepository`. |
+| Sync (iOS) | `Gardens/…/Sync` | Firestore + Storage + **Sign in with Apple** (Apple ID / iCloud). Shared multi-user `PlantRepository`. |
 | Platform (iOS) | `Gardens/…/Platform` | Core Image QR rendering, UIKit AirPrint, camera scanner. |
 | UI (iOS) | `Gardens/…/Views` | SwiftUI screens; talk to `GardensSession` / `PlantRepository`. |
 
@@ -22,7 +22,7 @@ No store-location field.
 
 ## Sync model (Firestore)
 
-When `GoogleService-Info.plist` is present and the user signs in with Google:
+When `GoogleService-Info.plist` is present and the user signs in with **Apple**:
 
 | Collection / path | One document = |
 | --- | --- |

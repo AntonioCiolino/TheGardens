@@ -30,16 +30,6 @@
 				<string>gardens</string>
 			</array>
 		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>com.gardens.intake.google</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>REPLACE_WITH_REVERSED_CLIENT_ID</string>
-			</array>
-		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>

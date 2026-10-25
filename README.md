@@ -1,6 +1,6 @@
 # Gardens
 
-iOS plant intake app (SwiftUI) with a shared `GardensCore` package. Inventory can stay on-device (SwiftData) or sync **record-by-record** across your Google Workspace team via **Cloud Firestore**.
+iOS plant intake app (SwiftUI) with a shared `GardensCore` package. Inventory can stay on-device (SwiftData) or sync **record-by-record** across team iPhones via **Cloud Firestore**, with **Sign in with Apple** (Apple ID / iCloud — not Google login).
 
 ## Open & run
 
@@ -11,14 +11,14 @@ iOS plant intake app (SwiftUI) with a shared `GardensCore` package. Inventory ca
 
 ### Team sync (Firestore)
 
-Follow **[docs/firestore-setup.md](docs/firestore-setup.md)** — create a Firebase project, add `GoogleService-Info.plist`, enable Google Auth + Firestore + Storage, then use **Sync** in the app to sign in with Workspace Google accounts.
+Follow **[docs/firestore-setup.md](docs/firestore-setup.md)** — create a Firebase project, add `GoogleService-Info.plist`, enable **Sign in with Apple** + Firestore + Storage, then use **Sync** in the app on each iPhone.
 
 ## What’s included
 
 - **Catalog vs instance** — plant types reused by name+genus; each physical plant is its own instance.
 - **Intake** — new or existing type; quantity creates N unique instances + batch QR print.
 - **Scan + care log** — QR lookup, maintenance / watering / health observations.
-- **Team sync** — Firestore documents + Storage photos; live updates when signed in.
+- **Team sync** — Firestore documents + Storage photos; Sign in with Apple; live updates when signed in.
 - **Local fallback** — SwiftData if Firebase isn’t configured yet.
 - **Compact QR** — `gardens://plant/<uuid>` deep links.
 

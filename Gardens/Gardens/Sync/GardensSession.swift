@@ -1,11 +1,9 @@
 import Foundation
 import SwiftUI
 import SwiftData
-import UIKit
+import AuthenticationServices
 import FirebaseAuth
-import FirebaseCore
 import FirebaseFirestore
-import GoogleSignIn
 import GardensCore
 
 struct GardensUser: Equatable {
@@ -14,8 +12,9 @@ struct GardensUser: Equatable {
     var displayName: String?
 }
 
-/// App-wide auth + plant repository. Uses Firestore when Firebase is configured and the user is signed in;
-/// otherwise falls back to on-device SwiftData (single-user).
+/// App-wide auth + plant repository.
+/// Cloud path: Firestore + **Sign in with Apple** (Apple ID / iCloud account required).
+/// Offline path: on-device SwiftData until someone signs in.
 @MainActor
 final class GardensSession: ObservableObject {
     @Published private(set) var user: GardensUser?
@@ -30,6 +29,7 @@ final class GardensSession: ObservableObject {
     private var localRepo: SwiftDataPlantRepository?
     private var instancesListener: ListenerRegistration?
     private var authListener: AuthStateDidChangeListenerHandle?
+    private let appleSignIn = AppleSignInCoordinator()
 
     var repository: any PlantRepository {
         if isCloudEnabled, user != nil, let firestoreRepo {
@@ -66,36 +66,40 @@ final class GardensSession: ObservableObject {
         }
     }
 
-    // MARK: - Auth
+    // MARK: - Auth (Apple ID / iCloud — not Google)
 
-    func signInWithGoogle() async {
+    func signInWithApple() async {
         errorMessage = nil
         guard isCloudEnabled else {
             errorMessage = "Add a real GoogleService-Info.plist to enable cloud sync."
             return
         }
-        guard let clientID = FirebaseApp.app()?.options.clientID else {
-            errorMessage = "Firebase is missing a Google client ID."
-            return
-        }
-        guard let presenter = Self.topViewController() else {
-            errorMessage = "Couldn’t present Google Sign-In."
-            return
-        }
 
         do {
-            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
-            let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: presenter)
-            guard let idToken = result.user.idToken?.tokenString else {
-                errorMessage = "Google Sign-In didn’t return an ID token."
+            let (appleCredential, rawNonce) = try await appleSignIn.signIn()
+            guard
+                let tokenData = appleCredential.identityToken,
+                let idToken = String(data: tokenData, encoding: .utf8)
+            else {
+                errorMessage = AppleSignInError.missingIdentityToken.localizedDescription
                 return
             }
-            let accessToken = result.user.accessToken.tokenString
-            let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: accessToken)
-            let authResult = try await Auth.auth().signIn(with: credential)
+
+            let oauth = OAuthProvider.appleCredential(
+                withIDToken: idToken,
+                rawNonce: rawNonce,
+                fullName: appleCredential.fullName
+            )
+            let authResult = try await Auth.auth().signIn(with: oauth)
             applyAuthUser(authResult.user)
-            statusMessage = "Signed in — inventory syncs live for your team."
+            statusMessage = "Signed in with Apple — inventory syncs live for your team."
         } catch {
+            // User cancelled the sheet — stay quiet.
+            let ns = error as NSError
+            if ns.domain == ASAuthorizationError.errorDomain,
+               ns.code == ASAuthorizationError.canceled.rawValue {
+                return
+            }
             errorMessage = error.localizedDescription
         }
     }
@@ -103,7 +107,6 @@ final class GardensSession: ObservableObject {
     func signOut() {
         do {
             try Auth.auth().signOut()
-            GIDSignIn.sharedInstance.signOut()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -186,31 +189,10 @@ final class GardensSession: ObservableObject {
         do {
             instances = try await localRepo.fetchInstances()
             statusMessage = isCloudEnabled
-                ? "Local only — sign in to share with your team"
+                ? "Local only — sign in with Apple to share with your team"
                 : "On-device SwiftData (Firebase not configured)"
         } catch {
             errorMessage = error.localizedDescription
         }
-    }
-
-    private static func topViewController(
-        base: UIViewController? = nil
-    ) -> UIViewController? {
-        let base = base ?? UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap(\.windows)
-            .first { $0.isKeyWindow }?
-            .rootViewController
-
-        if let nav = base as? UINavigationController {
-            return topViewController(base: nav.visibleViewController)
-        }
-        if let tab = base as? UITabBarController {
-            return topViewController(base: tab.selectedViewController)
-        }
-        if let presented = base?.presentedViewController {
-            return topViewController(base: presented)
-        }
-        return base
     }
 }

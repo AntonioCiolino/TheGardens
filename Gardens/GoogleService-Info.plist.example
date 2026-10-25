@@ -6,7 +6,8 @@
   Replace every REPLACE_ME value with the file downloaded from Firebase Console
   (Project settings → Your apps → iOS app → Download GoogleService-Info.plist).
 
-  Also add the REVERSED_CLIENT_ID as a URL scheme in Info.plist (see docs/firestore-setup.md).
+  Auth in the app is Sign in with Apple (not Google Sign-In).
+  See docs/firestore-setup.md.
 -->
 <plist version="1.0">
 <dict>

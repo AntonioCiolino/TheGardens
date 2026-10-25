@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import GoogleSignIn
 import GardensCore
 
 @main
@@ -28,7 +27,6 @@ struct GardensApp: App {
                 showSplash = false
             }
             .onOpenURL { url in
-                if GIDSignIn.sharedInstance.handle(url) { return }
                 handleIncomingURL(url)
             }
         }

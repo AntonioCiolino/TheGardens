@@ -1,73 +1,66 @@
 # Firestore team sync setup
 
-Gardens can store inventory in **Cloud Firestore** (record per plant / care event) with photos in **Firebase Storage**, and sign people in with **Google** (Workspace accounts work).
+Gardens stores shared inventory in **Cloud Firestore** (one document per plant / care event) with photos in **Firebase Storage**.
 
-Until Firebase is configured, the app still runs on **on-device SwiftData** (single phone only).
+**Login is Sign in with Apple** — teammates need an **Apple ID / iCloud account**. There is no Google login in the app. (Firebase still hosts the database; it is not used as the identity provider the staff taps.)
+
+Until Firebase is configured, the app runs on **on-device SwiftData** (that phone only).
 
 ## 1. Create a Firebase project
 
-1. Open [Firebase Console](https://console.firebase.google.com/) with your Workspace admin Google account.
+1. Open [Firebase Console](https://console.firebase.google.com/).
 2. Add a project (e.g. `the-gardens`).
 3. Add an **iOS app** with bundle ID `com.gardens.intake`.
-4. Download `GoogleService-Info.plist`.
+4. Download `GoogleService-Info.plist` (Firebase’s config filename — still required even though users sign in with Apple).
 
 ## 2. Drop the plist into Xcode
 
-1. Copy the downloaded file to:
-   `Gardens/Gardens/Resources/GoogleService-Info.plist`
-2. Confirm it’s in the Gardens app target (Copy Bundle Resources).
-3. From that plist, copy `REVERSED_CLIENT_ID` and add it as a URL scheme in `Info.plist` under `CFBundleURLTypes` (alongside `gardens`).
+1. Copy to `Gardens/Gardens/Resources/GoogleService-Info.plist`.
+2. Confirm it’s in the Gardens target (Copy Bundle Resources).
+3. Signing: the target already has `Gardens.entitlements` with **Sign in with Apple**.
 
-Example URL type entry:
+## 3. Enable Sign in with Apple (Firebase + Apple)
 
-```xml
-<dict>
-  <key>CFBundleTypeRole</key>
-  <string>Editor</string>
-  <key>CFBundleURLSchemes</key>
-  <array>
-    <string>com.googleusercontent.apps.YOUR_REVERSED_ID_SUFFIX</string>
-  </array>
-</dict>
-```
+### Apple Developer
 
-## 3. Enable products
+1. Certificates, Identifiers & Profiles → Identifiers → App ID `com.gardens.intake`.
+2. Enable **Sign in with Apple**.
+3. (Optional) Services ID if you later add web; not required for iPhone-only.
 
-In Firebase Console:
+### Firebase
 
-1. **Authentication** → Sign-in method → enable **Google**.
-2. **Firestore Database** → create database (start in production mode) → deploy rules from `firebase/firestore.rules`.
-3. **Storage** → enable → deploy rules from `firebase/storage.rules`.
+1. **Authentication** → Sign-in method → enable **Apple** (not Google).
+2. Follow Firebase’s Apple provider steps (Services ID / key as prompted for your account type).
 
-Optional: restrict rules to your Workspace domain:
+### Data products
+
+1. **Firestore** → create database → deploy `firebase/firestore.rules`.
+2. **Storage** → enable → deploy `firebase/storage.rules`.
+
+Rules only require a signed-in Firebase user (which will be an Apple ID session):
 
 ```
-allow read, write: if request.auth != null
-  && request.auth.token.email.matches('.*@yourcompany[.]com$');
+allow read, write: if request.auth != null;
 ```
 
 ## 4. Xcode packages
 
-The Gardens project already references:
-
 - `firebase-ios-sdk` → FirebaseAuth, FirebaseFirestore, FirebaseStorage  
-- `GoogleSignIn-iOS` → GoogleSignIn  
-
-Open `Gardens/Gardens.xcodeproj`, let packages resolve, set your Team, run.
+- Sign in with Apple uses Apple’s **AuthenticationServices** (system framework) — no Google Sign-In package.
 
 ## 5. Use it
 
-1. Launch Gardens → **Sync** (cloud icon).
-2. **Continue with Google** using each teammate’s Workspace account.
-3. Adds, care logs, and photos appear on every signed-in device (live listeners).
+1. Launch Gardens on an **iPhone** → **Sync**.
+2. **Sign in with Apple** (Apple ID / iCloud).
+3. Other team iPhones do the same; inventory and care history sync live.
 
 ## Data layout
 
 ```
-workspaces/default/catalog/{uuid}       plant types
-workspaces/default/instances/{uuid}     physical plants (photoPath → Storage)
-workspaces/default/careEvents/{uuid}    care / health history
-workspaces/default/photos/{uuid}.jpg    Storage
+workspaces/default/catalog/{uuid}
+workspaces/default/instances/{uuid}
+workspaces/default/careEvents/{uuid}
+workspaces/default/photos/{uuid}.jpg    (Storage)
 ```
 
-QR codes still encode the **instance UUID**. Any signed-in device can open that plant because the record lives in Firestore, not only on the phone that created it.
+QR codes still encode the instance UUID. Any signed-in teammate can open that plant from the shared store.
