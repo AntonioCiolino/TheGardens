@@ -24,6 +24,7 @@ struct AddPlantView: View {
     @State private var arrivedOn = Date()
     @State private var quantity = 1
     @State private var photoData: Data?
+    @State private var photoIsFromCatalog = false
     @State private var careInstructions = ""
     @State private var wateringCheck = ""
     @State private var healthCheck = ""
@@ -92,10 +93,6 @@ struct AddPlantView: View {
                 )
             }
 
-            Section("Photo") {
-                PlantPhotoPicker(photoData: $photoData)
-            }
-
             if mode == .newType {
                 Section("Plant type") {
                     TextField("Name", text: $name)
@@ -122,6 +119,20 @@ struct AddPlantView: View {
                         }
                     }
                 }
+            }
+
+            Section {
+                if mode == .existingType, photoIsFromCatalog, photoData != nil {
+                    catalogPhotoPreview
+                    Text("Using the photo already on file for this plant type. You can replace it if this shipment looks different.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    PlantPhotoPicker(photoData: $photoData, replaceOnly: true)
+                } else {
+                    PlantPhotoPicker(photoData: $photoData)
+                }
+            } header: {
+                Text("Photo")
             }
 
             Section("This arrival") {
@@ -160,8 +171,28 @@ struct AddPlantView: View {
         }
         .task { await loadCatalog() }
         .onChange(of: mode) { _, newMode in
-            if newMode == .existingType, selectedCatalogID == nil {
-                selectedCatalogID = catalog.first?.id
+            if newMode == .existingType {
+                if selectedCatalogID == nil {
+                    selectedCatalogID = catalog.first?.id
+                }
+                Task { await loadReferencePhoto() }
+            } else {
+                if photoIsFromCatalog {
+                    photoData = nil
+                    photoIsFromCatalog = false
+                }
+            }
+        }
+        .onChange(of: selectedCatalogID) { _, _ in
+            Task { await loadReferencePhoto() }
+        }
+        .onChange(of: photoData) { _, newValue in
+            // User replaced the catalog photo manually.
+            if photoIsFromCatalog, newValue != nil {
+                // keep flag until they clear — still fine to save
+            }
+            if newValue == nil {
+                photoIsFromCatalog = false
             }
         }
         .onChange(of: name) { _, _ in refreshCatalogHint() }
@@ -176,6 +207,18 @@ struct AddPlantView: View {
         }
     }
 
+    @ViewBuilder
+    private var catalogPhotoPreview: some View {
+        if let photoData, let image = UIImage(data: photoData) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity)
+                .frame(height: 200)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+    }
+
     @MainActor
     private func loadCatalog() async {
         let repo = SwiftDataPlantRepository(modelContext: modelContext)
@@ -185,6 +228,21 @@ struct AddPlantView: View {
         }
         if catalog.isEmpty {
             mode = .newType
+        } else if mode == .existingType {
+            await loadReferencePhoto()
+        }
+    }
+
+    @MainActor
+    private func loadReferencePhoto() async {
+        guard mode == .existingType, let id = selectedCatalogID else { return }
+        let repo = SwiftDataPlantRepository(modelContext: modelContext)
+        if let data = try? await repo.referencePhoto(for: id) {
+            photoData = data
+            photoIsFromCatalog = true
+        } else {
+            photoData = nil
+            photoIsFromCatalog = false
         }
     }
 

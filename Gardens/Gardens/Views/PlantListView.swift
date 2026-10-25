@@ -8,6 +8,7 @@ struct PlantListView: View {
     private var instances: [PlantInstanceEntity]
 
     @State private var showingAdd = false
+    @State private var showingScan = false
     @State private var batchToPrint: PlantArrivalBatch?
 
     var body: some View {
@@ -40,6 +41,13 @@ struct PlantListView: View {
                 PlantDetailView(instanceID: id)
             }
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showingScan = true
+                    } label: {
+                        Label("Scan", systemImage: "qrcode.viewfinder")
+                    }
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showingAdd = true
@@ -53,6 +61,11 @@ struct PlantListView: View {
                     AddPlantView { batch in
                         batchToPrint = batch
                     }
+                }
+            }
+            .sheet(isPresented: $showingScan) {
+                NavigationStack {
+                    ScanPlantView()
                 }
             }
             .sheet(item: $batchToPrint) { batch in

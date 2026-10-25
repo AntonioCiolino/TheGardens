@@ -3,38 +3,42 @@ import SwiftUI
 
 struct PlantPhotoPicker: View {
     @Binding var photoData: Data?
+    /// When true, hide the large empty placeholder (catalog photo shown above).
+    var replaceOnly: Bool = false
 
     @State private var pickerItem: PhotosPickerItem?
     @State private var showCamera = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(.secondarySystemBackground))
-                    .frame(height: 220)
-
-                if let photoData, let image = UIImage(data: photoData) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
+            if !replaceOnly {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color(.secondarySystemBackground))
                         .frame(height: 220)
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                } else {
-                    VStack(spacing: 8) {
-                        Image(systemName: "leaf.circle")
-                            .font(.system(size: 44))
-                            .foregroundStyle(.secondary)
-                        Text("Plant photo")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+
+                    if let photoData, let image = UIImage(data: photoData) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(height: 220)
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    } else {
+                        VStack(spacing: 8) {
+                            Image(systemName: "leaf.circle")
+                                .font(.system(size: 44))
+                                .foregroundStyle(.secondary)
+                            Text("Plant photo")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
 
             HStack(spacing: 12) {
                 PhotosPicker(selection: $pickerItem, matching: .images) {
-                    Label("Choose Photo", systemImage: "photo.on.rectangle")
+                    Label(replaceOnly ? "Replace Photo" : "Choose Photo", systemImage: "photo.on.rectangle")
                 }
                 .buttonStyle(.bordered)
 
@@ -42,12 +46,12 @@ struct PlantPhotoPicker: View {
                     Button {
                         showCamera = true
                     } label: {
-                        Label("Take Photo", systemImage: "camera")
+                        Label(replaceOnly ? "Retake" : "Take Photo", systemImage: "camera")
                     }
                     .buttonStyle(.bordered)
                 }
 
-                if photoData != nil {
+                if photoData != nil, !replaceOnly {
                     Button("Clear", role: .destructive) {
                         photoData = nil
                     }

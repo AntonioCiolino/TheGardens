@@ -27,14 +27,31 @@ public enum CareEventKind: String, Codable, Sendable, CaseIterable, Hashable {
     case healthCheck
     case note
     case other
+
+    public var displayName: String {
+        switch self {
+        case .watered: return "Watered"
+        case .fertilized: return "Fertilized"
+        case .pruned: return "Pruned"
+        case .repotted: return "Repotted"
+        case .healthCheck: return "Health check"
+        case .note: return "Note"
+        case .other: return "Other maintenance"
+        }
+    }
 }
 
-/// Care action recorded against one physical plant instance.
+/// Care / health update recorded against one physical plant instance.
 public struct CareEvent: Identifiable, Hashable, Codable, Sendable {
     public var id: UUID
     public var instanceID: UUID
     public var kind: CareEventKind
     public var performedAt: Date
+    /// What you observed when checking watering (soil dry, already moist, …).
+    public var wateringObservation: String
+    /// What you observed about plant health (pests, leaf color, …).
+    public var healthObservation: String
+    /// Extra free-form notes about the maintenance just performed.
     public var notes: String
 
     public init(
@@ -42,13 +59,68 @@ public struct CareEvent: Identifiable, Hashable, Codable, Sendable {
         instanceID: UUID,
         kind: CareEventKind,
         performedAt: Date = Date(),
+        wateringObservation: String = "",
+        healthObservation: String = "",
         notes: String = ""
     ) {
         self.id = id
         self.instanceID = instanceID
         self.kind = kind
         self.performedAt = performedAt
+        self.wateringObservation = wateringObservation.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.healthObservation = healthObservation.trimmingCharacters(in: .whitespacesAndNewlines)
         self.notes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    public var hasContent: Bool {
+        kind != .note
+            || !wateringObservation.isEmpty
+            || !healthObservation.isEmpty
+            || !notes.isEmpty
+    }
+}
+
+/// Form draft for logging maintenance after scanning a plant.
+public struct CareUpdateDraft: Hashable, Sendable {
+    public var instanceID: UUID
+    public var kind: CareEventKind
+    public var performedAt: Date
+    public var wateringObservation: String
+    public var healthObservation: String
+    public var notes: String
+
+    public init(
+        instanceID: UUID,
+        kind: CareEventKind = .healthCheck,
+        performedAt: Date = Date(),
+        wateringObservation: String = "",
+        healthObservation: String = "",
+        notes: String = ""
+    ) {
+        self.instanceID = instanceID
+        self.kind = kind
+        self.performedAt = performedAt
+        self.wateringObservation = wateringObservation
+        self.healthObservation = healthObservation
+        self.notes = notes
+    }
+
+    public var isValid: Bool {
+        !wateringObservation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !healthObservation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || kind != .note
+    }
+
+    public func makeEvent() -> CareEvent {
+        CareEvent(
+            instanceID: instanceID,
+            kind: kind,
+            performedAt: performedAt,
+            wateringObservation: wateringObservation,
+            healthObservation: healthObservation,
+            notes: notes
+        )
     }
 }
 

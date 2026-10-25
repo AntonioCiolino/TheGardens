@@ -10,6 +10,7 @@ struct PlantDetailView: View {
     @State private var qrPayload: String?
     @State private var printError: String?
     @State private var isPrinting = false
+    @State private var showingCareLog = false
 
     private let qrGenerator = CoreImageQRCodeGenerator()
 
@@ -24,6 +25,26 @@ struct PlantDetailView: View {
         }
         .navigationTitle(destination?.catalog.name ?? "Plant")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if destination != nil {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingCareLog = true
+                    } label: {
+                        Label("Log care", systemImage: "heart.text.clipboard")
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showingCareLog) {
+            if let destination {
+                NavigationStack {
+                    LogCareUpdateView(destination: destination) {
+                        Task { await reload() }
+                    }
+                }
+            }
+        }
         .alert("Print", isPresented: Binding(
             get: { printError != nil },
             set: { if !$0 { printError = nil } }
@@ -128,12 +149,20 @@ struct PlantDetailView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(destination.careHistory) { event in
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(event.kind.rawValue.capitalized)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(event.kind.displayName)
                             .font(.subheadline.weight(.semibold))
                         Text(event.performedAt.formatted(date: .abbreviated, time: .shortened))
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                        if !event.wateringObservation.isEmpty {
+                            Text("Watering: \(event.wateringObservation)")
+                                .font(.caption)
+                        }
+                        if !event.healthObservation.isEmpty {
+                            Text("Health: \(event.healthObservation)")
+                                .font(.caption)
+                        }
                         if !event.notes.isEmpty {
                             Text(event.notes)
                                 .font(.caption)
@@ -142,6 +171,14 @@ struct PlantDetailView: View {
                     .padding(.vertical, 4)
                 }
             }
+
+            Button {
+                showingCareLog = true
+            } label: {
+                Label("Log care / health update", systemImage: "plus.circle")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
         }
     }
 

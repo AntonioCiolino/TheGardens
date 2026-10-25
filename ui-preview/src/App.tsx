@@ -24,7 +24,13 @@ type Plant = {
   arrivedOn: string;
   photo: string;
   care: CareProfile;
-  history: { kind: string; when: string; notes: string }[];
+  history: {
+    kind: string;
+    when: string;
+    watering?: string;
+    health?: string;
+    notes: string;
+  }[];
 };
 
 const CATALOG: CatalogType[] = [
@@ -102,7 +108,7 @@ const SAMPLE: Plant[] = [
   },
 ];
 
-type Screen = "list" | "add" | "detail" | "batch";
+type Screen = "list" | "add" | "detail" | "batch" | "scan" | "care";
 
 function compactQR(plant: Plant) {
   return JSON.stringify({
@@ -158,8 +164,8 @@ export default function App() {
         <p className="eyebrow">UI preview · not the Simulator</p>
         <h1>Gardens</h1>
         <p>
-          Try <strong>New type</strong> with quantity 7, or <strong>Existing type</strong> to add
-          more of a plant you already carry — each gets its own QR.
+          Existing type reuses the stored photo. Use <strong>Scan</strong> to look up a QR and log
+          watering / health / maintenance.
         </p>
         <div className="splash-controls">
           {showSplash ? (
@@ -194,8 +200,35 @@ export default function App() {
           <ListScreen
             plants={plants}
             onAdd={() => setScreen("add")}
+            onScan={() => setScreen("scan")}
             onOpen={(id) => {
               setSelectedId(id);
+              setScreen("detail");
+            }}
+          />
+        )}
+
+        {!showSplash && screen === "scan" && (
+          <ScanScreen
+            plants={plants}
+            onCancel={() => setScreen("list")}
+            onMatched={(id) => {
+              setSelectedId(id);
+              setScreen("care");
+            }}
+          />
+        )}
+
+        {!showSplash && screen === "care" && selected && (
+          <CareLogScreen
+            plant={selected}
+            onCancel={() => setScreen("detail")}
+            onSave={(entry) => {
+              setPlants((prev) =>
+                prev.map((p) =>
+                  p.id === selected.id ? { ...p, history: [entry, ...p.history] } : p
+                )
+              );
               setScreen("detail");
             }}
           />
@@ -204,6 +237,7 @@ export default function App() {
         {!showSplash && screen === "add" && (
           <AddScreen
             catalog={catalog}
+            plants={plants}
             onCancel={() => setScreen("list")}
             onSave={({ catalogType, created, isNewCatalog }) => {
               if (isNewCatalog) {
@@ -233,6 +267,7 @@ export default function App() {
           <DetailScreen
             plant={selected}
             onBack={() => setScreen("list")}
+            onLogCare={() => setScreen("care")}
             onPrint={() => {
               setPrintNote("Print sheet opened (preview) — AirPrint wiring in the iOS app.");
               window.setTimeout(() => setPrintNote(null), 2800);
@@ -301,15 +336,20 @@ function SplashScreen({ style }: { style: SplashStyle }) {
 function ListScreen({
   plants,
   onAdd,
+  onScan,
   onOpen,
 }: {
   plants: Plant[];
   onAdd: () => void;
+  onScan: () => void;
   onOpen: (id: string) => void;
 }) {
   return (
     <div className="screen">
       <div className="nav">
+        <button className="text-btn" onClick={onScan} aria-label="Scan plant">
+          ⌁ Scan
+        </button>
         <h2>Gardens</h2>
         <button className="icon-btn" onClick={onAdd} aria-label="Add plant">
           +
@@ -346,10 +386,12 @@ function ListScreen({
 
 function AddScreen({
   catalog,
+  plants,
   onCancel,
   onSave,
 }: {
   catalog: CatalogType[];
+  plants: Plant[];
   onCancel: () => void;
   onSave: (result: {
     catalogType: CatalogType;
@@ -369,6 +411,10 @@ function AddScreen({
   const [health, setHealth] = useState("");
 
   const selected = catalog.find((c) => c.id === catalogId);
+  const referencePhoto =
+    mode === "existing"
+      ? plants.find((p) => p.catalogId === catalogId && p.photo)?.photo
+      : undefined;
 
   const valid =
     quantity >= 1 &&
@@ -428,6 +474,11 @@ function AddScreen({
               }
             }
 
+            const photo =
+              mode === "existing" && referencePhoto
+                ? referencePhoto
+                : "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=800&q=80&auto=format&fit=crop";
+
             const created: Plant[] = Array.from({ length: quantity }, () => ({
               id: newId(),
               catalogId: catalogType.id,
@@ -435,8 +486,7 @@ function AddScreen({
               genus: catalogType.genus,
               vendor: vendor.trim(),
               arrivedOn,
-              photo:
-                "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=800&q=80&auto=format&fit=crop",
+              photo,
               care: catalogType.care,
               history: [],
             }));
@@ -472,13 +522,20 @@ function AddScreen({
             : "Already on the floor — pick the type and add another shipment. Each plant still gets its own QR."}
         </p>
 
-        <div className="photo-slot">
-          <span>Plant photo</span>
-          <div className="photo-actions">
-            <button type="button">Choose Photo</button>
-            <button type="button">Take Photo</button>
+        {mode === "existing" && referencePhoto ? (
+          <div className="photo-slot has-photo">
+            <img src={referencePhoto} alt="Stored plant photo" />
+            <p className="hint">Using the photo already on file for this type.</p>
           </div>
-        </div>
+        ) : (
+          <div className="photo-slot">
+            <span>Plant photo</span>
+            <div className="photo-actions">
+              <button type="button">Choose Photo</button>
+              <button type="button">Take Photo</button>
+            </div>
+          </div>
+        )}
 
         {mode === "new" ? (
           <>
@@ -611,13 +668,185 @@ function BatchPrintScreen({
   );
 }
 
+function ScanScreen({
+  plants,
+  onCancel,
+  onMatched,
+}: {
+  plants: Plant[];
+  onCancel: () => void;
+  onMatched: (id: string) => void;
+}) {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  function findPlant() {
+    setError(null);
+    const trimmed = code.trim();
+    let id: string | null = null;
+    try {
+      const parsed = JSON.parse(trimmed) as { i?: string };
+      if (parsed.i) id = parsed.i;
+    } catch {
+      id = trimmed;
+    }
+    const match = plants.find((p) => p.id === id);
+    if (!match) {
+      setError("No plant matched that code. Paste a QR JSON or instance UUID.");
+      return;
+    }
+    onMatched(match.id);
+  }
+
+  return (
+    <div className="screen">
+      <div className="nav nav-stack">
+        <button className="text-btn" onClick={onCancel}>
+          Close
+        </button>
+        <h2>Scan plant</h2>
+        <span className="spacer" />
+      </div>
+      <div className="form">
+        <p className="hint">
+          Paste QR contents or an instance UUID (camera scan wires to the same lookup in the iOS
+          app).
+        </p>
+        <label>
+          QR / UUID
+          <textarea
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            rows={4}
+            placeholder='{"i":"…","n":"Snake Plant","v":1}'
+          />
+        </label>
+        <button className="print-btn" type="button" onClick={findPlant}>
+          Find plant
+        </button>
+        {error && <p className="error-text">{error}</p>}
+        <p className="section-label">Try one</p>
+        {plants.slice(0, 3).map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            className="sample-code"
+            onClick={() => setCode(compactQR(p))}
+          >
+            {p.name} · {p.id.slice(0, 8)}…
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CareLogScreen({
+  plant,
+  onCancel,
+  onSave,
+}: {
+  plant: Plant;
+  onCancel: () => void;
+  onSave: (entry: Plant["history"][number]) => void;
+}) {
+  const [kind, setKind] = useState("Health check");
+  const [watering, setWatering] = useState("");
+  const [health, setHealth] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const canSave = watering.trim() || health.trim() || notes.trim() || kind !== "Note";
+
+  return (
+    <div className="screen">
+      <div className="nav nav-stack">
+        <button className="text-btn" onClick={onCancel}>
+          Cancel
+        </button>
+        <h2>Log care</h2>
+        <button
+          className="text-btn accent"
+          disabled={!canSave}
+          onClick={() => {
+            if (!canSave) return;
+            onSave({
+              kind,
+              when: new Date().toLocaleString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              }),
+              watering: watering.trim() || undefined,
+              health: health.trim() || undefined,
+              notes: notes.trim(),
+            });
+          }}
+        >
+          Save
+        </button>
+      </div>
+      <div className="form">
+        <p className="hint">
+          {plant.name} · {plant.genus}
+        </p>
+        <p className="section-label">Guidance on file</p>
+        <p className="muted">{plant.care.wateringCheckGuidance || "No watering guidance yet."}</p>
+        <p className="muted">{plant.care.healthCheckGuidance || "No health guidance yet."}</p>
+
+        <label>
+          Maintenance just done
+          <select value={kind} onChange={(e) => setKind(e.target.value)}>
+            {[
+              "Watered",
+              "Fertilized",
+              "Pruned",
+              "Repotted",
+              "Health check",
+              "Note",
+              "Other maintenance",
+            ].map((k) => (
+              <option key={k}>{k}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Watering observation
+          <textarea
+            value={watering}
+            onChange={(e) => setWatering(e.target.value)}
+            rows={3}
+            placeholder="Soil dry 2&quot; down — watered thoroughly"
+          />
+        </label>
+        <label>
+          Health observation
+          <textarea
+            value={health}
+            onChange={(e) => setHealth(e.target.value)}
+            rows={3}
+            placeholder="No pests; new growth on top leaves"
+          />
+        </label>
+        <label>
+          Notes
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+        </label>
+      </div>
+    </div>
+  );
+}
+
 function DetailScreen({
   plant,
   onBack,
+  onLogCare,
   onPrint,
 }: {
   plant: Plant;
   onBack: () => void;
+  onLogCare: () => void;
   onPrint: () => void;
 }) {
   const payload = compactQR(plant);
@@ -629,7 +858,9 @@ function DetailScreen({
           ‹ Gardens
         </button>
         <h2>{plant.name}</h2>
-        <span className="spacer" />
+        <button className="text-btn accent" onClick={onLogCare}>
+          Log
+        </button>
       </div>
 
       <div className="detail">
@@ -663,11 +894,16 @@ function DetailScreen({
                 <li key={i}>
                   <strong>{h.kind}</strong>
                   <small>{h.when}</small>
+                  {h.watering && <span>Watering: {h.watering}</span>}
+                  {h.health && <span>Health: {h.health}</span>}
                   {h.notes && <span>{h.notes}</span>}
                 </li>
               ))}
             </ul>
           )}
+          <button className="print-btn" type="button" onClick={onLogCare} style={{ marginTop: 12 }}>
+            Log care / health update
+          </button>
         </section>
 
         <section className="qr-card">

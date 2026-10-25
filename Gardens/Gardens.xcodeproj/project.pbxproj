@@ -13,8 +13,11 @@
 		B21EF9EA577049A7A9462F65 /* AddPlantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 497F8E156F1E487D96C3B314 /* AddPlantView.swift */; };
 		B8B96F2514F14EBDB7FDF99D /* BatchLabelPrintView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E5172D9BBB4DB4AA9D58BA /* BatchLabelPrintView.swift */; };
 		A6421800E0FF4732898C1D8C /* PlantDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69375AC8E2CC46DCBEF3B660 /* PlantDetailView.swift */; };
+		11EE402376174148B736F78F /* LogCareUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B350954A98F34C8F88A4D742 /* LogCareUpdateView.swift */; };
+		E5C51205FF3A480B843D9599 /* ScanPlantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB76F0BFB6D4AC8B5AC26A5 /* ScanPlantView.swift */; };
 		970DA46BDDFE4D9CBB09082D /* PlantPhotoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B763501CD146B6858D5E7D /* PlantPhotoPicker.swift */; };
 		7F141139316F4752A87CC2D6 /* QRCodeImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7063F8BCEB604AC288FC74C8 /* QRCodeImageView.swift */; };
+		86A8D9B5ED03459E95A8345D /* BrandWatermark.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4B4157423B0466CBD29D054 /* BrandWatermark.swift */; };
 		5178BEFEF5E642928333351F /* SwiftDataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0028F7F188EB4BAA9609F0F2 /* SwiftDataModels.swift */; };
 		4F3E46DDF2984D87BEE52CC0 /* SwiftDataPlantRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E277E42F1F4676BEA88A61 /* SwiftDataPlantRepository.swift */; };
 		2E96E2D9DADF4E1988847624 /* CoreImageQRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */; };
@@ -30,8 +33,11 @@
 		497F8E156F1E487D96C3B314 /* AddPlantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPlantView.swift; sourceTree = "<group>"; };
 		F5E5172D9BBB4DB4AA9D58BA /* BatchLabelPrintView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchLabelPrintView.swift; sourceTree = "<group>"; };
 		69375AC8E2CC46DCBEF3B660 /* PlantDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantDetailView.swift; sourceTree = "<group>"; };
+		B350954A98F34C8F88A4D742 /* LogCareUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogCareUpdateView.swift; sourceTree = "<group>"; };
+		6BB76F0BFB6D4AC8B5AC26A5 /* ScanPlantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanPlantView.swift; sourceTree = "<group>"; };
 		F7B763501CD146B6858D5E7D /* PlantPhotoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantPhotoPicker.swift; sourceTree = "<group>"; };
 		7063F8BCEB604AC288FC74C8 /* QRCodeImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeImageView.swift; sourceTree = "<group>"; };
+		E4B4157423B0466CBD29D054 /* BrandWatermark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandWatermark.swift; sourceTree = "<group>"; };
 		0028F7F188EB4BAA9609F0F2 /* SwiftDataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataModels.swift; sourceTree = "<group>"; };
 		80E277E42F1F4676BEA88A61 /* SwiftDataPlantRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataPlantRepository.swift; sourceTree = "<group>"; };
 		90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreImageQRCodeGenerator.swift; sourceTree = "<group>"; };
@@ -115,6 +121,8 @@
 				497F8E156F1E487D96C3B314 /* AddPlantView.swift */,
 				F5E5172D9BBB4DB4AA9D58BA /* BatchLabelPrintView.swift */,
 				69375AC8E2CC46DCBEF3B660 /* PlantDetailView.swift */,
+				B350954A98F34C8F88A4D742 /* LogCareUpdateView.swift */,
+				6BB76F0BFB6D4AC8B5AC26A5 /* ScanPlantView.swift */,
 				A15B324A6C5643BD9306039A /* Components */,
 			);
 			path = Views;
@@ -125,6 +133,7 @@
 			children = (
 				F7B763501CD146B6858D5E7D /* PlantPhotoPicker.swift */,
 				7063F8BCEB604AC288FC74C8 /* QRCodeImageView.swift */,
+				E4B4157423B0466CBD29D054 /* BrandWatermark.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -214,8 +223,11 @@
 				B21EF9EA577049A7A9462F65 /* AddPlantView.swift in Sources */,
 				B8B96F2514F14EBDB7FDF99D /* BatchLabelPrintView.swift in Sources */,
 				A6421800E0FF4732898C1D8C /* PlantDetailView.swift in Sources */,
+				11EE402376174148B736F78F /* LogCareUpdateView.swift in Sources */,
+				E5C51205FF3A480B843D9599 /* ScanPlantView.swift in Sources */,
 				970DA46BDDFE4D9CBB09082D /* PlantPhotoPicker.swift in Sources */,
 				7F141139316F4752A87CC2D6 /* QRCodeImageView.swift in Sources */,
+				86A8D9B5ED03459E95A8345D /* BrandWatermark.swift in Sources */,
 				5178BEFEF5E642928333351F /* SwiftDataModels.swift in Sources */,
 				4F3E46DDF2984D87BEE52CC0 /* SwiftDataPlantRepository.swift in Sources */,
 				2E96E2D9DADF4E1988847624 /* CoreImageQRCodeGenerator.swift in Sources */,

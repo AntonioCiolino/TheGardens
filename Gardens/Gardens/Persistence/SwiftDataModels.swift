@@ -99,6 +99,8 @@ final class CareEventEntity {
     @Attribute(.unique) var id: UUID
     var kindRaw: String
     var performedAt: Date
+    var wateringObservation: String
+    var healthObservation: String
     var notes: String
     var instance: PlantInstanceEntity?
 
@@ -106,6 +108,8 @@ final class CareEventEntity {
         self.id = event.id
         self.kindRaw = event.kind.rawValue
         self.performedAt = event.performedAt
+        self.wateringObservation = event.wateringObservation
+        self.healthObservation = event.healthObservation
         self.notes = event.notes
         self.instance = instance
     }
@@ -117,6 +121,8 @@ final class CareEventEntity {
             instanceID: instance.id,
             kind: kind,
             performedAt: performedAt,
+            wateringObservation: wateringObservation,
+            healthObservation: healthObservation,
             notes: notes
         )
     }

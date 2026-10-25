@@ -269,6 +269,42 @@
   gap: 12px;
   text-align: center;
   color: var(--muted);
+  overflow: hidden;
+}
+
+.photo-slot.has-photo {
+  padding: 0;
+  place-content: stretch;
+}
+
+.photo-slot.has-photo img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-slot.has-photo .hint {
+  margin: 0;
+  padding: 8px 10px 10px;
+  background: white;
+}
+
+.error-text {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.sample-code {
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 0.82rem;
+  cursor: pointer;
+  color: var(--soil);
 }
 
 .photo-actions {

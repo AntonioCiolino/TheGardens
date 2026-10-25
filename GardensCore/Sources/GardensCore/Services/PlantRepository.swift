@@ -10,6 +10,8 @@ public protocol PlantRepository: AnyObject {
     func saveIntake(_ draft: PlantIntakeDraft) async throws -> PlantArrivalBatch
     func addCareEvent(_ event: CareEvent) async throws
     func updateCareProfile(catalogItemID: UUID, profile: PlantCareProfile) async throws
+    /// Most recent photo already stored for this catalog type (for restock intake).
+    func referencePhoto(for catalogItemID: UUID) async throws -> Data?
 }
 
 /// Application service: intake matching + QR destination assembly.
@@ -45,5 +47,13 @@ public struct PlantIntakeService {
         try batch.instances.map { detail in
             (detail, try compactQR(for: detail))
         }
+    }
+
+    /// Persist a maintenance / health update against a scanned instance.
+    @discardableResult
+    public func logCareUpdate(_ draft: CareUpdateDraft) async throws -> CareEvent {
+        let event = draft.makeEvent()
+        try await repository.addCareEvent(event)
+        return event
     }
 }

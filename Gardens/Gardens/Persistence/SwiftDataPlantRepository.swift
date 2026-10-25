@@ -91,6 +91,16 @@ final class SwiftDataPlantRepository: PlantRepository {
         try modelContext.save()
     }
 
+    func referencePhoto(for catalogItemID: UUID) async throws -> Data? {
+        let descriptor = FetchDescriptor<PlantInstanceEntity>(
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        let matches = try modelContext.fetch(descriptor).filter {
+            $0.catalog?.id == catalogItemID && $0.photoData != nil
+        }
+        return matches.first?.photoData
+    }
+
     // MARK: - Catalog resolve
 
     private func resolveCatalog(for draft: PlantIntakeDraft) throws -> CatalogItemEntity {
