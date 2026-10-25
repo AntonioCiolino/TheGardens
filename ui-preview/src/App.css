@@ -88,6 +88,24 @@
   flex: 1;
   overflow: auto;
   padding-bottom: 28px;
+  position: relative;
+  isolation: isolate;
+}
+
+.screen::before {
+  content: "";
+  position: absolute;
+  inset: 12% 8% 18%;
+  background: url("/brand-mark.png") center / contain no-repeat;
+  opacity: 0.07;
+  transform: rotate(-18deg);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.screen > * {
+  position: relative;
+  z-index: 1;
 }
 
 .nav {
@@ -593,8 +611,19 @@ dd {
   color: #1c2a1f;
 }
 
-.skip-splash {
+.splash-controls {
   margin-top: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.splash-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.skip-splash {
   border: 1px solid var(--line);
   background: white;
   border-radius: 999px;
@@ -602,6 +631,12 @@ dd {
   font-weight: 600;
   color: var(--soil);
   cursor: pointer;
+}
+
+.skip-splash.ghost {
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 500;
 }
 
 @keyframes splash-in {

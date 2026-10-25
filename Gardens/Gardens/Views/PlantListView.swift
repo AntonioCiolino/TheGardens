@@ -12,22 +12,27 @@ struct PlantListView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if instances.isEmpty {
-                    ContentUnavailableView(
-                        "No plants yet",
-                        systemImage: "leaf",
-                        description: Text("Log an arrival — one plant or a whole carton.")
-                    )
-                } else {
-                    List(instances) { entity in
-                        if let detail = entity.toDetail() {
-                            NavigationLink(value: detail.instance.id) {
-                                PlantRowView(detail: detail)
+            ZStack {
+                BrandWatermark(opacity: 0.08)
+
+                Group {
+                    if instances.isEmpty {
+                        ContentUnavailableView(
+                            "No plants yet",
+                            systemImage: "leaf",
+                            description: Text("Log an arrival — one plant or a whole carton.")
+                        )
+                    } else {
+                        List(instances) { entity in
+                            if let detail = entity.toDetail() {
+                                NavigationLink(value: detail.instance.id) {
+                                    PlantRowView(detail: detail)
+                                }
                             }
                         }
+                        .scrollContentBackground(.hidden)
+                        .listStyle(.insetGrouped)
                     }
-                    .listStyle(.insetGrouped)
                 }
             }
             .navigationTitle("Gardens")

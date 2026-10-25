@@ -59,6 +59,7 @@ struct PlantDetailView: View {
             }
             .padding()
         }
+        .background { BrandWatermark(opacity: 0.06) }
         .refreshable { await reload() }
     }
 

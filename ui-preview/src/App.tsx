@@ -132,12 +132,20 @@ export default function App() {
   const [batch, setBatch] = useState<Plant[]>([]);
   const [printNote, setPrintNote] = useState<string | null>(null);
   const [showSplash, setShowSplash] = useState(true);
-  const [splashStyle] = useState<SplashStyle>(() => randomSplashStyle());
+  const [splashStyle, setSplashStyle] = useState<SplashStyle>(() => randomSplashStyle());
+  const [splashKey, setSplashKey] = useState(0);
 
   useEffect(() => {
+    if (!showSplash) return;
     const t = window.setTimeout(() => setShowSplash(false), 1800);
     return () => window.clearTimeout(t);
-  }, []);
+  }, [showSplash, splashKey]);
+
+  function replaySplash(next?: SplashStyle) {
+    setSplashStyle(next ?? randomSplashStyle());
+    setSplashKey((k) => k + 1);
+    setShowSplash(true);
+  }
 
   const selected = useMemo(
     () => plants.find((p) => p.id === selectedId) ?? null,
@@ -153,11 +161,24 @@ export default function App() {
           Try <strong>New type</strong> with quantity 7, or <strong>Existing type</strong> to add
           more of a plant you already carry — each gets its own QR.
         </p>
-        {showSplash && (
-          <button type="button" className="skip-splash" onClick={() => setShowSplash(false)}>
-            Skip splash
-          </button>
-        )}
+        <div className="splash-controls">
+          {showSplash ? (
+            <button type="button" className="skip-splash" onClick={() => setShowSplash(false)}>
+              Skip splash
+            </button>
+          ) : (
+            <button type="button" className="skip-splash" onClick={() => replaySplash()}>
+              Replay random splash
+            </button>
+          )}
+          <div className="splash-picks">
+            {SPLASH_STYLES.map((s) => (
+              <button key={s} type="button" className="skip-splash ghost" onClick={() => replaySplash(s)}>
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
       </header>
 
       <div className="phone" aria-label="iPhone preview">
