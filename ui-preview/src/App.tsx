@@ -132,6 +132,7 @@ export default function App() {
   const [batch, setBatch] = useState<Plant[]>([]);
   const [printNote, setPrintNote] = useState<string | null>(null);
   const [showSplash, setShowSplash] = useState(true);
+  const [splashStyle] = useState<SplashStyle>(() => randomSplashStyle());
 
   useEffect(() => {
     const t = window.setTimeout(() => setShowSplash(false), 1800);
@@ -166,7 +167,7 @@ export default function App() {
           <span className="status-icons">●●● ▮</span>
         </div>
 
-        {showSplash && <SplashScreen />}
+        {showSplash && <SplashScreen style={splashStyle} />}
 
         {!showSplash && screen === "list" && (
           <ListScreen
@@ -224,26 +225,54 @@ export default function App() {
   );
 }
 
-function SplashScreen() {
+type SplashStyle = "leafMark" | "wordmark" | "largeLogo";
+
+const SPLASH_STYLES: SplashStyle[] = ["leafMark", "wordmark", "largeLogo"];
+
+function randomSplashStyle(): SplashStyle {
+  return SPLASH_STYLES[Math.floor(Math.random() * SPLASH_STYLES.length)];
+}
+
+function SplashScreen({ style }: { style: SplashStyle }) {
   return (
-    <div className="splash" role="img" aria-label="Gardens splash">
+    <div className={`splash splash-${style}`} role="img" aria-label="Gardens splash">
       <div className="splash-orb" aria-hidden />
-      <div className="splash-mark" aria-hidden>
-        <svg viewBox="0 0 64 64" width="56" height="56" fill="none">
-          <path
-            d="M32 8c-2 14-14 22-20 26 10 2 18 10 20 22 2-12 10-20 20-22-6-4-18-12-20-26Z"
-            fill="url(#leaf)"
-          />
-          <defs>
-            <linearGradient id="leaf" x1="12" y1="8" x2="48" y2="56" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#b8e0b2" />
-              <stop offset="1" stopColor="#4fa35a" />
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-      <h2 className="splash-title">Gardens</h2>
+      {style === "leafMark" && (
+        <div className="splash-mark" aria-hidden>
+          <svg viewBox="0 0 64 64" width="56" height="56" fill="none">
+            <path
+              d="M32 8c-2 14-14 22-20 26 10 2 18 10 20 22 2-12 10-20 20-22-6-4-18-12-20-26Z"
+              fill="url(#leaf)"
+            />
+            <defs>
+              <linearGradient
+                id="leaf"
+                x1="12"
+                y1="8"
+                x2="48"
+                y2="56"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop stopColor="#b8e0b2" />
+                <stop offset="1" stopColor="#4fa35a" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+      )}
+      {style === "wordmark" && (
+        <div className="splash-initial" aria-hidden>
+          G
+        </div>
+      )}
+      {style === "largeLogo" && (
+        <div className="splash-logo-card" aria-hidden>
+          <span>GARDENS</span>
+        </div>
+      )}
+      {style !== "largeLogo" && <h2 className="splash-title">Gardens</h2>}
       <p className="splash-sub">Plant intake</p>
+      <p className="splash-variant">Splash: {style}</p>
     </div>
   );
 }

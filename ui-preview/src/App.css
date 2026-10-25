@@ -554,6 +554,45 @@ dd {
   font-weight: 600;
 }
 
+.splash-variant {
+  margin: 14px 0 0;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(244, 250, 242, 0.35);
+}
+
+.splash-initial {
+  width: 96px;
+  height: 96px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 3.4rem;
+  font-weight: 700;
+  color: #d8f0d2;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.splash-logo-card {
+  width: 200px;
+  height: 120px;
+  border-radius: 28px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #c7ebbd 0%, #4fa35a 100%);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.splash-logo-card span {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 800;
+  font-size: 1.55rem;
+  letter-spacing: 0.22em;
+  color: #1c2a1f;
+}
+
 .skip-splash {
   margin-top: 16px;
   border: 1px solid var(--line);
