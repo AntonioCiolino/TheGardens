@@ -25,16 +25,9 @@
 		1EA70580002F467A8E3FA025 /* PlantQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D488314D7F3D4988A311217C /* PlantQRScannerView.swift */; };
 		8385BA678B1C48AD9F964661 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A4952323A68541608D1A286F /* Assets.xcassets */; };
 		DAA181E0D7EC4AA29A35F4FB /* GardensCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9C580D26CA894853A6AB79B9 /* GardensCore */; };
-		C3C8283594E44F939482B5CF /* FirebaseBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18E1BD9EE7634DD49F1010EC /* FirebaseBootstrap.swift */; };
-		42422D9CAA154E188A7A285B /* FirestorePaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B8D4CEFC63F4E4E846CDC4D /* FirestorePaths.swift */; };
-		AA06DE1BA73D440DBD3E1808 /* FirestoreMappers.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB22C14D8BF845EFA14AFCAA /* FirestoreMappers.swift */; };
-		FA01895BD9664069900A3905 /* FirestorePlantRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05DA76D33D241B8879C023F /* FirestorePlantRepository.swift */; };
 		87B70E6D4AAB45D0B80C6B0D /* GardensSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4888A886DDCE446FAD929AEA /* GardensSession.swift */; };
 		A08E2174BEBE4C18B01C1656 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49E4DF803244D9B1691A54 /* SignInView.swift */; };
-		CACF9A3AFA434514891F126F /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AF63591A46274875BD13F9D4 /* FirebaseAuth */; };
-		1587D903140641EB90BE9E4F /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 11AAE9FF8B7144AEAAA80FAC /* FirebaseFirestore */; };
-		15E89045DE2D48D488B17AFE /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 332D7CCFC4D848F1A3752133 /* FirebaseStorage */; };
-		C070923857A34B3F84FBB894 /* AppleSignInCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F3472EF9651433E95731F95 /* AppleSignInCoordinator.swift */; };
+		D63295D02D5A4983A63C7A53 /* CloudKitPlantRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899F6D6A3D214902BDB2C832 /* CloudKitPlantRepository.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -57,14 +50,10 @@
 		A4952323A68541608D1A286F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		395FA4407F2946F0A3384929 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0E5744733B714F3CB94858AF /* Gardens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gardens.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		18E1BD9EE7634DD49F1010EC /* FirebaseBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseBootstrap.swift; sourceTree = "<group>"; };
-		6B8D4CEFC63F4E4E846CDC4D /* FirestorePaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestorePaths.swift; sourceTree = "<group>"; };
-		EB22C14D8BF845EFA14AFCAA /* FirestoreMappers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreMappers.swift; sourceTree = "<group>"; };
-		C05DA76D33D241B8879C023F /* FirestorePlantRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestorePlantRepository.swift; sourceTree = "<group>"; };
 		4888A886DDCE446FAD929AEA /* GardensSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GardensSession.swift; sourceTree = "<group>"; };
 		AF49E4DF803244D9B1691A54 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
-		5F3472EF9651433E95731F95 /* AppleSignInCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInCoordinator.swift; sourceTree = "<group>"; };
 		4C6798F5A79C4A21B92A8219 /* Gardens.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Gardens.entitlements; sourceTree = "<group>"; };
+		899F6D6A3D214902BDB2C832 /* CloudKitPlantRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitPlantRepository.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,9 +62,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				DAA181E0D7EC4AA29A35F4FB /* GardensCore in Frameworks */,
-				CACF9A3AFA434514891F126F /* FirebaseAuth in Frameworks */,
-				1587D903140641EB90BE9E4F /* FirebaseFirestore in Frameworks */,
-				15E89045DE2D48D488B17AFE /* FirebaseStorage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -177,11 +163,7 @@
 		47A234BD5B5E417388D989D3 /* Sync */ = {
 			isa = PBXGroup;
 			children = (
-				5F3472EF9651433E95731F95 /* AppleSignInCoordinator.swift */,
-				18E1BD9EE7634DD49F1010EC /* FirebaseBootstrap.swift */,
-				6B8D4CEFC63F4E4E846CDC4D /* FirestorePaths.swift */,
-				EB22C14D8BF845EFA14AFCAA /* FirestoreMappers.swift */,
-				C05DA76D33D241B8879C023F /* FirestorePlantRepository.swift */,
+				899F6D6A3D214902BDB2C832 /* CloudKitPlantRepository.swift */,
 				4888A886DDCE446FAD929AEA /* GardensSession.swift */,
 			);
 			path = Sync;
@@ -205,9 +187,6 @@
 			name = Gardens;
 			packageProductDependencies = (
 				9C580D26CA894853A6AB79B9 /* GardensCore */,
-				AF63591A46274875BD13F9D4 /* FirebaseAuth */,
-				11AAE9FF8B7144AEAAA80FAC /* FirebaseFirestore */,
-				332D7CCFC4D848F1A3752133 /* FirebaseStorage */,
 			);
 			productName = Gardens;
 			productReference = 0E5744733B714F3CB94858AF /* Gardens.app */;
@@ -234,7 +213,6 @@
 			mainGroup = 5BAA9EE3C7764DB19A71BC62;
 			packageReferences = (
 				D87DE9EE47F44F57A50376ED /* XCLocalSwiftPackageReference "../GardensCore" */,
-				438793A3568747C989441832 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			productRefGroup = AF97D29386CE49269C083036 /* Products */;
 			projectDirPath = "";
@@ -277,11 +255,7 @@
 				2E96E2D9DADF4E1988847624 /* CoreImageQRCodeGenerator.swift in Sources */,
 				94AFC090BA7A461EAC2B5E40 /* UIKitPlantLabelPrinter.swift in Sources */,
 				1EA70580002F467A8E3FA025 /* PlantQRScannerView.swift in Sources */,
-				C070923857A34B3F84FBB894 /* AppleSignInCoordinator.swift in Sources */,
-				C3C8283594E44F939482B5CF /* FirebaseBootstrap.swift in Sources */,
-				42422D9CAA154E188A7A285B /* FirestorePaths.swift in Sources */,
-				AA06DE1BA73D440DBD3E1808 /* FirestoreMappers.swift in Sources */,
-				FA01895BD9664069900A3905 /* FirestorePlantRepository.swift in Sources */,
+				D63295D02D5A4983A63C7A53 /* CloudKitPlantRepository.swift in Sources */,
 				87B70E6D4AAB45D0B80C6B0D /* GardensSession.swift in Sources */,
 				A08E2174BEBE4C18B01C1656 /* SignInView.swift in Sources */,
 			);
@@ -400,37 +374,11 @@
 /* End XCLocalSwiftPackageReference section */
 
 
-/* Begin XCRemoteSwiftPackageReference section */
-		438793A3568747C989441832 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 11.0.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
 /* Begin XCSwiftPackageProductDependency section */
 		9C580D26CA894853A6AB79B9 /* GardensCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = D87DE9EE47F44F57A50376ED /* XCLocalSwiftPackageReference "../GardensCore" */;
 			productName = GardensCore;
-		};
-		AF63591A46274875BD13F9D4 /* FirebaseAuth */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 438793A3568747C989441832 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAuth;
-		};
-		11AAE9FF8B7144AEAAA80FAC /* FirebaseFirestore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 438793A3568747C989441832 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseFirestore;
-		};
-		332D7CCFC4D848F1A3752133 /* FirebaseStorage */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 438793A3568747C989441832 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseStorage;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

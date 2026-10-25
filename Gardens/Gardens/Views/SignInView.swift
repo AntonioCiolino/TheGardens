@@ -1,5 +1,5 @@
 import SwiftUI
-import AuthenticationServices
+import UIKit
 
 struct SignInView: View {
     @EnvironmentObject private var session: GardensSession
@@ -8,42 +8,36 @@ struct SignInView: View {
     var body: some View {
         Form {
             Section {
-                Text("Inventory syncs plant-by-plant in the cloud so every iPhone on the team sees the same catalog, arrivals, and care history. Access uses Sign in with Apple — you need an Apple ID (iCloud), not a Google login.")
+                Text("Team inventory lives in iCloud (CloudKit) — one record per plant and care update. Every iPhone needs an Apple ID signed into iCloud. There is no Google login or Google cloud for Gardens.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
 
-            if session.isCloudEnabled {
-                if let user = session.user {
-                    Section("Signed in") {
-                        Text(user.displayName ?? "Apple ID")
-                        if let email = user.email {
-                            Text(email)
-                                .foregroundStyle(.secondary)
-                        } else {
-                            Text("Apple ID connected (email may be hidden)")
-                                .foregroundStyle(.secondary)
-                        }
-                        Button("Sign out", role: .destructive) {
-                            session.signOut()
-                        }
-                    }
-                } else {
-                    Section {
-                        Button {
-                            Task { await session.signInWithApple() }
-                        } label: {
-                            Label("Sign in with Apple", systemImage: "apple.logo")
-                        }
-                    } footer: {
-                        Text("Each teammate signs in once with their Apple ID / iCloud account. After that, adds and care logs sync live. This app is built for iPhone.")
+            if let user = session.user {
+                Section("Connected") {
+                    Text(user.displayName ?? "iCloud")
+                    Text("Apple ID / iCloud is active on this iPhone.")
+                        .foregroundStyle(.secondary)
+                    Button("Use this phone only") {
+                        session.signOutLocally()
                     }
                 }
             } else {
-                Section("Cloud sync not configured") {
-                    Text("Add your Firebase `GoogleService-Info.plist` and enable Sign in with Apple (see docs/firestore-setup.md). Until then the app keeps using on-device SwiftData only.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                Section {
+                    Button {
+                        Task { await session.refreshAccount() }
+                    } label: {
+                        Label("Connect iCloud", systemImage: "icloud")
+                    }
+                    Button {
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        Label("Open Settings", systemImage: "gear")
+                    }
+                } footer: {
+                    Text("If you aren’t signed into iCloud, open Settings → [your name] and sign in with your Apple ID. Then return here and tap Connect iCloud.")
                 }
             }
 
@@ -66,6 +60,9 @@ struct SignInView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(session.errorMessage ?? "")
+        }
+        .task {
+            await session.refreshAccount()
         }
     }
 }

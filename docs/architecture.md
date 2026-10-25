@@ -4,47 +4,40 @@
 
 | Layer | Location | Rules |
 | --- | --- | --- |
-| Domain | `GardensCore` | Pure Swift + Foundation. Models, matching, compact QR, repository protocols. No UIKit/SwiftUI/SwiftData/Firebase. |
-| Persistence (iOS) | `Gardens/…/Persistence` | SwiftData entities map to/from domain types. Local-only `PlantRepository` fallback. |
-| Sync (iOS) | `Gardens/…/Sync` | Firestore + Storage + **Sign in with Apple** (Apple ID / iCloud). Shared multi-user `PlantRepository`. |
-| Platform (iOS) | `Gardens/…/Platform` | Core Image QR rendering, UIKit AirPrint, camera scanner. |
-| UI (iOS) | `Gardens/…/Views` | SwiftUI screens; talk to `GardensSession` / `PlantRepository`. |
+| Domain | `GardensCore` | Pure Swift + Foundation. Models, matching, compact QR, repository protocols. No UIKit/SwiftUI/SwiftData/CloudKit. |
+| Persistence (iOS) | `Gardens/…/Persistence` | SwiftData entities. Local-only `PlantRepository` fallback. |
+| Sync (iOS) | `Gardens/…/Sync` | **CloudKit** shared inventory + iCloud account check. |
+| Platform (iOS) | `Gardens/…/Platform` | Core Image QR, AirPrint, camera scanner. |
+| UI (iOS) | `Gardens/…/Views` | SwiftUI; talks to `GardensSession` / `PlantRepository`. |
 
-Future Android/web apps should depend on the same domain concepts and supply their own repository (also against Firestore).
+No Google services in the stack.
 
 ## Catalog vs instance
 
 - **Catalog** (`PlantCatalogItem`): plant *type* — name, genus, care profile.
 - **Instance** (`PlantInstance`): one physical plant — photo, vendor, date arrived, `catalogItemID`.
-- Intake matches name+genus (case/whitespace-insensitive) and **reuses** the catalog row when found.
+- Intake matches name+genus and reuses the catalog row when found.
 
 No store-location field.
 
-## Sync model (Firestore)
+## Sync model (CloudKit)
 
-When `GoogleService-Info.plist` is present and the user signs in with **Apple**:
+When the iPhone has an iCloud account:
 
-| Collection / path | One document = |
+| Record type | One record = |
 | --- | --- |
-| `workspaces/default/catalog/{id}` | Plant type |
-| `workspaces/default/instances/{id}` | Physical plant (`photoPath` → Storage) |
-| `workspaces/default/careEvents/{id}` | Care / health update |
-| Storage `workspaces/default/photos/{id}.jpg` | Plant photo |
+| `CatalogItem` | Plant type |
+| `PlantInstance` | Physical plant (`photo` CKAsset) |
+| `CareEvent` | Care / health update |
 
-This is **record-level** sync (not a shared file copy). Teammates see each other’s adds and care logs via live listeners.
+Container: `iCloud.com.gardens.intake` (public database for shared team inventory).
 
-Without Firebase config (or while signed out), the app uses on-device SwiftData only.
+Without iCloud, the app uses on-device SwiftData only.
 
-## QR (two layers)
+## QR
 
 ```
 gardens://plant/<instance-uuid>?n=Snake%20Plant
 ```
 
-| Part | Meaning |
-| --- | --- |
-| `gardens://` | Magic scheme — identifies a Gardens label; Camera can open the app |
-| `plant/<uuid>` | Instance ID → full record in the data store |
-| `n=` | Optional offline display name |
-
-Legacy JSON payloads still decode. Care/history are **not** in the QR; they load via `PlantRepository.destination(for:)`.
+Care/history are not in the QR; they load via `PlantRepository.destination(for:)`.

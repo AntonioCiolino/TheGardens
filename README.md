@@ -1,34 +1,31 @@
 # Gardens
 
-iOS plant intake app (SwiftUI) with a shared `GardensCore` package. Inventory can stay on-device (SwiftData) or sync **record-by-record** across team iPhones via **Cloud Firestore**, with **Sign in with Apple** (Apple ID / iCloud — not Google login).
+iOS plant intake app (SwiftUI) with a shared `GardensCore` package. Inventory can stay on-device (SwiftData) or sync **record-by-record** across team iPhones via **Apple CloudKit / iCloud**.
+
+No Google login. No Firebase. Staff need an **Apple ID signed into iCloud** on each iPhone.
 
 ## Open & run
 
 1. On a Mac, open `Gardens/Gardens.xcodeproj` in Xcode 15+.
-2. Select an iOS 17+ Simulator or device.
-3. Set your Development Team under Signing.
-4. Run (⌘R).
-
-### Team sync (Firestore)
-
-Follow **[docs/firestore-setup.md](docs/firestore-setup.md)** — create a Firebase project, add `GoogleService-Info.plist`, enable **Sign in with Apple** + Firestore + Storage, then use **Sync** in the app on each iPhone.
+2. Set your Development Team under Signing (CloudKit entitlement enabled).
+3. Run on an iPhone signed into iCloud.
+4. For shared sync setup, see **[docs/cloudkit-setup.md](docs/cloudkit-setup.md)**.
 
 ## What’s included
 
 - **Catalog vs instance** — plant types reused by name+genus; each physical plant is its own instance.
 - **Intake** — new or existing type; quantity creates N unique instances + batch QR print.
 - **Scan + care log** — QR lookup, maintenance / watering / health observations.
-- **Team sync** — Firestore documents + Storage photos; Sign in with Apple; live updates when signed in.
-- **Local fallback** — SwiftData if Firebase isn’t configured yet.
+- **Team sync** — CloudKit records + photo assets; iCloud account required.
+- **Local fallback** — SwiftData when iCloud isn’t available.
 - **Compact QR** — `gardens://plant/<uuid>` deep links.
 
 ## Layout
 
 ```
-GardensCore/          Shared models + QR + PlantRepository protocol
-Gardens/              iOS app (SwiftUI, SwiftData, Firestore, camera, print)
-firebase/             Suggested Firestore + Storage security rules
-docs/                 Architecture + Firestore setup
+GardensCore/     Shared models + QR + PlantRepository protocol
+Gardens/         iOS app (SwiftUI, SwiftData, CloudKit, camera, print)
+docs/            Architecture + CloudKit setup
 ```
 
 No store-location field (intentionally omitted).

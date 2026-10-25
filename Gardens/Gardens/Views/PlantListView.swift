@@ -119,8 +119,8 @@ struct PlantListView: View {
     }
 
     private var emptyDescription: Text {
-        if session.isCloudEnabled, session.user == nil {
-            return Text("Sign in with Apple under Sync to share inventory with your team, or add a plant to keep it on this device for now.")
+        if session.user == nil {
+            return Text("Connect iCloud under Sync to share inventory with your team, or add a plant to keep it on this device for now.")
         }
         return Text("Log an arrival — one plant or a whole carton.")
     }

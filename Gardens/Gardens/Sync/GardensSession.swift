@@ -1,9 +1,7 @@
 import Foundation
 import SwiftUI
 import SwiftData
-import AuthenticationServices
-import FirebaseAuth
-import FirebaseFirestore
+import CloudKit
 import GardensCore
 
 struct GardensUser: Equatable {
@@ -12,28 +10,26 @@ struct GardensUser: Equatable {
     var displayName: String?
 }
 
-/// App-wide auth + plant repository.
-/// Cloud path: Firestore + **Sign in with Apple** (Apple ID / iCloud account required).
-/// Offline path: on-device SwiftData until someone signs in.
+/// App-wide iCloud account + plant repository.
+/// Shared path: **CloudKit** (Apple) — requires an iCloud / Apple ID on the iPhone.
+/// Offline path: on-device SwiftData until iCloud is available.
 @MainActor
 final class GardensSession: ObservableObject {
     @Published private(set) var user: GardensUser?
     @Published private(set) var instances: [PlantInstanceDetail] = []
-    @Published private(set) var isCloudEnabled: Bool
+    @Published private(set) var isCloudEnabled = true
     @Published private(set) var isListening = false
     @Published var statusMessage: String?
     @Published var errorMessage: String?
 
     private var modelContext: ModelContext?
-    private var firestoreRepo: FirestorePlantRepository?
+    private let cloudRepo = CloudKitPlantRepository()
     private var localRepo: SwiftDataPlantRepository?
-    private var instancesListener: ListenerRegistration?
-    private var authListener: AuthStateDidChangeListenerHandle?
-    private let appleSignIn = AppleSignInCoordinator()
+    private var pollTask: Task<Void, Never>?
 
     var repository: any PlantRepository {
-        if isCloudEnabled, user != nil, let firestoreRepo {
-            return firestoreRepo
+        if usesSharedCloud {
+            return cloudRepo
         }
         guard let localRepo else {
             fatalError("GardensSession missing local repository — call attach(modelContext:) first.")
@@ -42,20 +38,11 @@ final class GardensSession: ObservableObject {
     }
 
     var usesSharedCloud: Bool {
-        isCloudEnabled && user != nil
+        user != nil
     }
 
     init() {
-        isCloudEnabled = FirebaseBootstrap.configureIfNeeded()
-        if isCloudEnabled {
-            firestoreRepo = FirestorePlantRepository()
-            authListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
-                Task { @MainActor in
-                    self?.applyAuthUser(user)
-                }
-            }
-            applyAuthUser(Auth.auth().currentUser)
-        }
+        Task { await refreshAccount() }
     }
 
     func attach(modelContext: ModelContext) {
@@ -66,53 +53,64 @@ final class GardensSession: ObservableObject {
         }
     }
 
-    // MARK: - Auth (Apple ID / iCloud — not Google)
+    // MARK: - iCloud (Apple ID) — no Google
 
-    func signInWithApple() async {
+    /// Checks the device iCloud account. Staff must be signed into iCloud in Settings.
+    func refreshAccount() async {
         errorMessage = nil
-        guard isCloudEnabled else {
-            errorMessage = "Add a real GoogleService-Info.plist to enable cloud sync."
-            return
-        }
-
         do {
-            let (appleCredential, rawNonce) = try await appleSignIn.signIn()
-            guard
-                let tokenData = appleCredential.identityToken,
-                let idToken = String(data: tokenData, encoding: .utf8)
-            else {
-                errorMessage = AppleSignInError.missingIdentityToken.localizedDescription
-                return
+            let status = try await cloudRepo.accountStatus()
+            switch status {
+            case .available:
+                let recordName = try await cloudRepo.userRecordName()
+                user = GardensUser(
+                    id: recordName,
+                    email: nil,
+                    displayName: "iCloud"
+                )
+                statusMessage = "iCloud connected — inventory syncs across team iPhones"
+                startPolling()
+                await refreshCloudInstances()
+            case .noAccount:
+                user = nil
+                stopPolling()
+                statusMessage = "Sign into iCloud in Settings to share inventory"
+                await refreshLocalInstances()
+            case .restricted:
+                user = nil
+                stopPolling()
+                errorMessage = "iCloud is restricted on this device."
+                await refreshLocalInstances()
+            case .couldNotDetermine:
+                user = nil
+                stopPolling()
+                errorMessage = "Couldn’t determine iCloud status. Try again."
+                await refreshLocalInstances()
+            case .temporarilyUnavailable:
+                user = nil
+                stopPolling()
+                errorMessage = "iCloud is temporarily unavailable."
+                await refreshLocalInstances()
+            @unknown default:
+                user = nil
+                stopPolling()
+                await refreshLocalInstances()
             }
-
-            let oauth = OAuthProvider.appleCredential(
-                withIDToken: idToken,
-                rawNonce: rawNonce,
-                fullName: appleCredential.fullName
-            )
-            let authResult = try await Auth.auth().signIn(with: oauth)
-            applyAuthUser(authResult.user)
-            statusMessage = "Signed in with Apple — inventory syncs live for your team."
         } catch {
-            // User cancelled the sheet — stay quiet.
-            let ns = error as NSError
-            if ns.domain == ASAuthorizationError.errorDomain,
-               ns.code == ASAuthorizationError.canceled.rawValue {
-                return
-            }
+            user = nil
+            stopPolling()
             errorMessage = error.localizedDescription
+            await refreshLocalInstances()
         }
     }
 
-    func signOut() {
-        do {
-            try Auth.auth().signOut()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-        stopListening()
+    func signOutLocally() {
+        // CloudKit uses the system iCloud account — we only drop the in-app session view
+        // and fall back to on-device data until iCloud is available again.
+        stopPolling()
         user = nil
         Task { await refreshLocalInstances() }
+        statusMessage = "Using this iPhone only — reconnect iCloud under Sync to share"
     }
 
     // MARK: - Data
@@ -121,64 +119,36 @@ final class GardensSession: ObservableObject {
         if usesSharedCloud {
             await refreshCloudInstances()
         } else {
-            await refreshLocalInstances()
+            await refreshAccount()
+            if !usesSharedCloud {
+                await refreshLocalInstances()
+            }
         }
     }
 
-    private func applyAuthUser(_ firebaseUser: User?) {
-        if let firebaseUser {
-            user = GardensUser(
-                id: firebaseUser.uid,
-                email: firebaseUser.email,
-                displayName: firebaseUser.displayName
-            )
-            startListening()
-        } else {
-            user = nil
-            stopListening()
-            instances = []
-        }
-    }
-
-    private func startListening() {
-        guard usesSharedCloud, let firestoreRepo else { return }
-        stopListening()
+    private func startPolling() {
+        stopPolling()
         isListening = true
-
-        instancesListener = firestoreRepo.listenToInstances { [weak self] docs in
-            guard let self else { return }
-            Task { await self.applyInstanceDocuments(docs) }
+        pollTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(20))
+                guard let self, self.usesSharedCloud else { continue }
+                await self.refreshCloudInstances()
+            }
         }
     }
 
-    private func stopListening() {
-        instancesListener?.remove()
-        instancesListener = nil
+    private func stopPolling() {
+        pollTask?.cancel()
+        pollTask = nil
         isListening = false
     }
 
-    private func applyInstanceDocuments(_ docs: [QueryDocumentSnapshot]) async {
-        guard let firestoreRepo else { return }
-        do {
-            let catalog = try await firestoreRepo.fetchCatalog()
-            let catalogByID = Dictionary(uniqueKeysWithValues: catalog.map { ($0.id, $0) })
-            var built: [PlantInstanceDetail] = []
-            for doc in docs {
-                if let detail = await firestoreRepo.detail(from: doc, catalogByID: catalogByID) {
-                    built.append(detail)
-                }
-            }
-            instances = built
-            statusMessage = "Live sync · \(built.count) plant\(built.count == 1 ? "" : "s")"
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-    }
-
     private func refreshCloudInstances() async {
-        guard let firestoreRepo else { return }
         do {
-            instances = try await firestoreRepo.fetchInstances()
+            let list = try await cloudRepo.fetchInstances()
+            instances = list
+            statusMessage = "iCloud sync · \(list.count) plant\(list.count == 1 ? "" : "s")"
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -188,9 +158,9 @@ final class GardensSession: ObservableObject {
         guard let localRepo else { return }
         do {
             instances = try await localRepo.fetchInstances()
-            statusMessage = isCloudEnabled
-                ? "Local only — sign in with Apple to share with your team"
-                : "On-device SwiftData (Firebase not configured)"
+            if statusMessage == nil || user == nil {
+                statusMessage = "On this iPhone only — connect iCloud under Sync to share"
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
