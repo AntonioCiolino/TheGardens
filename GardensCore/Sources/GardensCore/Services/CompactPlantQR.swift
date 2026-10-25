@@ -3,15 +3,15 @@ import Foundation
 /// Two-layer QR content for one plant instance.
 ///
 /// 1. **ID** (`i`) — looks up the full rich record (care, watering, health, history).
-/// 2. **Core fields** — tiny offline snapshot (name, color, …) so a scanner
-///    can show basics without a database round-trip.
+/// 2. **Core fields** — tiny offline snapshot (name) so a scanner can show
+///    basics without a database round-trip.
 ///
 /// Wire format (UTF-8 JSON, short keys, sorted): typically well under 200 bytes,
 /// hard-capped below 1 KB for QR Version ≤ ~10 capacity.
 ///
 /// Example:
 /// ```
-/// {"c":"variegated green","i":"A1B2C3D4-...","n":"Snake Plant","v":1}
+/// {"i":"A1B2C3D4-...","n":"Snake Plant","v":1}
 /// ```
 public struct CompactPlantQR: Hashable, Codable, Sendable {
     public static let schemaVersion = 1
@@ -23,25 +23,20 @@ public struct CompactPlantQR: Hashable, Codable, Sendable {
     public var i: UUID
     /// Plant display name (from catalog).
     public var n: String
-    /// Simple color / foliage note for offline display.
-    public var c: String
 
     public var instanceID: UUID { i }
     public var name: String { n }
-    public var color: String { c }
 
-    public init(instanceID: UUID, name: String, color: String) {
+    public init(instanceID: UUID, name: String) {
         self.v = Self.schemaVersion
         self.i = instanceID
         self.n = Self.clip(name, maxChars: 80)
-        self.c = Self.clip(color, maxChars: 40)
     }
 
     public init(detail: PlantInstanceDetail) {
         self.init(
             instanceID: detail.instance.id,
-            name: detail.catalog.name,
-            color: detail.catalog.color
+            name: detail.catalog.name
         )
     }
 

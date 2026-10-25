@@ -92,18 +92,12 @@ final class SwiftDataPlantRepository: PlantRepository {
             in: domain
         ),
            let entity = existing.first(where: { $0.id == match.id }) {
-            // Refresh color on reuse when intake provides one.
-            let color = draft.color.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !color.isEmpty {
-                entity.color = color
-            }
             return entity
         }
 
         let item = PlantCatalogItem(
             name: draft.name,
             genus: draft.genus,
-            color: draft.color,
             careProfile: draft.careProfile
         )
         let entity = CatalogItemEntity(from: item)

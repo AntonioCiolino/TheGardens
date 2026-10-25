@@ -7,7 +7,6 @@ final class CatalogItemEntity {
     @Attribute(.unique) var id: UUID
     var name: String
     var genus: String
-    var color: String
     var careInstructions: String
     var wateringCheckGuidance: String
     var healthCheckGuidance: String
@@ -20,7 +19,6 @@ final class CatalogItemEntity {
         self.id = item.id
         self.name = item.name
         self.genus = item.genus
-        self.color = item.color
         self.careInstructions = item.careProfile.careInstructions
         self.wateringCheckGuidance = item.careProfile.wateringCheckGuidance
         self.healthCheckGuidance = item.careProfile.healthCheckGuidance
@@ -33,7 +31,6 @@ final class CatalogItemEntity {
             id: id,
             name: name,
             genus: genus,
-            color: color,
             careProfile: PlantCareProfile(
                 careInstructions: careInstructions,
                 wateringCheckGuidance: wateringCheckGuidance,

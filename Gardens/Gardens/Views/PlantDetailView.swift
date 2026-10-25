@@ -46,10 +46,6 @@ struct PlantDetailView: View {
                     Text(destination.catalog.genus)
                         .font(.title3)
                         .foregroundStyle(.secondary)
-                    if !destination.catalog.color.isEmpty {
-                        Text("Color: \(destination.catalog.color)")
-                            .font(.subheadline)
-                    }
                     LabeledContent("Vendor", value: destination.instance.vendor)
                     LabeledContent(
                         "Arrived",
@@ -83,7 +79,7 @@ struct PlantDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Label QR")
                 .font(.headline)
-            Text("Encodes this instance’s ID plus compact name/color. Full care history loads from the store by ID.")
+            Text("Encodes this instance’s ID plus a compact name. Full care history loads from the store by ID.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 

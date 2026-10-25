@@ -13,7 +13,7 @@ Future Android/web apps should depend on the same domain concepts (or a KMP/TS p
 
 ## Catalog vs instance
 
-- **Catalog** (`PlantCatalogItem`): plant *type* — name, genus, color, care profile.
+- **Catalog** (`PlantCatalogItem`): plant *type* — name, genus, care profile.
 - **Instance** (`PlantInstance`): one physical plant — photo, vendor, date arrived, `catalogItemID`.
 - Intake matches name+genus (case/whitespace-insensitive) and **reuses** the catalog row when found.
 
@@ -24,7 +24,7 @@ No store-location field.
 Wire format: compact JSON with short keys, schema `v=1`:
 
 ```json
-{"c":"green","i":"A1B2…","n":"Snake Plant","v":1}
+{"i":"A1B2…","n":"Snake Plant","v":1}
 ```
 
 | Key | Meaning |
@@ -32,6 +32,5 @@ Wire format: compact JSON with short keys, schema `v=1`:
 | `v` | Schema version |
 | `i` | Instance UUID → full record in the data store |
 | `n` | Name (offline) |
-| `c` | Color (offline) |
 
 Payload is capped under 900 UTF-8 bytes. Care instructions, watering/health checks, and care history are **not** in the QR; they load via `PlantRepository.destination(for:)`.

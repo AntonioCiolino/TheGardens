@@ -1,0 +1,43 @@
+:root {
+  --soil: #1c2a1f;
+  --leaf: #2f6b3a;
+  --leaf-bright: #3f8f4c;
+  --moss: #c8d9c4;
+  --mist: #eef3eb;
+  --paper: #f7faf5;
+  --ink: #142018;
+  --muted: #5a6b5e;
+  --line: #d5e0d3;
+  --danger: #a33b2c;
+  --phone-w: 390px;
+  --phone-h: 844px;
+  font-family: "DM Sans", system-ui, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #d7e8d2 0%, transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, #cfe0d8 0%, transparent 50%),
+    linear-gradient(165deg, #e8f0e4 0%, #d3ddd0 45%, #c5d0c2 100%);
+  line-height: 1.4;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}

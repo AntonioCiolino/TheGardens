@@ -12,9 +12,9 @@ iOS plant intake app (SwiftUI + SwiftData) with a shared `GardensCore` package f
 ## What’s included
 
 - **Catalog vs instance** — plant types (`PlantCatalogItem`) are reused by name+genus; each physical plant is a separate `PlantInstance` (photo, vendor, date arrived).
-- **Intake form** — camera / photo library, name, genus, color, vendor, arrival date, optional care defaults.
+- **Intake form** — camera / photo library, name, genus, vendor, arrival date, optional care defaults.
 - **List + detail** — saved instances with photos; detail shows QR, care guidance, and care history.
-- **Compact QR** — embeds instance ID + short name/color; full care/watering/health/history load from storage by ID.
+- **Compact QR** — embeds instance ID + short name; full care/watering/health/history load from storage by ID.
 - **Print** — AirPrint sheet for a label (works with PDF preview; no physical printer required).
 
 ## Layout

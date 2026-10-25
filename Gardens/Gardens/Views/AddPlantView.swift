@@ -7,7 +7,6 @@ struct AddPlantView: View {
 
     @State private var name = ""
     @State private var genus = ""
-    @State private var color = ""
     @State private var vendor = ""
     @State private var arrivedOn = Date()
     @State private var photoData: Data?
@@ -22,7 +21,6 @@ struct AddPlantView: View {
         PlantIntakeDraft(
             name: name,
             genus: genus,
-            color: color,
             vendor: vendor,
             arrivedOn: arrivedOn,
             photoData: photoData,
@@ -45,8 +43,6 @@ struct AddPlantView: View {
                     .textInputAutocapitalization(.words)
                 TextField("Genus", text: $genus)
                     .textInputAutocapitalization(.words)
-                TextField("Color", text: $color)
-                    .textInputAutocapitalization(.never)
                 if let catalogHint {
                     Text(catalogHint)
                         .font(.footnote)
