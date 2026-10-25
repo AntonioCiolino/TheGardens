@@ -108,7 +108,7 @@ const SAMPLE: Plant[] = [
   },
 ];
 
-type Screen = "list" | "add" | "detail" | "batch" | "scan" | "care";
+type Screen = "list" | "add" | "detail" | "batch" | "scan" | "care" | "sync";
 
 function compactQR(plant: Plant) {
   const name = encodeURIComponent(plant.name.slice(0, 80));
@@ -137,6 +137,8 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [splashStyle, setSplashStyle] = useState<SplashStyle>(() => randomSplashStyle());
   const [splashKey, setSplashKey] = useState(0);
+  const [iCloudConnected, setICloudConnected] = useState(false);
+  const [syncStatus, setSyncStatus] = useState("On this phone only — connect iCloud under Sync");
 
   useEffect(() => {
     if (!showSplash) return;
@@ -161,8 +163,8 @@ export default function App() {
         <p className="eyebrow">UI preview · not the Simulator</p>
         <h1>Gardens</h1>
         <p>
-          Existing type reuses the stored photo. Use <strong>Scan</strong> to look up a QR and log
-          watering / health / maintenance.
+          Web stand-in for the iOS app. Sync simulates <strong>iCloud / CloudKit</strong> (no Google).
+          Use <strong>Scan</strong> for QR → care log; <strong>Sync</strong> to connect iCloud and write a test plant.
         </p>
         <div className="splash-controls">
           {showSplash ? (
@@ -196,11 +198,79 @@ export default function App() {
         {!showSplash && screen === "list" && (
           <ListScreen
             plants={plants}
+            syncStatus={syncStatus}
+            iCloudConnected={iCloudConnected}
             onAdd={() => setScreen("add")}
             onScan={() => setScreen("scan")}
+            onSync={() => setScreen("sync")}
             onOpen={(id) => {
               setSelectedId(id);
               setScreen("detail");
+            }}
+          />
+        )}
+
+        {!showSplash && screen === "sync" && (
+          <SyncScreen
+            iCloudConnected={iCloudConnected}
+            syncStatus={syncStatus}
+            onCancel={() => setScreen("list")}
+            onConnect={() => {
+              setICloudConnected(true);
+              setSyncStatus(`iCloud sync · ${plants.length} plants`);
+            }}
+            onDisconnect={() => {
+              setICloudConnected(false);
+              setSyncStatus("On this phone only — connect iCloud under Sync");
+            }}
+            onWriteTest={() => {
+              const id = newId();
+              const today = new Date().toISOString().slice(0, 10);
+              const stamp = new Date().toLocaleString();
+              let catalogType = catalog.find(
+                (c) => c.name === "Gardens Sync Test" && c.genus === "Testus"
+              );
+              let isNewCatalog = false;
+              if (!catalogType) {
+                catalogType = {
+                  id: `cat-${id.slice(0, 8)}`,
+                  name: "Gardens Sync Test",
+                  genus: "Testus",
+                  care: {
+                    careInstructions: "Created by Sync → Write test record",
+                    wateringCheckGuidance: "Ignore — smoke test",
+                    healthCheckGuidance: "Ignore — smoke test",
+                  },
+                };
+                isNewCatalog = true;
+              }
+              const plant: Plant = {
+                id,
+                catalogId: catalogType.id,
+                name: catalogType.name,
+                genus: catalogType.genus,
+                vendor: "Setup Check",
+                arrivedOn: today,
+                photo:
+                  "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=800&q=80&auto=format&fit=crop",
+                care: catalogType.care,
+                history: [
+                  {
+                    kind: "Note",
+                    when: stamp,
+                    notes: `CloudKit smoke test at ${stamp}`,
+                  },
+                ],
+              };
+              if (isNewCatalog) setCatalog((prev) => [...prev, catalogType!]);
+              setPlants((prev) => [plant, ...prev]);
+              setSyncStatus(
+                iCloudConnected
+                  ? `Test OK — plant ${id.slice(0, 8)}… (iCloud demo)`
+                  : `Test OK — plant ${id.slice(0, 8)}… (this phone only)`
+              );
+              setPrintNote("Test plant written — check the list for Gardens Sync Test.");
+              window.setTimeout(() => setPrintNote(null), 2800);
             }}
           />
         )}
@@ -303,21 +373,32 @@ function SplashScreen({ style }: { style: SplashStyle }) {
 
 function ListScreen({
   plants,
+  syncStatus,
+  iCloudConnected,
   onAdd,
   onScan,
+  onSync,
   onOpen,
 }: {
   plants: Plant[];
+  syncStatus: string;
+  iCloudConnected: boolean;
   onAdd: () => void;
   onScan: () => void;
+  onSync: () => void;
   onOpen: (id: string) => void;
 }) {
   return (
     <div className="screen">
       <div className="nav">
-        <button className="text-btn" onClick={onScan} aria-label="Scan plant">
-          ⌁ Scan
-        </button>
+        <div className="nav-leading">
+          <button className="text-btn" onClick={onScan} aria-label="Scan plant">
+            ⌁ Scan
+          </button>
+          <button className="text-btn" onClick={onSync} aria-label="Team sync">
+            {iCloudConnected ? "☁ Synced" : "☁ Sync"}
+          </button>
+        </div>
         <h2>Gardens</h2>
         <button className="icon-btn" onClick={onAdd} aria-label="Add plant">
           +
@@ -327,7 +408,11 @@ function ListScreen({
         <div className="empty">
           <div className="empty-glyph">🌿</div>
           <h3>No plants yet</h3>
-          <p>Log an arrival — one plant or a whole carton.</p>
+          <p>
+            {iCloudConnected
+              ? "Log an arrival — one plant or a whole carton."
+              : "Connect iCloud under Sync to share, or add a plant on this phone."}
+          </p>
         </div>
       ) : (
         <ul className="plant-list">
@@ -348,6 +433,65 @@ function ListScreen({
           ))}
         </ul>
       )}
+      <p className="sync-footer">{syncStatus}</p>
+    </div>
+  );
+}
+
+function SyncScreen({
+  iCloudConnected,
+  syncStatus,
+  onCancel,
+  onConnect,
+  onDisconnect,
+  onWriteTest,
+}: {
+  iCloudConnected: boolean;
+  syncStatus: string;
+  onCancel: () => void;
+  onConnect: () => void;
+  onDisconnect: () => void;
+  onWriteTest: () => void;
+}) {
+  return (
+    <div className="screen">
+      <div className="nav nav-stack">
+        <button className="text-btn" onClick={onCancel}>
+          Done
+        </button>
+        <h2>Team sync</h2>
+        <span />
+      </div>
+      <div className="form sync-form">
+        <p className="hint">
+          Inventory syncs plant-by-plant via iCloud (CloudKit). Apple ID on the phone — no Google
+          login.
+        </p>
+        {iCloudConnected ? (
+          <section className="sync-card">
+            <strong>Connected</strong>
+            <p>iCloud is active (demo).</p>
+            <button type="button" className="secondary-btn" onClick={onDisconnect}>
+              Use this phone only
+            </button>
+          </section>
+        ) : (
+          <section className="sync-card">
+            <button type="button" className="primary-btn" onClick={onConnect}>
+              Connect iCloud
+            </button>
+            <p className="hint">Simulates signing into iCloud on an iPhone.</p>
+          </section>
+        )}
+        <section className="sync-card">
+          <strong>Test a record</strong>
+          <button type="button" className="primary-btn" onClick={onWriteTest}>
+            Write test plant + care note
+          </button>
+          <p className="hint">Creates “Gardens Sync Test” (genus Testus) like the iOS smoke test.</p>
+        </section>
+        <p className="sync-footer">{syncStatus}</p>
+      </div>
     </div>
   );
 }

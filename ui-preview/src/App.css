@@ -180,6 +180,62 @@
   cursor: not-allowed;
 }
 
+.nav-leading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 72px;
+}
+
+.nav-leading .text-btn {
+  min-width: 0;
+  font-size: 0.82rem;
+}
+
+.sync-footer {
+  margin: 12px 18px 20px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.sync-form {
+  gap: 14px;
+}
+
+.sync-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--soil) 12%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--paper) 88%, white);
+}
+
+.sync-card strong {
+  color: var(--soil);
+}
+
+.primary-btn,
+.secondary-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-btn {
+  background: var(--leaf);
+  color: white;
+}
+
+.secondary-btn {
+  background: color-mix(in srgb, var(--soil) 8%, transparent);
+  color: var(--soil);
+}
+
 .plant-list {
   list-style: none;
   margin: 0;
