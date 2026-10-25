@@ -22,7 +22,7 @@ struct GardensApp: App {
             }
             .animation(.easeInOut(duration: 0.55), value: showSplash)
             .task {
-                try? await Task.sleep(for: .seconds(1.6))
+                try? await Task.sleep(for: .seconds(3.5))
                 showSplash = false
             }
         }

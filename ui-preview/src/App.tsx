@@ -143,7 +143,7 @@ export default function App() {
 
   useEffect(() => {
     if (!showSplash) return;
-    const t = window.setTimeout(() => setShowSplash(false), 1800);
+    const t = window.setTimeout(() => setShowSplash(false), 3500);
     return () => window.clearTimeout(t);
   }, [showSplash, splashKey]);
 
