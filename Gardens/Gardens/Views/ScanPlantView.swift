@@ -4,7 +4,7 @@ import GardensCore
 
 /// Live camera QR scan → plant lookup → care logging.
 struct ScanPlantView: View {
-    @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var session: GardensSession
     @Environment(\.dismiss) private var dismiss
 
     @State private var scannedText = ""
@@ -187,8 +187,7 @@ struct ScanPlantView: View {
         defer { isLookingUp = false }
 
         do {
-            let repo = SwiftDataPlantRepository(modelContext: modelContext)
-            let service = PlantIntakeService(repository: repo)
+            let service = PlantIntakeService(repository: session.repository)
             let match = try await service.destination(fromScannedQR: code)
             destination = match
             scannedText = code

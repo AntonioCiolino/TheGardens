@@ -1,17 +1,16 @@
 import SwiftUI
-import SwiftData
+import UIKit
 import GardensCore
 
 struct PlantListView: View {
     @Binding var deepLinkPlantID: UUID?
     @Binding var openCareFromDeepLink: Bool
 
-    @Environment(\.modelContext) private var modelContext
-    @Query(sort: \PlantInstanceEntity.arrivedOn, order: .reverse)
-    private var instances: [PlantInstanceEntity]
+    @EnvironmentObject private var session: GardensSession
 
     @State private var showingAdd = false
     @State private var showingScan = false
+    @State private var showingSync = false
     @State private var batchToPrint: PlantArrivalBatch?
     @State private var path = NavigationPath()
 
@@ -21,18 +20,16 @@ struct PlantListView: View {
                 BrandWatermark(opacity: 0.16)
 
                 Group {
-                    if instances.isEmpty {
+                    if session.instances.isEmpty {
                         ContentUnavailableView(
                             "No plants yet",
                             systemImage: "leaf",
-                            description: Text("Log an arrival — one plant or a whole carton.")
+                            description: Text(emptyDescription)
                         )
                     } else {
-                        List(instances) { entity in
-                            if let detail = entity.toDetail() {
-                                NavigationLink(value: detail.instance.id) {
-                                    PlantRowView(detail: detail)
-                                }
+                        List(session.instances) { detail in
+                            NavigationLink(value: detail.instance.id) {
+                                PlantRowView(detail: detail)
                             }
                         }
                         .scrollContentBackground(.hidden)
@@ -60,6 +57,18 @@ struct PlantListView: View {
                         Label("Scan", systemImage: "qrcode.viewfinder")
                     }
                 }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showingSync = true
+                    } label: {
+                        Label(
+                            session.usesSharedCloud ? "Synced" : "Sync",
+                            systemImage: session.usesSharedCloud
+                                ? "checkmark.icloud"
+                                : "icloud.and.arrow.up"
+                        )
+                    }
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showingAdd = true
@@ -68,16 +77,32 @@ struct PlantListView: View {
                     }
                 }
             }
+            .safeAreaInset(edge: .bottom) {
+                if let status = session.statusMessage, !session.instances.isEmpty {
+                    Text(status)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .background(.ultraThinMaterial)
+                }
+            }
             .sheet(isPresented: $showingAdd) {
                 NavigationStack {
                     AddPlantView { batch in
                         batchToPrint = batch
+                        Task { await session.refresh() }
                     }
                 }
             }
             .sheet(isPresented: $showingScan) {
                 NavigationStack {
                     ScanPlantView()
+                }
+            }
+            .sheet(isPresented: $showingSync) {
+                NavigationStack {
+                    SignInView()
                 }
             }
             .sheet(item: $batchToPrint) { batch in
@@ -87,7 +112,17 @@ struct PlantListView: View {
                 guard let newID else { return }
                 path.append(newID)
             }
+            .refreshable {
+                await session.refresh()
+            }
         }
+    }
+
+    private var emptyDescription: Text {
+        if session.isCloudEnabled, session.user == nil {
+            return Text("Sign in under Sync to share inventory with your team, or add a plant to keep it on this device for now.")
+        }
+        return Text("Log an arrival — one plant or a whole carton.")
     }
 }
 
@@ -121,10 +156,10 @@ private struct PlantRowView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         } else {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color(.tertiarySystemFill))
+                .fill(.quaternary)
                 .frame(width: 64, height: 64)
                 .overlay {
-                    Image(systemName: "leaf.fill")
+                    Image(systemName: "leaf")
                         .foregroundStyle(.secondary)
                 }
         }

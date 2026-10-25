@@ -6,7 +6,7 @@ struct LogCareUpdateView: View {
     let destination: PlantInstanceDestination
     var onSaved: (() -> Void)?
 
-    @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var session: GardensSession
     @Environment(\.dismiss) private var dismiss
 
     @State private var kind: CareEventKind = .healthCheck
@@ -118,8 +118,7 @@ struct LogCareUpdateView: View {
         isSaving = true
         defer { isSaving = false }
         do {
-            let repo = SwiftDataPlantRepository(modelContext: modelContext)
-            let service = PlantIntakeService(repository: repo)
+            let service = PlantIntakeService(repository: session.repository)
             _ = try await service.logCareUpdate(draft)
             onSaved?()
             dismiss()

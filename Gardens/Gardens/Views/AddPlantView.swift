@@ -8,7 +8,7 @@ enum AddPlantMode: String, CaseIterable, Identifiable {
 }
 
 struct AddPlantView: View {
-    @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var session: GardensSession
     @Environment(\.dismiss) private var dismiss
 
     /// Called after a successful save with the created batch (for label printing).
@@ -221,8 +221,7 @@ struct AddPlantView: View {
 
     @MainActor
     private func loadCatalog() async {
-        let repo = SwiftDataPlantRepository(modelContext: modelContext)
-        catalog = (try? await repo.fetchCatalog()) ?? []
+        catalog = (try? await session.repository.fetchCatalog()) ?? []
         if mode == .existingType, selectedCatalogID == nil {
             selectedCatalogID = catalog.first?.id
         }
@@ -236,8 +235,7 @@ struct AddPlantView: View {
     @MainActor
     private func loadReferencePhoto() async {
         guard mode == .existingType, let id = selectedCatalogID else { return }
-        let repo = SwiftDataPlantRepository(modelContext: modelContext)
-        if let data = try? await repo.referencePhoto(for: id) {
+        if let data = try? await session.repository.referencePhoto(for: id) {
             photoData = data
             photoIsFromCatalog = true
         } else {
@@ -267,8 +265,7 @@ struct AddPlantView: View {
         isSaving = true
         defer { isSaving = false }
         do {
-            let repo = SwiftDataPlantRepository(modelContext: modelContext)
-            let service = PlantIntakeService(repository: repo)
+            let service = PlantIntakeService(repository: session.repository)
             let batch = try await service.saveNewArrival(draft)
             onSaved?(batch)
             dismiss()

@@ -1,6 +1,6 @@
 # Gardens
 
-iOS plant intake app (SwiftUI + SwiftData) with a shared `GardensCore` package for future Android/web ports.
+iOS plant intake app (SwiftUI) with a shared `GardensCore` package. Inventory can stay on-device (SwiftData) or sync **record-by-record** across your Google Workspace team via **Cloud Firestore**.
 
 ## Open & run
 
@@ -9,23 +9,26 @@ iOS plant intake app (SwiftUI + SwiftData) with a shared `GardensCore` package f
 3. Set your Development Team under Signing.
 4. Run (⌘R).
 
+### Team sync (Firestore)
+
+Follow **[docs/firestore-setup.md](docs/firestore-setup.md)** — create a Firebase project, add `GoogleService-Info.plist`, enable Google Auth + Firestore + Storage, then use **Sync** in the app to sign in with Workspace Google accounts.
+
 ## What’s included
 
-- **Catalog vs instance** — plant types (`PlantCatalogItem`) are reused by name+genus; each physical plant is a separate `PlantInstance` (photo, vendor, date arrived).
-- **Intake** — **New type** or **Existing type** (reuses stored photo). Quantity creates N unique instances.
-- **Batch labels** — print all QRs for an arrival.
-- **Scan + care log** — look up a plant by QR/UUID, record maintenance, watering & health observations; saved to care history.
-- **List + detail** — photos, care above QR, log care from detail.
-- **Compact QR** — instance ID + name; rich data loads by ID.
-- **Print** — AirPrint (PDF preview OK).
+- **Catalog vs instance** — plant types reused by name+genus; each physical plant is its own instance.
+- **Intake** — new or existing type; quantity creates N unique instances + batch QR print.
+- **Scan + care log** — QR lookup, maintenance / watering / health observations.
+- **Team sync** — Firestore documents + Storage photos; live updates when signed in.
+- **Local fallback** — SwiftData if Firebase isn’t configured yet.
+- **Compact QR** — `gardens://plant/<uuid>` deep links.
 
 ## Layout
 
 ```
-GardensCore/          Shared models + QR + repository protocols (Foundation only)
-Gardens/              iOS app (SwiftUI, SwiftData, Core Image, UIKit print)
-  Gardens.xcodeproj
-  Gardens/
+GardensCore/          Shared models + QR + PlantRepository protocol
+Gardens/              iOS app (SwiftUI, SwiftData, Firestore, camera, print)
+firebase/             Suggested Firestore + Storage security rules
+docs/                 Architecture + Firestore setup
 ```
 
 No store-location field (intentionally omitted).

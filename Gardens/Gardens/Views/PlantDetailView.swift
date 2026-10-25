@@ -1,12 +1,11 @@
 import SwiftUI
-import SwiftData
 import GardensCore
 
 struct PlantDetailView: View {
     let instanceID: UUID
     var autoOpenCareLog: Bool = false
 
-    @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var session: GardensSession
     @State private var destination: PlantInstanceDestination?
     @State private var qrPayload: String?
     @State private var printError: String?
@@ -201,8 +200,7 @@ struct PlantDetailView: View {
 
     @MainActor
     private func reload() async {
-        let repo = SwiftDataPlantRepository(modelContext: modelContext)
-        destination = try? await repo.destination(for: instanceID)
+        destination = try? await session.repository.destination(for: instanceID)
         if let destination {
             let detail = PlantInstanceDetail(
                 instance: destination.instance,

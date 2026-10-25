@@ -23,3 +23,7 @@ Packages/Package.resolved
 *.log
 *.swp
 *~
+
+# Firebase — keep secrets out of git (commit the .example instead)
+**/GoogleService-Info.plist
+!**/GoogleService-Info.plist.example
