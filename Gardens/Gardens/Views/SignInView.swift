@@ -5,6 +5,9 @@ struct SignInView: View {
     @EnvironmentObject private var session: GardensSession
     @Environment(\.dismiss) private var dismiss
 
+    @State private var testResult: String?
+    @State private var isTesting = false
+
     var body: some View {
         Form {
             Section {
@@ -39,6 +42,32 @@ struct SignInView: View {
                 } footer: {
                     Text("If you aren’t signed into iCloud, open Settings → [your name] and sign in with your Apple ID. Then return here and tap Connect iCloud.")
                 }
+            }
+
+            Section("Test a record") {
+                Button {
+                    isTesting = true
+                    testResult = nil
+                    Task {
+                        testResult = await session.writeTestRecord()
+                        isTesting = false
+                    }
+                } label: {
+                    if isTesting {
+                        ProgressView()
+                    } else {
+                        Label("Write test plant + care note", systemImage: "leaf.circle")
+                    }
+                }
+                .disabled(isTesting)
+
+                if let testResult {
+                    Text(testResult)
+                        .font(.footnote)
+                        .foregroundStyle(testResult.hasPrefix("Test OK") ? .primary : .red)
+                }
+            } footer: {
+                Text("Creates a “Gardens Sync Test” plant (genus Testus) and a care note. On iCloud it should show in CloudKit Console → Public Database, and on the main plant list.")
             }
 
             if let status = session.statusMessage {

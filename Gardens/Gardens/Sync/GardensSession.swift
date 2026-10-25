@@ -126,6 +126,49 @@ final class GardensSession: ObservableObject {
         }
     }
 
+    /// Writes one catalog + instance + care event through the active repository, then reloads.
+    /// Use after Connect iCloud to verify CloudKit accepts a real record.
+    @discardableResult
+    func writeTestRecord() async -> String {
+        errorMessage = nil
+        do {
+            if user == nil {
+                await refreshAccount()
+            }
+            let service = PlantIntakeService(repository: repository)
+            let stamp = Date().formatted(date: .numeric, time: .shortened)
+            let batch = try await service.saveNewArrival(
+                PlantIntakeDraft(
+                    catalogMode: .newOrMatchType,
+                    name: "Gardens Sync Test",
+                    genus: "Testus",
+                    vendor: "Setup Check",
+                    careProfile: PlantCareProfile(
+                        careInstructions: "Created by Sync → Write test record",
+                        wateringCheckGuidance: "Ignore — smoke test",
+                        healthCheckGuidance: "Ignore — smoke test"
+                    ),
+                    quantity: 1
+                )
+            )
+            let instanceID = batch.instances[0].id
+            _ = try await service.logCareUpdate(
+                CareUpdateDraft(
+                    instanceID: instanceID,
+                    kind: .note,
+                    notes: "CloudKit smoke test at \(stamp)"
+                )
+            )
+            await refresh()
+            let message = "Test OK — plant \(instanceID.uuidString.prefix(8))… with care note (\(usesSharedCloud ? "iCloud" : "this iPhone only"))"
+            statusMessage = message
+            return message
+        } catch {
+            errorMessage = error.localizedDescription
+            return "Test failed: \(error.localizedDescription)"
+        }
+    }
+
     private func startPolling() {
         stopPolling()
         isListening = true

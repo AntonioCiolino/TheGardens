@@ -34,7 +34,17 @@ Until iCloud is available, the app uses on-device SwiftData for that phone only.
 
 3. Deploy Development → Production when you’re ready for TestFlight / App Store.
 
-## 4. Team use
+## 4. Test a record (smoke test)
+
+1. Run Gardens from Xcode on an iPhone signed into iCloud.
+2. Tap **Sync** → **Connect iCloud** (status should say iCloud connected).
+3. Tap **Write test plant + care note**.
+4. Expect **Test OK** and a list row named **Gardens Sync Test**.
+5. In [CloudKit Console](https://icloud.developer.apple.com/) → container `iCloud.com.gardens.intake` → **Public Database** → Records, confirm `CatalogItem` / `PlantInstance` / `CareEvent`.
+
+If the write fails with “not authenticated” / account errors, fix iCloud sign-in and the App ID CloudKit container first.
+
+## 5. Team use
 
 1. Each person: iPhone → Settings → signed into **iCloud** with their Apple ID.
 2. Open Gardens → **Sync** → **Connect iCloud**.
