@@ -22,6 +22,7 @@
 		4F3E46DDF2984D87BEE52CC0 /* SwiftDataPlantRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E277E42F1F4676BEA88A61 /* SwiftDataPlantRepository.swift */; };
 		2E96E2D9DADF4E1988847624 /* CoreImageQRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */; };
 		94AFC090BA7A461EAC2B5E40 /* UIKitPlantLabelPrinter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 651C84A8EE9D423B8BEECF87 /* UIKitPlantLabelPrinter.swift */; };
+		1EA70580002F467A8E3FA025 /* PlantQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D488314D7F3D4988A311217C /* PlantQRScannerView.swift */; };
 		8385BA678B1C48AD9F964661 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A4952323A68541608D1A286F /* Assets.xcassets */; };
 		DAA181E0D7EC4AA29A35F4FB /* GardensCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9C580D26CA894853A6AB79B9 /* GardensCore */; };
 /* End PBXBuildFile section */
@@ -42,6 +43,7 @@
 		80E277E42F1F4676BEA88A61 /* SwiftDataPlantRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataPlantRepository.swift; sourceTree = "<group>"; };
 		90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreImageQRCodeGenerator.swift; sourceTree = "<group>"; };
 		651C84A8EE9D423B8BEECF87 /* UIKitPlantLabelPrinter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIKitPlantLabelPrinter.swift; sourceTree = "<group>"; };
+		D488314D7F3D4988A311217C /* PlantQRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantQRScannerView.swift; sourceTree = "<group>"; };
 		A4952323A68541608D1A286F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		395FA4407F2946F0A3384929 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0E5744733B714F3CB94858AF /* Gardens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gardens.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -109,6 +111,7 @@
 			children = (
 				90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */,
 				651C84A8EE9D423B8BEECF87 /* UIKitPlantLabelPrinter.swift */,
+				D488314D7F3D4988A311217C /* PlantQRScannerView.swift */,
 			);
 			path = Platform;
 			sourceTree = "<group>";
@@ -232,6 +235,7 @@
 				4F3E46DDF2984D87BEE52CC0 /* SwiftDataPlantRepository.swift in Sources */,
 				2E96E2D9DADF4E1988847624 /* CoreImageQRCodeGenerator.swift in Sources */,
 				94AFC090BA7A461EAC2B5E40 /* UIKitPlantLabelPrinter.swift in Sources */,
+				1EA70580002F467A8E3FA025 /* PlantQRScannerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

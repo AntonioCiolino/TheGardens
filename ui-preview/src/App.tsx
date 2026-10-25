@@ -650,10 +650,16 @@ function ScanScreen({
 }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [cameraStatus, setCameraStatus] = useState<"idle" | "starting" | "live" | "denied" | "unsupported">(
+    "idle"
+  );
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef<number | null>(null);
 
-  function findPlant() {
+  function resolvePlant(raw: string) {
     setError(null);
-    const trimmed = code.trim();
+    const trimmed = raw.trim();
     let id: string | null = null;
     try {
       const parsed = JSON.parse(trimmed) as { i?: string };
@@ -663,14 +669,77 @@ function ScanScreen({
     }
     const match = plants.find((p) => p.id === id);
     if (!match) {
-      setError("No plant matched that code. Paste a QR JSON or instance UUID.");
-      return;
+      setError("No plant matched that code.");
+      return false;
     }
     onMatched(match.id);
+    return true;
   }
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function startCamera() {
+      setCameraStatus("starting");
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCameraStatus("unsupported");
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false,
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        streamRef.current = stream;
+        const video = videoRef.current;
+        if (video) {
+          video.srcObject = stream;
+          await video.play();
+        }
+        setCameraStatus("live");
+
+        // Prefer BarcodeDetector when the browser supports it.
+        const Detector = (window as unknown as { BarcodeDetector?: new (opts: { formats: string[] }) => {
+          detect: (source: HTMLVideoElement) => Promise<Array<{ rawValue: string }>>;
+        } }).BarcodeDetector;
+
+        if (Detector) {
+          const detector = new Detector({ formats: ["qr_code"] });
+          const tick = async () => {
+            if (cancelled || !videoRef.current) return;
+            try {
+              const codes = await detector.detect(videoRef.current);
+              if (codes[0]?.rawValue) {
+                resolvePlant(codes[0].rawValue);
+                return;
+              }
+            } catch {
+              // keep scanning
+            }
+            rafRef.current = window.setTimeout(tick, 250) as unknown as number;
+          };
+          tick();
+        }
+      } catch {
+        if (!cancelled) setCameraStatus("denied");
+      }
+    }
+
+    startCamera();
+    return () => {
+      cancelled = true;
+      if (rafRef.current) window.clearTimeout(rafRef.current);
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <div className="screen">
+    <div className="screen scan-screen">
       <div className="nav nav-stack">
         <button className="text-btn" onClick={onCancel}>
           Close
@@ -678,21 +747,30 @@ function ScanScreen({
         <h2>Scan plant</h2>
         <span className="spacer" />
       </div>
-      <div className="form">
-        <p className="hint">
-          Paste QR contents or an instance UUID (camera scan wires to the same lookup in the iOS
-          app).
+
+      <div className="camera-stage">
+        <video ref={videoRef} className="camera-video" playsInline muted />
+        <div className="camera-frame" aria-hidden />
+        <p className="camera-status">
+          {cameraStatus === "starting" && "Starting camera…"}
+          {cameraStatus === "live" && "Point at a plant label QR"}
+          {cameraStatus === "denied" && "Camera permission denied — paste a code below."}
+          {cameraStatus === "unsupported" && "Camera unavailable here — paste a code below."}
+          {cameraStatus === "idle" && "Preparing…"}
         </p>
+      </div>
+
+      <div className="form">
         <label>
-          QR / UUID
+          Or paste QR / UUID
           <textarea
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            rows={4}
+            rows={3}
             placeholder='{"i":"…","n":"Snake Plant","v":1}'
           />
         </label>
-        <button className="print-btn" type="button" onClick={findPlant}>
+        <button className="print-btn" type="button" onClick={() => resolvePlant(code)}>
           Find plant
         </button>
         {error && <p className="error-text">{error}</p>}
