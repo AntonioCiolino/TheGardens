@@ -53,9 +53,9 @@ struct PlantDetailView: View {
                     )
                 }
 
-                qrSection(destination)
-
                 careSection(destination)
+
+                qrSection(destination)
             }
             .padding()
         }

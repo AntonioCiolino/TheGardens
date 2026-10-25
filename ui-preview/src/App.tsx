@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import "./App.css";
 
@@ -93,6 +93,12 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("list");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [printNote, setPrintNote] = useState<string | null>(null);
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setShowSplash(false), 1800);
+    return () => window.clearTimeout(t);
+  }, []);
 
   const selected = useMemo(
     () => plants.find((p) => p.id === selectedId) ?? null,
@@ -108,6 +114,11 @@ export default function App() {
           Interactive mock of the SwiftUI intake flow. Open{" "}
           <code>Gardens/Gardens.xcodeproj</code> on a Mac for the real app.
         </p>
+        {showSplash && (
+          <button type="button" className="skip-splash" onClick={() => setShowSplash(false)}>
+            Skip splash
+          </button>
+        )}
       </header>
 
       <div className="phone" aria-label="iPhone preview">
@@ -117,7 +128,9 @@ export default function App() {
           <span className="status-icons">●●● ▮</span>
         </div>
 
-        {screen === "list" && (
+        {showSplash && <SplashScreen />}
+
+        {!showSplash && screen === "list" && (
           <ListScreen
             plants={plants}
             onAdd={() => setScreen("add")}
@@ -128,7 +141,7 @@ export default function App() {
           />
         )}
 
-        {screen === "add" && (
+        {!showSplash && screen === "add" && (
           <AddScreen
             existing={plants}
             onCancel={() => setScreen("list")}
@@ -140,7 +153,7 @@ export default function App() {
           />
         )}
 
-        {screen === "detail" && selected && (
+        {!showSplash && screen === "detail" && selected && (
           <DetailScreen
             plant={selected}
             onBack={() => setScreen("list")}
@@ -153,6 +166,30 @@ export default function App() {
 
         {printNote && <div className="toast">{printNote}</div>}
       </div>
+    </div>
+  );
+}
+
+function SplashScreen() {
+  return (
+    <div className="splash" role="img" aria-label="Gardens splash">
+      <div className="splash-orb" aria-hidden />
+      <div className="splash-mark" aria-hidden>
+        <svg viewBox="0 0 64 64" width="56" height="56" fill="none">
+          <path
+            d="M32 8c-2 14-14 22-20 26 10 2 18 10 20 22 2-12 10-20 20-22-6-4-18-12-20-26Z"
+            fill="url(#leaf)"
+          />
+          <defs>
+            <linearGradient id="leaf" x1="12" y1="8" x2="48" y2="56" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#b8e0b2" />
+              <stop offset="1" stopColor="#4fa35a" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <h2 className="splash-title">Gardens</h2>
+      <p className="splash-sub">Plant intake</p>
     </div>
   );
 }
@@ -347,21 +384,6 @@ function DetailScreen({
           </div>
         </dl>
 
-        <section className="qr-card">
-          <h4>Label QR</h4>
-          <p>
-            Encodes this instance’s ID plus a compact name. Full care history loads from the
-            store by ID.
-          </p>
-          <div className="qr-wrap">
-            <QRCodeSVG value={payload} size={180} level="M" includeMargin={false} />
-          </div>
-          <code className="payload">{payload}</code>
-          <button className="print-btn" onClick={onPrint}>
-            Print label
-          </button>
-        </section>
-
         <section>
           <h4>Care</h4>
           <p>{plant.care.careInstructions || "Not set yet."}</p>
@@ -383,6 +405,21 @@ function DetailScreen({
               ))}
             </ul>
           )}
+        </section>
+
+        <section className="qr-card">
+          <h4>Label QR</h4>
+          <p>
+            Encodes this instance’s ID plus a compact name. Full care history loads from the
+            store by ID.
+          </p>
+          <div className="qr-wrap">
+            <QRCodeSVG value={payload} size={180} level="M" includeMargin={false} />
+          </div>
+          <code className="payload">{payload}</code>
+          <button className="print-btn" onClick={onPrint}>
+            Print label
+          </button>
         </section>
       </div>
     </div>

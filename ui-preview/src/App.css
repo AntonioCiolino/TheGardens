@@ -444,6 +444,86 @@ dd {
   animation: rise 220ms ease;
 }
 
+.splash {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  background:
+    radial-gradient(circle at 70% 18%, rgba(255, 255, 255, 0.08), transparent 42%),
+    linear-gradient(155deg, #1c2a1f 0%, #2f5238 48%, #3a6b44 100%);
+  animation: splash-in 500ms ease;
+}
+
+.splash-orb {
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: rgba(184, 224, 178, 0.12);
+  filter: blur(28px);
+  top: 18%;
+  right: 4%;
+  pointer-events: none;
+}
+
+.splash-mark {
+  animation: leaf-pulse 2.2s ease-in-out infinite;
+}
+
+.splash-title {
+  margin: 8px 0 0;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: #f4faf2;
+  letter-spacing: -0.03em;
+}
+
+.splash-sub {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(244, 250, 242, 0.62);
+  font-weight: 600;
+}
+
+.skip-splash {
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 600;
+  color: var(--soil);
+  cursor: pointer;
+}
+
+@keyframes splash-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes leaf-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.92;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
 @keyframes rise {
   from {
     opacity: 0;
