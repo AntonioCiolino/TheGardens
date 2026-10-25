@@ -23,14 +23,14 @@ No store-location field.
 
 Wire format: compact JSON with short keys, schema `v=1`:
 
-```json
-{"i":"A1B2…","n":"Snake Plant","v":1}
+```
+gardens://plant/<instance-uuid>?n=Snake%20Plant
 ```
 
-| Key | Meaning |
+| Part | Meaning |
 | --- | --- |
-| `v` | Schema version |
-| `i` | Instance UUID → full record in the data store |
-| `n` | Name (offline) |
+| `gardens://` | Magic scheme — identifies a Gardens label; Camera can open the app |
+| `plant/<uuid>` | Instance ID → full record in the data store |
+| `n=` | Optional offline display name |
 
-Payload is capped under 900 UTF-8 bytes. Care instructions, watering/health checks, and care history are **not** in the QR; they load via `PlantRepository.destination(for:)`.
+Legacy JSON payloads still decode. Care/history are **not** in the QR; they load via `PlantRepository.destination(for:)`.

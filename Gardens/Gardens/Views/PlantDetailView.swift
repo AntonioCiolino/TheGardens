@@ -4,6 +4,7 @@ import GardensCore
 
 struct PlantDetailView: View {
     let instanceID: UUID
+    var autoOpenCareLog: Bool = false
 
     @Environment(\.modelContext) private var modelContext
     @State private var destination: PlantInstanceDestination?
@@ -34,6 +35,11 @@ struct PlantDetailView: View {
                         Label("Log care", systemImage: "heart.text.clipboard")
                     }
                 }
+            }
+        }
+        .task(id: destination?.id) {
+            if autoOpenCareLog, destination != nil {
+                showingCareLog = true
             }
         }
         .sheet(isPresented: $showingCareLog) {

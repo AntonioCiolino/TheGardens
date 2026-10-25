@@ -3,6 +3,9 @@ import SwiftData
 import GardensCore
 
 struct PlantListView: View {
+    @Binding var deepLinkPlantID: UUID?
+    @Binding var openCareFromDeepLink: Bool
+
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \PlantInstanceEntity.arrivedOn, order: .reverse)
     private var instances: [PlantInstanceEntity]
@@ -10,9 +13,10 @@ struct PlantListView: View {
     @State private var showingAdd = false
     @State private var showingScan = false
     @State private var batchToPrint: PlantArrivalBatch?
+    @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ZStack {
                 BrandWatermark(opacity: 0.16)
 
@@ -38,7 +42,15 @@ struct PlantListView: View {
             }
             .navigationTitle("Gardens")
             .navigationDestination(for: UUID.self) { id in
-                PlantDetailView(instanceID: id)
+                PlantDetailView(
+                    instanceID: id,
+                    autoOpenCareLog: openCareFromDeepLink && deepLinkPlantID == id
+                )
+                .onAppear {
+                    if openCareFromDeepLink, deepLinkPlantID == id {
+                        openCareFromDeepLink = false
+                    }
+                }
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -70,6 +82,10 @@ struct PlantListView: View {
             }
             .sheet(item: $batchToPrint) { batch in
                 BatchLabelPrintView(batch: batch)
+            }
+            .onChange(of: deepLinkPlantID) { _, newID in
+                guard let newID else { return }
+                path.append(newID)
             }
         }
     }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import "./App.css";
 
@@ -111,11 +111,8 @@ const SAMPLE: Plant[] = [
 type Screen = "list" | "add" | "detail" | "batch" | "scan" | "care";
 
 function compactQR(plant: Plant) {
-  return JSON.stringify({
-    i: plant.id,
-    n: plant.name.slice(0, 80),
-    v: 1,
-  });
+  const name = encodeURIComponent(plant.name.slice(0, 80));
+  return `gardens://plant/${plant.id}?n=${name}`;
 }
 
 function formatDate(iso: string) {

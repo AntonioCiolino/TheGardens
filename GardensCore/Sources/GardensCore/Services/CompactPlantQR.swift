@@ -1,79 +1,123 @@
 import Foundation
 
-/// Two-layer QR content for one plant instance.
+/// Plant label QR payload.
 ///
-/// 1. **ID** (`i`) — looks up the full rich record (care, watering, health, history).
-/// 2. **Core fields** — tiny offline snapshot (name) so a scanner can show
-///    basics without a database round-trip.
-///
-/// Wire format (UTF-8 JSON, short keys, sorted): typically well under 200 bytes,
-/// hard-capped below 1 KB for QR Version ≤ ~10 capacity.
+/// Wire format is a **Gardens deep link** so:
+/// 1. The magic scheme `gardens://` identifies the code as ours.
+/// 2. The iPhone Camera app can offer **Open in Gardens** when scanned.
 ///
 /// Example:
 /// ```
-/// {"i":"A1B2C3D4-...","n":"Snake Plant","v":1}
+/// gardens://plant/A1B2C3D4-E5F6-7890-ABCD-EF1234567890?n=Snake%20Plant
 /// ```
-public struct CompactPlantQR: Hashable, Codable, Sendable {
-    public static let schemaVersion = 1
+///
+/// Still accepts legacy compact JSON and bare UUIDs when decoding.
+public struct CompactPlantQR: Hashable, Sendable {
+    public static let urlScheme = "gardens"
+    public static let plantHost = "plant"
     public static let maxEncodedUTF8Bytes = 900
 
-    /// Schema version.
-    public var v: Int
-    /// Plant instance UUID (authoritative link into the data store).
-    public var i: UUID
-    /// Plant display name (from catalog).
-    public var n: String
+    /// Magic prefix / scheme that marks a Gardens plant label.
+    public static let magicHeader = "gardens"
 
-    public var instanceID: UUID { i }
-    public var name: String { n }
+    public var instanceID: UUID
+    public var name: String
 
-    public init(instanceID: UUID, name: String) {
-        self.v = Self.schemaVersion
-        self.i = instanceID
-        self.n = Self.clip(name, maxChars: 80)
+    public init(instanceID: UUID, name: String = "") {
+        self.instanceID = instanceID
+        self.name = Self.clip(name, maxChars: 80)
     }
 
     public init(detail: PlantInstanceDetail) {
-        self.init(
-            instanceID: detail.instance.id,
-            name: detail.catalog.name
-        )
+        self.init(instanceID: detail.instance.id, name: detail.catalog.name)
+    }
+
+    /// Deep link written into the QR symbol.
+    public var deepLinkURL: URL {
+        var components = URLComponents()
+        components.scheme = Self.urlScheme
+        components.host = Self.plantHost
+        components.path = "/\(instanceID.uuidString)"
+        if !name.isEmpty {
+            components.queryItems = [URLQueryItem(name: "n", value: name)]
+        }
+        return components.url ?? URL(string: "\(Self.urlScheme)://\(Self.plantHost)/\(instanceID.uuidString)")!
     }
 
     // MARK: - Encode / decode
 
     public func encodedString() throws -> String {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.sortedKeys]
-        let data = try encoder.encode(self)
-        guard data.count <= Self.maxEncodedUTF8Bytes else {
-            throw CompactPlantQRError.payloadTooLarge(data.count)
-        }
-        guard let string = String(data: data, encoding: .utf8) else {
-            throw CompactPlantQRError.encodingFailed
+        let string = deepLinkURL.absoluteString
+        guard string.utf8.count <= Self.maxEncodedUTF8Bytes else {
+            throw CompactPlantQRError.payloadTooLarge(string.utf8.count)
         }
         return string
     }
 
     public static func decode(_ scanned: String) throws -> CompactPlantQR {
         let trimmed = scanned.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let data = trimmed.data(using: .utf8) else {
-            throw CompactPlantQRError.invalidPayload
+        if let fromURL = decodeDeepLink(trimmed) {
+            return fromURL
         }
-        let decoded = try JSONDecoder().decode(CompactPlantQR.self, from: data)
-        guard decoded.v == schemaVersion else {
-            throw CompactPlantQRError.unsupportedVersion(decoded.v)
+        if let fromLegacy = decodeLegacyJSON(trimmed) {
+            return fromLegacy
         }
-        return decoded
+        if let id = UUID(uuidString: trimmed) {
+            return CompactPlantQR(instanceID: id)
+        }
+        throw CompactPlantQRError.invalidPayload
     }
 
-    /// Prefer the embedded ID; also accept a bare UUID for older/manual codes.
+    /// Extract instance ID from a scanned QR (deep link, legacy JSON, or bare UUID).
     public static func instanceID(fromScanned string: String) -> UUID? {
-        if let compact = try? decode(string) {
-            return compact.instanceID
-        }
+        try? decode(string).instanceID
+    }
+
+    /// True when the payload is clearly a Gardens label (scheme / magic header).
+    public static func isGardensPayload(_ string: String) -> Bool {
         let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
-        return UUID(uuidString: trimmed)
+        if let url = URL(string: trimmed), url.scheme?.lowercased() == urlScheme {
+            return true
+        }
+        if trimmed.lowercased().hasPrefix("\(magicHeader):") { return true }
+        // Legacy JSON always included instance id — treat as gardens if decodable.
+        return (try? decode(trimmed)) != nil
+    }
+
+    private static func decodeDeepLink(_ string: String) -> CompactPlantQR? {
+        guard let url = URL(string: string),
+              url.scheme?.lowercased() == urlScheme,
+              (url.host?.lowercased() == plantHost || url.host == nil)
+        else { return nil }
+
+        // gardens://plant/<uuid>  or  gardens:///plant/<uuid>
+        let pathParts = url.pathComponents.filter { $0 != "/" }
+        let idString: String?
+        if url.host?.lowercased() == plantHost {
+            idString = pathParts.first
+        } else if pathParts.count >= 2, pathParts[0].lowercased() == plantHost {
+            idString = pathParts[1]
+        } else {
+            idString = pathParts.last
+        }
+
+        guard let idString, let id = UUID(uuidString: idString) else { return nil }
+        let name = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?
+            .first(where: { $0.name == "n" })?
+            .value ?? ""
+        return CompactPlantQR(instanceID: id, name: name)
+    }
+
+    private static func decodeLegacyJSON(_ string: String) -> CompactPlantQR? {
+        guard let data = string.data(using: .utf8) else { return nil }
+        struct Legacy: Decodable {
+            var v: Int?
+            var i: UUID
+            var n: String?
+        }
+        guard let legacy = try? JSONDecoder().decode(Legacy.self, from: data) else { return nil }
+        return CompactPlantQR(instanceID: legacy.i, name: legacy.n ?? "")
     }
 
     private static func clip(_ value: String, maxChars: Int) -> String {
