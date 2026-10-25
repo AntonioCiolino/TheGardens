@@ -17,10 +17,6 @@ enum SplashBrandStyle: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// Optional asset catalog image for the large-logo style.
-    /// Drop a logo into Assets as `SplashLogo` (or change this name) to use it.
-    static let largeLogoAssetName = "SplashLogo"
-
     static func random() -> SplashBrandStyle {
         allCases.randomElement() ?? .leafMark
     }
@@ -93,43 +89,12 @@ struct SplashView: View {
                 .background(Circle().fill(Color.white.opacity(0.1)))
 
         case .largeLogo:
-            largeLogoContent
-        }
-    }
-
-    @ViewBuilder
-    private var largeLogoContent: some View {
-        // Prefer a real asset when present; otherwise a bold placeholder mark.
-        if UIImage(named: SplashBrandStyle.largeLogoAssetName) != nil {
-            Image(SplashBrandStyle.largeLogoAssetName)
+            Image("BrandMark")
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: 240, maxHeight: 160)
+                .frame(maxWidth: 220, maxHeight: 300)
+                .shadow(color: .black.opacity(0.35), radius: 18, y: 8)
                 .accessibilityHidden(true)
-        } else {
-            VStack(spacing: 10) {
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.78, green: 0.92, blue: 0.74),
-                                Color(red: 0.35, green: 0.62, blue: 0.40),
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 200, height: 120)
-                    .overlay {
-                        Text("GARDENS")
-                            .font(.system(size: 28, weight: .heavy, design: .rounded))
-                            .tracking(3)
-                            .foregroundStyle(Color(red: 0.11, green: 0.18, blue: 0.13))
-                    }
-                Text("Add SplashLogo to Assets to replace this")
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.45))
-            }
         }
     }
 

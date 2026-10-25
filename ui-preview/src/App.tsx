@@ -322,11 +322,14 @@ function SplashScreen({ style }: { style: SplashStyle }) {
         </div>
       )}
       {style === "largeLogo" && (
-        <div className="splash-logo-card" aria-hidden>
-          <span>GARDENS</span>
-        </div>
+        <img
+          className="splash-logo-img"
+          src="/brand-mark.png"
+          alt="The Gardens"
+        />
       )}
-      {style !== "largeLogo" && <h2 className="splash-title">Gardens</h2>}
+      {style === "wordmark" && <h2 className="splash-title">Gardens</h2>}
+      {style === "leafMark" && <h2 className="splash-title">Gardens</h2>}
       <p className="splash-sub">Plant intake</p>
       <p className="splash-variant">Splash: {style}</p>
     </div>

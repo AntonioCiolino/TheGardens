@@ -14,7 +14,7 @@ struct PlantListView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                BrandWatermark(opacity: 0.08)
+                BrandWatermark(opacity: 0.16)
 
                 Group {
                     if instances.isEmpty {
