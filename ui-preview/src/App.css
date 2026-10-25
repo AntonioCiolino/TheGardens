@@ -630,10 +630,20 @@ dd {
 }
 
 .splash-logo-img {
-  width: min(220px, 70%);
+  width: min(240px, 72%);
   height: auto;
-  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.4));
   animation: leaf-pulse 2.2s ease-in-out infinite;
+  z-index: 1;
+}
+
+.splash-logo-lifted {
+  width: min(260px, 76%);
+  transform: translateY(-18px);
+}
+
+.splash-logo-softGlow {
+  width: min(250px, 74%);
 }
 
 .splash-controls {

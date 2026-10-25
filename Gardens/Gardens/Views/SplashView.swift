@@ -1,28 +1,27 @@
 import SwiftUI
 
-/// Splash brand treatments. Add asset names here when real logos land in Assets.
+/// Splash layout variants — the official BrandMark logo is always shown.
 enum SplashBrandStyle: String, CaseIterable, Identifiable, Sendable {
-    case leafMark
-    case wordmark
-    case largeLogo
+    case centered
+    case lifted
+    case softGlow
 
     var id: String { rawValue }
 
-    /// Display name for settings / future picker.
     var title: String {
         switch self {
-        case .leafMark: return "Leaf mark"
-        case .wordmark: return "Wordmark"
-        case .largeLogo: return "Large logo"
+        case .centered: return "Centered logo"
+        case .lifted: return "Lifted logo"
+        case .softGlow: return "Soft glow"
         }
     }
 
     static func random() -> SplashBrandStyle {
-        allCases.randomElement() ?? .leafMark
+        allCases.randomElement() ?? .centered
     }
 }
 
-/// Brief brand splash shown on launch. Style can be fixed or randomized.
+/// Launch splash featuring the official The Gardens G badge.
 struct SplashView: View {
     var style: SplashBrandStyle = .random()
 
@@ -30,71 +29,39 @@ struct SplashView: View {
         ZStack {
             background
 
-            Circle()
-                .fill(Color.white.opacity(0.06))
-                .frame(width: 320, height: 320)
-                .blur(radius: 40)
-                .offset(x: 80, y: -160)
+            if style == .softGlow {
+                Circle()
+                    .fill(Color.white.opacity(0.1))
+                    .frame(width: 340, height: 340)
+                    .blur(radius: 50)
+                    .offset(y: -20)
+            }
 
-            VStack(spacing: 18) {
-                logo
-                if style != .largeLogo {
-                    Text("Gardens")
-                        .font(.system(size: 44, weight: .bold, design: .serif))
-                        .foregroundStyle(.white)
-                }
+            VStack(spacing: 22) {
+                Image("BrandMark")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: logoWidth, maxHeight: 340)
+                    .shadow(color: .black.opacity(0.4), radius: 20, y: 10)
+                    .offset(y: style == .lifted ? -24 : 0)
+                    .accessibilityHidden(true)
+
                 Text("Plant intake")
                     .font(.subheadline.weight(.medium))
-                    .tracking(1.2)
+                    .tracking(1.4)
                     .textCase(.uppercase)
-                    .foregroundStyle(.white.opacity(0.65))
+                    .foregroundStyle(.white.opacity(0.7))
             }
-            .padding(.horizontal, 28)
+            .padding(.horizontal, 32)
         }
-        .accessibilityLabel("Gardens")
+        .accessibilityLabel("The Gardens")
     }
 
-    @ViewBuilder
-    private var logo: some View {
+    private var logoWidth: CGFloat {
         switch style {
-        case .leafMark:
-            Image(systemName: "leaf.fill")
-                .font(.system(size: 56, weight: .medium))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.72, green: 0.88, blue: 0.70),
-                            Color(red: 0.45, green: 0.72, blue: 0.48),
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .symbolEffect(.pulse, options: .repeating.speed(0.4))
-
-        case .wordmark:
-            Text("G")
-                .font(.system(size: 72, weight: .bold, design: .serif))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.85, green: 0.94, blue: 0.82),
-                            Color(red: 0.55, green: 0.78, blue: 0.55),
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: 96, height: 96)
-                .background(Circle().fill(Color.white.opacity(0.1)))
-
-        case .largeLogo:
-            Image("BrandMark")
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: 220, maxHeight: 300)
-                .shadow(color: .black.opacity(0.35), radius: 18, y: 8)
-                .accessibilityHidden(true)
+        case .centered: return 240
+        case .lifted: return 260
+        case .softGlow: return 250
         }
     }
 

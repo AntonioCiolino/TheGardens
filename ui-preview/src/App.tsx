@@ -75,7 +75,7 @@ const SAMPLE: Plant[] = [
     vendor: "Green Harbor Nursery",
     arrivedOn: "2026-10-22",
     photo:
-      "https://images.unsplash.com/photo-1593691509543-c55fb32e5cee?w=800&q=80&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=800&q=80&auto=format&fit=crop",
     care: CATALOG[0].care,
     history: [
       { kind: "Watered", when: "Oct 23, 2026", notes: "Light soak" },
@@ -281,9 +281,9 @@ export default function App() {
   );
 }
 
-type SplashStyle = "leafMark" | "wordmark" | "largeLogo";
+type SplashStyle = "centered" | "lifted" | "softGlow";
 
-const SPLASH_STYLES: SplashStyle[] = ["leafMark", "wordmark", "largeLogo"];
+const SPLASH_STYLES: SplashStyle[] = ["centered", "lifted", "softGlow"];
 
 function randomSplashStyle(): SplashStyle {
   return SPLASH_STYLES[Math.floor(Math.random() * SPLASH_STYLES.length)];
@@ -291,47 +291,15 @@ function randomSplashStyle(): SplashStyle {
 
 function SplashScreen({ style }: { style: SplashStyle }) {
   return (
-    <div className={`splash splash-${style}`} role="img" aria-label="Gardens splash">
+    <div className={`splash splash-${style}`} role="img" aria-label="The Gardens splash">
       <div className="splash-orb" aria-hidden />
-      {style === "leafMark" && (
-        <div className="splash-mark" aria-hidden>
-          <svg viewBox="0 0 64 64" width="56" height="56" fill="none">
-            <path
-              d="M32 8c-2 14-14 22-20 26 10 2 18 10 20 22 2-12 10-20 20-22-6-4-18-12-20-26Z"
-              fill="url(#leaf)"
-            />
-            <defs>
-              <linearGradient
-                id="leaf"
-                x1="12"
-                y1="8"
-                x2="48"
-                y2="56"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop stopColor="#b8e0b2" />
-                <stop offset="1" stopColor="#4fa35a" />
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-      )}
-      {style === "wordmark" && (
-        <div className="splash-initial" aria-hidden>
-          G
-        </div>
-      )}
-      {style === "largeLogo" && (
-        <img
-          className="splash-logo-img"
-          src="/brand-mark.png"
-          alt="The Gardens"
-        />
-      )}
-      {style === "wordmark" && <h2 className="splash-title">Gardens</h2>}
-      {style === "leafMark" && <h2 className="splash-title">Gardens</h2>}
+      <img
+        className={`splash-logo-img splash-logo-${style}`}
+        src="/brand-mark.png"
+        alt="The Gardens"
+      />
       <p className="splash-sub">Plant intake</p>
-      <p className="splash-variant">Splash: {style}</p>
+      <p className="splash-variant">Official logo · {style}</p>
     </div>
   );
 }
