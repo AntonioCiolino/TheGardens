@@ -11,6 +11,7 @@
 		9C37951D9A204234B79849D1 /* PlantListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D09732F4683647F991629D3C /* PlantListView.swift */; };
 		DE84C174F62C42D1947A6C4B /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2AC03ED2C4141C2B07FF9AB /* SplashView.swift */; };
 		B21EF9EA577049A7A9462F65 /* AddPlantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 497F8E156F1E487D96C3B314 /* AddPlantView.swift */; };
+		B8B96F2514F14EBDB7FDF99D /* BatchLabelPrintView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E5172D9BBB4DB4AA9D58BA /* BatchLabelPrintView.swift */; };
 		A6421800E0FF4732898C1D8C /* PlantDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69375AC8E2CC46DCBEF3B660 /* PlantDetailView.swift */; };
 		970DA46BDDFE4D9CBB09082D /* PlantPhotoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B763501CD146B6858D5E7D /* PlantPhotoPicker.swift */; };
 		7F141139316F4752A87CC2D6 /* QRCodeImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7063F8BCEB604AC288FC74C8 /* QRCodeImageView.swift */; };
@@ -27,6 +28,7 @@
 		D09732F4683647F991629D3C /* PlantListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantListView.swift; sourceTree = "<group>"; };
 		E2AC03ED2C4141C2B07FF9AB /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		497F8E156F1E487D96C3B314 /* AddPlantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPlantView.swift; sourceTree = "<group>"; };
+		F5E5172D9BBB4DB4AA9D58BA /* BatchLabelPrintView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchLabelPrintView.swift; sourceTree = "<group>"; };
 		69375AC8E2CC46DCBEF3B660 /* PlantDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantDetailView.swift; sourceTree = "<group>"; };
 		F7B763501CD146B6858D5E7D /* PlantPhotoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantPhotoPicker.swift; sourceTree = "<group>"; };
 		7063F8BCEB604AC288FC74C8 /* QRCodeImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeImageView.swift; sourceTree = "<group>"; };
@@ -111,6 +113,7 @@
 				D09732F4683647F991629D3C /* PlantListView.swift */,
 				E2AC03ED2C4141C2B07FF9AB /* SplashView.swift */,
 				497F8E156F1E487D96C3B314 /* AddPlantView.swift */,
+				F5E5172D9BBB4DB4AA9D58BA /* BatchLabelPrintView.swift */,
 				69375AC8E2CC46DCBEF3B660 /* PlantDetailView.swift */,
 				A15B324A6C5643BD9306039A /* Components */,
 			);
@@ -209,6 +212,7 @@
 				9C37951D9A204234B79849D1 /* PlantListView.swift in Sources */,
 				DE84C174F62C42D1947A6C4B /* SplashView.swift in Sources */,
 				B21EF9EA577049A7A9462F65 /* AddPlantView.swift in Sources */,
+				B8B96F2514F14EBDB7FDF99D /* BatchLabelPrintView.swift in Sources */,
 				A6421800E0FF4732898C1D8C /* PlantDetailView.swift in Sources */,
 				970DA46BDDFE4D9CBB09082D /* PlantPhotoPicker.swift in Sources */,
 				7F141139316F4752A87CC2D6 /* QRCodeImageView.swift in Sources */,

@@ -8,8 +8,16 @@ type CareProfile = {
   healthCheckGuidance: string;
 };
 
+type CatalogType = {
+  id: string;
+  name: string;
+  genus: string;
+  care: CareProfile;
+};
+
 type Plant = {
   id: string;
+  catalogId: string;
   name: string;
   genus: string;
   vendor: string;
@@ -19,20 +27,50 @@ type Plant = {
   history: { kind: string; when: string; notes: string }[];
 };
 
+const CATALOG: CatalogType[] = [
+  {
+    id: "cat-snake",
+    name: "Snake Plant",
+    genus: "Dracaena",
+    care: {
+      careInstructions: "Bright indirect light. Allow soil to dry between waterings.",
+      wateringCheckGuidance: "Probe 2 inches down — water only if dry.",
+      healthCheckGuidance: "Yellow tips usually mean overwatering; soft leaves mean cold draft.",
+    },
+  },
+  {
+    id: "cat-fig",
+    name: "Fiddle Leaf Fig",
+    genus: "Ficus",
+    care: {
+      careInstructions: "Consistent bright light; wipe leaves monthly.",
+      wateringCheckGuidance: "Lift the pot — water when it feels light.",
+      healthCheckGuidance: "Brown spots can be inconsistent watering or low humidity.",
+    },
+  },
+  {
+    id: "cat-monstera",
+    name: "Monstera Deliciosa",
+    genus: "Monstera",
+    care: {
+      careInstructions: "Moss pole optional. Keep soil lightly moist in growing season.",
+      wateringCheckGuidance: "Check top inch of soil every few days.",
+      healthCheckGuidance: "Yellow oldest leaves are normal; check for pests under leaves.",
+    },
+  },
+];
+
 const SAMPLE: Plant[] = [
   {
     id: "7F3A9C21-4B8E-4D12-9A01-E2C45B678901",
+    catalogId: "cat-snake",
     name: "Snake Plant",
     genus: "Dracaena",
     vendor: "Green Harbor Nursery",
     arrivedOn: "2026-10-22",
     photo:
       "https://images.unsplash.com/photo-1593691509543-c55fb32e5cee?w=800&q=80&auto=format&fit=crop",
-    care: {
-      careInstructions: "Bright indirect light. Allow soil to dry between waterings.",
-      wateringCheckGuidance: "Probe 2 inches down — water only if dry.",
-      healthCheckGuidance: "Yellow tips usually mean overwatering; soft leaves mean cold draft.",
-    },
+    care: CATALOG[0].care,
     history: [
       { kind: "Watered", when: "Oct 23, 2026", notes: "Light soak" },
       { kind: "Health check", when: "Oct 22, 2026", notes: "Arrived healthy" },
@@ -40,37 +78,31 @@ const SAMPLE: Plant[] = [
   },
   {
     id: "A91C2D34-55E6-4F78-B901-C234567890AB",
+    catalogId: "cat-fig",
     name: "Fiddle Leaf Fig",
     genus: "Ficus",
     vendor: "Westside Growers",
     arrivedOn: "2026-10-20",
     photo:
       "https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=800&q=80&auto=format&fit=crop",
-    care: {
-      careInstructions: "Consistent bright light; wipe leaves monthly.",
-      wateringCheckGuidance: "Lift the pot — water when it feels light.",
-      healthCheckGuidance: "Brown spots can be inconsistent watering or low humidity.",
-    },
+    care: CATALOG[1].care,
     history: [],
   },
   {
     id: "B02D3E45-66F7-4089-C012-D345678901BC",
+    catalogId: "cat-monstera",
     name: "Monstera Deliciosa",
     genus: "Monstera",
     vendor: "Green Harbor Nursery",
     arrivedOn: "2026-10-18",
     photo:
       "https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=800&q=80&auto=format&fit=crop",
-    care: {
-      careInstructions: "Moss pole optional. Keep soil lightly moist in growing season.",
-      wateringCheckGuidance: "Check top inch of soil every few days.",
-      healthCheckGuidance: "Yellow oldest leaves are normal; check for pests under leaves.",
-    },
+    care: CATALOG[2].care,
     history: [{ kind: "Repotted", when: "Oct 19, 2026", notes: "Into 8-inch nursery pot" }],
   },
 ];
 
-type Screen = "list" | "add" | "detail";
+type Screen = "list" | "add" | "detail" | "batch";
 
 function compactQR(plant: Plant) {
   return JSON.stringify({
@@ -88,10 +120,16 @@ function formatDate(iso: string) {
   });
 }
 
+function newId() {
+  return crypto.randomUUID().toUpperCase();
+}
+
 export default function App() {
+  const [catalog, setCatalog] = useState<CatalogType[]>(CATALOG);
   const [plants, setPlants] = useState<Plant[]>(SAMPLE);
   const [screen, setScreen] = useState<Screen>("list");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [batch, setBatch] = useState<Plant[]>([]);
   const [printNote, setPrintNote] = useState<string | null>(null);
   const [showSplash, setShowSplash] = useState(true);
 
@@ -111,8 +149,8 @@ export default function App() {
         <p className="eyebrow">UI preview · not the Simulator</p>
         <h1>Gardens</h1>
         <p>
-          Interactive mock of the SwiftUI intake flow. Open{" "}
-          <code>Gardens/Gardens.xcodeproj</code> on a Mac for the real app.
+          Try <strong>New type</strong> with quantity 7, or <strong>Existing type</strong> to add
+          more of a plant you already carry — each gets its own QR.
         </p>
         {showSplash && (
           <button type="button" className="skip-splash" onClick={() => setShowSplash(false)}>
@@ -143,12 +181,28 @@ export default function App() {
 
         {!showSplash && screen === "add" && (
           <AddScreen
-            existing={plants}
+            catalog={catalog}
             onCancel={() => setScreen("list")}
-            onSave={(plant) => {
-              setPlants((prev) => [plant, ...prev]);
-              setSelectedId(plant.id);
-              setScreen("detail");
+            onSave={({ catalogType, created, isNewCatalog }) => {
+              if (isNewCatalog) {
+                setCatalog((prev) => [...prev, catalogType]);
+              }
+              setPlants((prev) => [...created, ...prev]);
+              setBatch(created);
+              setScreen("batch");
+            }}
+          />
+        )}
+
+        {!showSplash && screen === "batch" && (
+          <BatchPrintScreen
+            plants={batch}
+            onDone={() => setScreen("list")}
+            onPrintAll={() => {
+              setPrintNote(
+                `Print sheet opened for ${batch.length} unique label${batch.length === 1 ? "" : "s"}.`
+              );
+              window.setTimeout(() => setPrintNote(null), 2800);
             }}
           />
         )}
@@ -215,7 +269,7 @@ function ListScreen({
         <div className="empty">
           <div className="empty-glyph">🌿</div>
           <h3>No plants yet</h3>
-          <p>Add an arrival to start your inventory.</p>
+          <p>Log an arrival — one plant or a whole carton.</p>
         </div>
       ) : (
         <ul className="plant-list">
@@ -241,29 +295,48 @@ function ListScreen({
 }
 
 function AddScreen({
-  existing,
+  catalog,
   onCancel,
   onSave,
 }: {
-  existing: Plant[];
+  catalog: CatalogType[];
   onCancel: () => void;
-  onSave: (plant: Plant) => void;
+  onSave: (result: {
+    catalogType: CatalogType;
+    created: Plant[];
+    isNewCatalog: boolean;
+  }) => void;
 }) {
+  const [mode, setMode] = useState<"new" | "existing">("new");
   const [name, setName] = useState("");
   const [genus, setGenus] = useState("");
   const [vendor, setVendor] = useState("");
   const [arrivedOn, setArrivedOn] = useState("2026-10-24");
+  const [quantity, setQuantity] = useState(1);
+  const [catalogId, setCatalogId] = useState(catalog[0]?.id ?? "");
   const [care, setCare] = useState("");
   const [watering, setWatering] = useState("");
   const [health, setHealth] = useState("");
 
-  const match = existing.find(
-    (p) =>
-      p.name.trim().toLowerCase() === name.trim().toLowerCase() &&
-      p.genus.trim().toLowerCase() === genus.trim().toLowerCase()
-  );
+  const selected = catalog.find((c) => c.id === catalogId);
 
-  const valid = name.trim() && genus.trim() && vendor.trim();
+  const valid =
+    quantity >= 1 &&
+    vendor.trim() &&
+    (mode === "existing"
+      ? Boolean(selected)
+      : Boolean(name.trim() && genus.trim()));
+
+  const hint =
+    mode === "new" && name.trim() && genus.trim()
+      ? catalog.find(
+          (c) =>
+            c.name.toLowerCase() === name.trim().toLowerCase() &&
+            c.genus.toLowerCase() === genus.trim().toLowerCase()
+        )
+        ? "Name/genus already in catalog — will reuse it and add new unique instances."
+        : `Will create a new catalog type and ${quantity} unique instance${quantity === 1 ? "" : "s"}.`
+      : null;
 
   return (
     <div className="screen">
@@ -271,34 +344,84 @@ function AddScreen({
         <button className="text-btn" onClick={onCancel}>
           Cancel
         </button>
-        <h2>New plant</h2>
+        <h2>{mode === "new" ? "New arrival" : "Add more"}</h2>
         <button
           className="text-btn accent"
           disabled={!valid}
           onClick={() => {
             if (!valid) return;
-            onSave({
-              id: crypto.randomUUID().toUpperCase(),
-              name: name.trim(),
-              genus: genus.trim(),
+            let catalogType: CatalogType;
+            let isNewCatalog = false;
+
+            if (mode === "existing" && selected) {
+              catalogType = selected;
+            } else {
+              const match = catalog.find(
+                (c) =>
+                  c.name.toLowerCase() === name.trim().toLowerCase() &&
+                  c.genus.toLowerCase() === genus.trim().toLowerCase()
+              );
+              if (match) {
+                catalogType = match;
+              } else {
+                catalogType = {
+                  id: `cat-${newId().slice(0, 8)}`,
+                  name: name.trim(),
+                  genus: genus.trim(),
+                  care: {
+                    careInstructions: care,
+                    wateringCheckGuidance: watering,
+                    healthCheckGuidance: health,
+                  },
+                };
+                isNewCatalog = true;
+              }
+            }
+
+            const created: Plant[] = Array.from({ length: quantity }, () => ({
+              id: newId(),
+              catalogId: catalogType.id,
+              name: catalogType.name,
+              genus: catalogType.genus,
               vendor: vendor.trim(),
               arrivedOn,
               photo:
                 "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=800&q=80&auto=format&fit=crop",
-              care: {
-                careInstructions: care,
-                wateringCheckGuidance: watering,
-                healthCheckGuidance: health,
-              },
+              care: catalogType.care,
               history: [],
-            });
+            }));
+
+            onSave({ catalogType, created, isNewCatalog });
           }}
         >
-          Save
+          {quantity > 1 ? `Save ${quantity}` : "Save"}
         </button>
       </div>
 
       <div className="form">
+        <div className="mode-toggle" role="tablist">
+          <button
+            type="button"
+            className={mode === "new" ? "active" : ""}
+            onClick={() => setMode("new")}
+          >
+            New type
+          </button>
+          <button
+            type="button"
+            className={mode === "existing" ? "active" : ""}
+            onClick={() => setMode("existing")}
+            disabled={catalog.length === 0}
+          >
+            Existing type
+          </button>
+        </div>
+        <p className="hint">
+          {mode === "new"
+            ? "First time this plant arrives — set the type once, then how many came in."
+            : "Already on the floor — pick the type and add another shipment. Each plant still gets its own QR."}
+        </p>
+
         <div className="photo-slot">
           <span>Plant photo</span>
           <div className="photo-actions">
@@ -307,19 +430,53 @@ function AddScreen({
           </div>
         </div>
 
+        {mode === "new" ? (
+          <>
+            <label>
+              Name
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Snake Plant" />
+            </label>
+            <label>
+              Genus
+              <input value={genus} onChange={(e) => setGenus(e.target.value)} placeholder="Dracaena" />
+            </label>
+            {hint && <p className="hint">{hint}</p>}
+          </>
+        ) : (
+          <label>
+            Catalog plant
+            <select value={catalogId} onChange={(e) => setCatalogId(e.target.value)}>
+              {catalog.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} · {c.genus}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
         <label>
-          Name
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Snake Plant" />
+          Quantity
+          <div className="qty-row">
+            <button type="button" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
+              −
+            </button>
+            <input
+              type="number"
+              min={1}
+              max={500}
+              value={quantity}
+              onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+            />
+            <button type="button" onClick={() => setQuantity((q) => Math.min(500, q + 1))}>
+              +
+            </button>
+          </div>
         </label>
-        <label>
-          Genus
-          <input value={genus} onChange={(e) => setGenus(e.target.value)} placeholder="Dracaena" />
-        </label>
-        {match ? (
-          <p className="hint">Will reuse catalog entry “{match.name}” ({match.genus}).</p>
-        ) : valid ? (
-          <p className="hint">Will create a new catalog entry.</p>
-        ) : null}
+        <p className="hint">
+          Creates {quantity} unique plant record{quantity === 1 ? "" : "s"} and QR label
+          {quantity === 1 ? "" : "s"}.
+        </p>
 
         <label>
           Date arrived
@@ -330,19 +487,75 @@ function AddScreen({
           <input value={vendor} onChange={(e) => setVendor(e.target.value)} placeholder="Nursery name" />
         </label>
 
-        <p className="section-label">Care defaults (for new catalog types)</p>
-        <label>
-          Care instructions
-          <textarea value={care} onChange={(e) => setCare(e.target.value)} rows={2} />
-        </label>
-        <label>
-          How to check watering
-          <textarea value={watering} onChange={(e) => setWatering(e.target.value)} rows={2} />
-        </label>
-        <label>
-          How to check health
-          <textarea value={health} onChange={(e) => setHealth(e.target.value)} rows={2} />
-        </label>
+        {mode === "new" && (
+          <>
+            <p className="section-label">Care defaults (for new catalog types)</p>
+            <label>
+              Care instructions
+              <textarea value={care} onChange={(e) => setCare(e.target.value)} rows={2} />
+            </label>
+            <label>
+              How to check watering
+              <textarea value={watering} onChange={(e) => setWatering(e.target.value)} rows={2} />
+            </label>
+            <label>
+              How to check health
+              <textarea value={health} onChange={(e) => setHealth(e.target.value)} rows={2} />
+            </label>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BatchPrintScreen({
+  plants,
+  onDone,
+  onPrintAll,
+}: {
+  plants: Plant[];
+  onDone: () => void;
+  onPrintAll: () => void;
+}) {
+  const name = plants[0]?.name ?? "Plants";
+  const genus = plants[0]?.genus ?? "";
+
+  return (
+    <div className="screen">
+      <div className="nav nav-stack">
+        <span className="spacer" />
+        <h2>Print labels</h2>
+        <button className="text-btn accent" onClick={onDone}>
+          Done
+        </button>
+      </div>
+      <div className="detail">
+        <h3>{name}</h3>
+        <p className="genus">{genus}</p>
+        <p className="meta">
+          {plants.length} unique plant{plants.length === 1 ? "" : "s"} — each QR is a different
+          instance ID.
+        </p>
+        <button className="print-btn" onClick={onPrintAll}>
+          Print {plants.length} label{plants.length === 1 ? "" : "s"}
+        </button>
+
+        {plants.map((p, index) => {
+          const payload = compactQR(p);
+          return (
+            <section className="qr-card" key={p.id}>
+              <h4>
+                {name} · #{index + 1} of {plants.length}
+              </h4>
+              <code className="payload">{p.id}</code>
+              <div className="qr-wrap">
+                <QRCodeSVG value={payload} size={160} level="M" includeMargin={false} />
+              </div>
+              <code className="payload">{payload}</code>
+            </section>
+          );
+        })}
       </div>
     </div>
   );
@@ -410,8 +623,8 @@ function DetailScreen({
         <section className="qr-card">
           <h4>Label QR</h4>
           <p>
-            Encodes this instance’s ID plus a compact name. Full care history loads from the
-            store by ID.
+            Encodes this instance’s ID plus a compact name. Full care history loads from the store
+            by ID.
           </p>
           <div className="qr-wrap">
             <QRCodeSVG value={payload} size={180} level="M" includeMargin={false} />

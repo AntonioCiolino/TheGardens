@@ -42,20 +42,30 @@ final class SwiftDataPlantRepository: PlantRepository {
         )
     }
 
-    func saveIntake(_ draft: PlantIntakeDraft) async throws -> PlantInstanceDetail {
-        let catalog = try resolveOrCreateCatalog(for: draft)
-        let instance = PlantInstanceEntity(
-            catalog: catalog,
-            arrivedOn: Calendar.current.startOfDay(for: draft.arrivedOn),
-            vendor: draft.vendor.trimmingCharacters(in: .whitespacesAndNewlines),
-            photoData: draft.photoData
-        )
-        modelContext.insert(instance)
-        try modelContext.save()
-        guard let detail = instance.toDetail() else {
-            throw RepositoryError.saveFailed
+    func saveIntake(_ draft: PlantIntakeDraft) async throws -> PlantArrivalBatch {
+        let catalog = try resolveCatalog(for: draft)
+        let arrivedOn = Calendar.current.startOfDay(for: draft.arrivedOn)
+        let vendor = draft.vendor.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        var details: [PlantInstanceDetail] = []
+        details.reserveCapacity(draft.quantity)
+
+        for _ in 0..<draft.quantity {
+            let instance = PlantInstanceEntity(
+                catalog: catalog,
+                arrivedOn: arrivedOn,
+                vendor: vendor,
+                photoData: draft.photoData
+            )
+            modelContext.insert(instance)
+            guard let detail = instance.toDetail() else {
+                throw RepositoryError.saveFailed
+            }
+            details.append(detail)
         }
-        return detail
+
+        try modelContext.save()
+        return PlantArrivalBatch(catalog: catalog.toDomain(), instances: details)
     }
 
     func addCareEvent(_ event: CareEvent) async throws {
@@ -81,28 +91,40 @@ final class SwiftDataPlantRepository: PlantRepository {
         try modelContext.save()
     }
 
-    // MARK: - Catalog reuse
+    // MARK: - Catalog resolve
 
-    private func resolveOrCreateCatalog(for draft: PlantIntakeDraft) throws -> CatalogItemEntity {
-        let existing = try modelContext.fetch(FetchDescriptor<CatalogItemEntity>())
-        let domain = existing.map { $0.toDomain() }
-        if let match = PlantCatalogMatcher.findExisting(
-            name: draft.name,
-            genus: draft.genus,
-            in: domain
-        ),
-           let entity = existing.first(where: { $0.id == match.id }) {
+    private func resolveCatalog(for draft: PlantIntakeDraft) throws -> CatalogItemEntity {
+        switch draft.catalogMode {
+        case .existingType(let catalogItemID):
+            let descriptor = FetchDescriptor<CatalogItemEntity>(
+                predicate: #Predicate { $0.id == catalogItemID }
+            )
+            guard let entity = try modelContext.fetch(descriptor).first else {
+                throw RepositoryError.catalogNotFound
+            }
+            return entity
+
+        case .newOrMatchType:
+            let existing = try modelContext.fetch(FetchDescriptor<CatalogItemEntity>())
+            let domain = existing.map { $0.toDomain() }
+            if let match = PlantCatalogMatcher.findExisting(
+                name: draft.name,
+                genus: draft.genus,
+                in: domain
+            ),
+               let entity = existing.first(where: { $0.id == match.id }) {
+                return entity
+            }
+
+            let item = PlantCatalogItem(
+                name: draft.name,
+                genus: draft.genus,
+                careProfile: draft.careProfile
+            )
+            let entity = CatalogItemEntity(from: item)
+            modelContext.insert(entity)
             return entity
         }
-
-        let item = PlantCatalogItem(
-            name: draft.name,
-            genus: draft.genus,
-            careProfile: draft.careProfile
-        )
-        let entity = CatalogItemEntity(from: item)
-        modelContext.insert(entity)
-        return entity
     }
 }
 

@@ -8,6 +8,7 @@ struct PlantListView: View {
     private var instances: [PlantInstanceEntity]
 
     @State private var showingAdd = false
+    @State private var batchToPrint: PlantArrivalBatch?
 
     var body: some View {
         NavigationStack {
@@ -16,7 +17,7 @@ struct PlantListView: View {
                     ContentUnavailableView(
                         "No plants yet",
                         systemImage: "leaf",
-                        description: Text("Add an arrival to start your inventory.")
+                        description: Text("Log an arrival — one plant or a whole carton.")
                     )
                 } else {
                     List(instances) { entity in
@@ -44,8 +45,13 @@ struct PlantListView: View {
             }
             .sheet(isPresented: $showingAdd) {
                 NavigationStack {
-                    AddPlantView()
+                    AddPlantView { batch in
+                        batchToPrint = batch
+                    }
                 }
+            }
+            .sheet(item: $batchToPrint) { batch in
+                BatchLabelPrintView(batch: batch)
             }
         }
     }

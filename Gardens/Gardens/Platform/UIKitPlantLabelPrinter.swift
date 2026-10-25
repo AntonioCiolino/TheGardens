@@ -7,19 +7,27 @@ import GardensCore
 @MainActor
 struct UIKitPlantLabelPrinter: PlantLabelPrinting {
     func printLabel(title: String, subtitle: String, qrImageData: Data) async throws {
-        guard UIPrintInteractionController.isPrintingAvailable else {
-            // Still present the controller when possible; otherwise no-op success
-            // so intake flows are not blocked during development.
-            return
-        }
+        try await printLabels(title: title, subtitle: subtitle, qrImageDataList: [qrImageData])
+    }
+
+    func printLabels(title: String, subtitle: String, qrImageDataList: [Data]) async throws {
+        guard !qrImageDataList.isEmpty else { return }
+
+        let imagesHTML = qrImageDataList.enumerated().map { index, data in
+            """
+            <div style="page-break-after:always;text-align:center;padding:24px 0;">
+              <h2 style="margin:0 0 4px;">\(Self.escape(title))</h2>
+              <p style="margin:0 0 12px;color:#555;">\(Self.escape(subtitle)) · \(index + 1)/\(qrImageDataList.count)</p>
+              <img src="data:image/png;base64,\(data.base64EncodedString())" width="220" height="220" />
+              <p style="font-size:12px;color:#666;">Gardens plant label</p>
+            </div>
+            """
+        }.joined()
 
         let formatter = UIMarkupTextPrintFormatter(
             markupText: """
-            <html><body style="font-family:-apple-system;text-align:center;padding:24px;">
-            <h1>\(Self.escape(title))</h1>
-            <p>\(Self.escape(subtitle))</p>
-            <img src="data:image/png;base64,\(qrImageData.base64EncodedString())" width="220" height="220" />
-            <p style="font-size:12px;color:#666;">Gardens plant label</p>
+            <html><body style="font-family:-apple-system;">
+            \(imagesHTML)
             </body></html>
             """
         )
@@ -28,11 +36,9 @@ struct UIKitPlantLabelPrinter: PlantLabelPrinting {
         controller.printFormatter = formatter
 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            controller.present(animated: true) { _, completed, error in
+            controller.present(animated: true) { _, _, error in
                 if let error {
                     continuation.resume(throwing: error)
-                } else if completed {
-                    continuation.resume()
                 } else {
                     continuation.resume()
                 }

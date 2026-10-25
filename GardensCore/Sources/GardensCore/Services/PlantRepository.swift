@@ -6,7 +6,8 @@ public protocol PlantRepository: AnyObject {
     func fetchCatalog() async throws -> [PlantCatalogItem]
     func fetchInstances() async throws -> [PlantInstanceDetail]
     func destination(for instanceID: UUID) async throws -> PlantInstanceDestination?
-    func saveIntake(_ draft: PlantIntakeDraft) async throws -> PlantInstanceDetail
+    /// Saves an arrival of `draft.quantity` unique instances (shared catalog type).
+    func saveIntake(_ draft: PlantIntakeDraft) async throws -> PlantArrivalBatch
     func addCareEvent(_ event: CareEvent) async throws
     func updateCareProfile(catalogItemID: UUID, profile: PlantCareProfile) async throws
 }
@@ -19,8 +20,9 @@ public struct PlantIntakeService {
         self.repository = repository
     }
 
+    /// First-time or repeat arrival — creates `quantity` unique instances + QRs.
     @discardableResult
-    public func saveNewArrival(_ draft: PlantIntakeDraft) async throws -> PlantInstanceDetail {
+    public func saveNewArrival(_ draft: PlantIntakeDraft) async throws -> PlantArrivalBatch {
         try await repository.saveIntake(draft)
     }
 
@@ -37,5 +39,11 @@ public struct PlantIntakeService {
 
     public func compactQR(for detail: PlantInstanceDetail) throws -> String {
         try CompactPlantQR(detail: detail).encodedString()
+    }
+
+    public func compactQRs(for batch: PlantArrivalBatch) throws -> [(PlantInstanceDetail, String)] {
+        try batch.instances.map { detail in
+            (detail, try compactQR(for: detail))
+        }
     }
 }
