@@ -1,0 +1,337 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		28C5A96BD9FF4F9B8DB19AAC /* GardensApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F38854A31EC4EE4BEA8DED0 /* GardensApp.swift */; };
+		9C37951D9A204234B79849D1 /* PlantListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D09732F4683647F991629D3C /* PlantListView.swift */; };
+		B21EF9EA577049A7A9462F65 /* AddPlantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 497F8E156F1E487D96C3B314 /* AddPlantView.swift */; };
+		A6421800E0FF4732898C1D8C /* PlantDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69375AC8E2CC46DCBEF3B660 /* PlantDetailView.swift */; };
+		970DA46BDDFE4D9CBB09082D /* PlantPhotoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B763501CD146B6858D5E7D /* PlantPhotoPicker.swift */; };
+		7F141139316F4752A87CC2D6 /* QRCodeImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7063F8BCEB604AC288FC74C8 /* QRCodeImageView.swift */; };
+		5178BEFEF5E642928333351F /* SwiftDataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0028F7F188EB4BAA9609F0F2 /* SwiftDataModels.swift */; };
+		4F3E46DDF2984D87BEE52CC0 /* SwiftDataPlantRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E277E42F1F4676BEA88A61 /* SwiftDataPlantRepository.swift */; };
+		2E96E2D9DADF4E1988847624 /* CoreImageQRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */; };
+		94AFC090BA7A461EAC2B5E40 /* UIKitPlantLabelPrinter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 651C84A8EE9D423B8BEECF87 /* UIKitPlantLabelPrinter.swift */; };
+		8385BA678B1C48AD9F964661 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A4952323A68541608D1A286F /* Assets.xcassets */; };
+		DAA181E0D7EC4AA29A35F4FB /* GardensCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9C580D26CA894853A6AB79B9 /* GardensCore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		5F38854A31EC4EE4BEA8DED0 /* GardensApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GardensApp.swift; sourceTree = "<group>"; };
+		D09732F4683647F991629D3C /* PlantListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantListView.swift; sourceTree = "<group>"; };
+		497F8E156F1E487D96C3B314 /* AddPlantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPlantView.swift; sourceTree = "<group>"; };
+		69375AC8E2CC46DCBEF3B660 /* PlantDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantDetailView.swift; sourceTree = "<group>"; };
+		F7B763501CD146B6858D5E7D /* PlantPhotoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantPhotoPicker.swift; sourceTree = "<group>"; };
+		7063F8BCEB604AC288FC74C8 /* QRCodeImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeImageView.swift; sourceTree = "<group>"; };
+		0028F7F188EB4BAA9609F0F2 /* SwiftDataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataModels.swift; sourceTree = "<group>"; };
+		80E277E42F1F4676BEA88A61 /* SwiftDataPlantRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataPlantRepository.swift; sourceTree = "<group>"; };
+		90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreImageQRCodeGenerator.swift; sourceTree = "<group>"; };
+		651C84A8EE9D423B8BEECF87 /* UIKitPlantLabelPrinter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIKitPlantLabelPrinter.swift; sourceTree = "<group>"; };
+		A4952323A68541608D1A286F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		395FA4407F2946F0A3384929 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		0E5744733B714F3CB94858AF /* Gardens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gardens.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8300269459204A6FB9EF7F18 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DAA181E0D7EC4AA29A35F4FB /* GardensCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5BAA9EE3C7764DB19A71BC62 = {
+			isa = PBXGroup;
+			children = (
+				600C18023E5542A987DDBA08 /* Gardens */,
+				AF97D29386CE49269C083036 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AF97D29386CE49269C083036 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0E5744733B714F3CB94858AF /* Gardens.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		600C18023E5542A987DDBA08 /* Gardens */ = {
+			isa = PBXGroup;
+			children = (
+				EA52A30A1BD14AA6ADB58C0B /* App */,
+				0321DBACCE684689A7B352BE /* Persistence */,
+				159390E6470D415AA0ECCE8C /* Platform */,
+				374309B2DCEA46E19A86607B /* Views */,
+				D54AC062733645CD9FCB638C /* Resources */,
+			);
+			path = Gardens;
+			sourceTree = "<group>";
+		};
+		EA52A30A1BD14AA6ADB58C0B /* App */ = {
+			isa = PBXGroup;
+			children = (
+				5F38854A31EC4EE4BEA8DED0 /* GardensApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		0321DBACCE684689A7B352BE /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				0028F7F188EB4BAA9609F0F2 /* SwiftDataModels.swift */,
+				80E277E42F1F4676BEA88A61 /* SwiftDataPlantRepository.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		159390E6470D415AA0ECCE8C /* Platform */ = {
+			isa = PBXGroup;
+			children = (
+				90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */,
+				651C84A8EE9D423B8BEECF87 /* UIKitPlantLabelPrinter.swift */,
+			);
+			path = Platform;
+			sourceTree = "<group>";
+		};
+		374309B2DCEA46E19A86607B /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				D09732F4683647F991629D3C /* PlantListView.swift */,
+				497F8E156F1E487D96C3B314 /* AddPlantView.swift */,
+				69375AC8E2CC46DCBEF3B660 /* PlantDetailView.swift */,
+				A15B324A6C5643BD9306039A /* Components */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A15B324A6C5643BD9306039A /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				F7B763501CD146B6858D5E7D /* PlantPhotoPicker.swift */,
+				7063F8BCEB604AC288FC74C8 /* QRCodeImageView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		D54AC062733645CD9FCB638C /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A4952323A68541608D1A286F /* Assets.xcassets */,
+				395FA4407F2946F0A3384929 /* Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3FCD1C12ADD64D4CA4547431 /* Gardens */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6ECB543CBCEB487191785C03 /* Build configuration list for PBXNativeTarget "Gardens" */;
+			buildPhases = (
+				5232E204D9D44864B2F51E2A /* Sources */,
+				8300269459204A6FB9EF7F18 /* Frameworks */,
+				87E5FD9534BF4773B7D92A74 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Gardens;
+			packageProductDependencies = (
+				9C580D26CA894853A6AB79B9 /* GardensCore */,
+			);
+			productName = Gardens;
+			productReference = 0E5744733B714F3CB94858AF /* Gardens.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		321F2052ACFF4927A97DD6DF /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+			};
+			buildConfigurationList = AFF3072B27184FBA8083C733 /* Build configuration list for PBXProject "Gardens" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5BAA9EE3C7764DB19A71BC62;
+			packageReferences = (
+				D87DE9EE47F44F57A50376ED /* XCLocalSwiftPackageReference "../GardensCore" */,
+			);
+			productRefGroup = AF97D29386CE49269C083036 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				3FCD1C12ADD64D4CA4547431 /* Gardens */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		87E5FD9534BF4773B7D92A74 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8385BA678B1C48AD9F964661 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5232E204D9D44864B2F51E2A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				28C5A96BD9FF4F9B8DB19AAC /* GardensApp.swift in Sources */,
+				9C37951D9A204234B79849D1 /* PlantListView.swift in Sources */,
+				B21EF9EA577049A7A9462F65 /* AddPlantView.swift in Sources */,
+				A6421800E0FF4732898C1D8C /* PlantDetailView.swift in Sources */,
+				970DA46BDDFE4D9CBB09082D /* PlantPhotoPicker.swift in Sources */,
+				7F141139316F4752A87CC2D6 /* QRCodeImageView.swift in Sources */,
+				5178BEFEF5E642928333351F /* SwiftDataModels.swift in Sources */,
+				4F3E46DDF2984D87BEE52CC0 /* SwiftDataPlantRepository.swift in Sources */,
+				2E96E2D9DADF4E1988847624 /* CoreImageQRCodeGenerator.swift in Sources */,
+				94AFC090BA7A461EAC2B5E40 /* UIKitPlantLabelPrinter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		D8E4A6532E3F475FB19C9FE5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		7CB21F10A4DC45658CFF6468 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CAD94BBF52364CEEAA462310 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Gardens/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.gardens.intake;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B31EF654C9C54BC995191BC5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Gardens/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.gardens.intake;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AFF3072B27184FBA8083C733 /* Build configuration list for PBXProject "Gardens" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D8E4A6532E3F475FB19C9FE5 /* Debug */,
+				7CB21F10A4DC45658CFF6468 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6ECB543CBCEB487191785C03 /* Build configuration list for PBXNativeTarget "Gardens" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CAD94BBF52364CEEAA462310 /* Debug */,
+				B31EF654C9C54BC995191BC5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		D87DE9EE47F44F57A50376ED /* XCLocalSwiftPackageReference "../GardensCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../GardensCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9C580D26CA894853A6AB79B9 /* GardensCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D87DE9EE47F44F57A50376ED /* XCLocalSwiftPackageReference "../GardensCore" */;
+			productName = GardensCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 321F2052ACFF4927A97DD6DF /* Project object */;
+}
