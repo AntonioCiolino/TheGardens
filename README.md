@@ -10,6 +10,7 @@ No Google login. No Firebase. Staff need an **Apple ID signed into iCloud** on e
 2. Set your Development Team under Signing (CloudKit entitlement enabled).
 3. Run on an iPhone signed into iCloud.
 4. For shared sync setup, see **[docs/cloudkit-setup.md](docs/cloudkit-setup.md)**.
+5. For **Xcode Cloud** (cloud archive / TestFlight), see **[docs/xcode-cloud-setup.md](docs/xcode-cloud-setup.md)**.
 
 ## What’s included
 
