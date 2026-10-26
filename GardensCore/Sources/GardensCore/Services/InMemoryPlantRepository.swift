@@ -18,22 +18,24 @@ public final class InMemoryPlantRepository: PlantRepository, @unchecked Sendable
     }
 
     public func fetchInstances() async throws -> [PlantInstanceDetail] {
-        let snapshot = lock.withLock { (catalog, instances) }
-        return snapshot.instances.values
+        let (catalogSnap, instancesSnap) = lock.withLock { (catalog, instances) }
+        return instancesSnap.values
             .sorted { $0.arrivedOn > $1.arrivedOn }
             .compactMap { instance in
-                guard let item = snapshot.catalog[instance.catalogItemID] else { return nil }
+                guard let item = catalogSnap[instance.catalogItemID] else { return nil }
                 return PlantInstanceDetail(instance: instance, catalog: item)
             }
     }
 
     public func destination(for instanceID: UUID) async throws -> PlantInstanceDestination? {
-        let snapshot = lock.withLock { (catalog, instances, careEvents) }
+        let (catalogSnap, instancesSnap, careSnap) = lock.withLock {
+            (catalog, instances, careEvents)
+        }
         guard
-            let instance = snapshot.instances[instanceID],
-            let item = snapshot.catalog[instance.catalogItemID]
+            let instance = instancesSnap[instanceID],
+            let item = catalogSnap[instance.catalogItemID]
         else { return nil }
-        let history = snapshot.careEvents.values.filter { $0.instanceID == instanceID }
+        let history = careSnap.values.filter { $0.instanceID == instanceID }
         return PlantInstanceDestination(
             instance: instance,
             catalog: item,
