@@ -290,10 +290,13 @@ final class CloudKitPlantRepository: PlantRepository {
         since token: CKServerChangeToken?
     ) async throws -> ZonePage {
         try await withCheckedThrowingContinuation { continuation in
-            let operation = CKFetchRecordZoneChangesOperation()
             let config = CKFetchRecordZoneChangesOperation.ZoneConfiguration()
             config.previousServerChangeToken = token
-            operation.configurationsByRecordZoneID = [zoneID: config]
+            // The no-argument initializer leaves zone IDs empty and CloudKit rejects the op.
+            let operation = CKFetchRecordZoneChangesOperation(
+                recordZoneIDs: [zoneID],
+                configurationsByRecordZoneID: [zoneID: config]
+            )
 
             let box = CloudKitRecordBox()
             operation.recordWasChangedBlock = { _, result in
