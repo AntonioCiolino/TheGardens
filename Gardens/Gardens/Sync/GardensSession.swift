@@ -115,6 +115,17 @@ final class GardensSession: ObservableObject {
 
     // MARK: - Data
 
+    func updatePlantPhoto(instanceID: UUID, photoData: Data?) async throws {
+        try await repository.updateInstancePhoto(instanceID: instanceID, photoData: photoData)
+        await refresh()
+    }
+
+    func deletePlant(instanceID: UUID) async throws {
+        try await repository.deleteInstance(instanceID: instanceID)
+        instances.removeAll { $0.instance.id == instanceID }
+        await refresh()
+    }
+
     func refresh() async {
         if usesSharedCloud {
             await refreshCloudInstances()

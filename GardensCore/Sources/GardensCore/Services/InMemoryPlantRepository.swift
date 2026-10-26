@@ -78,6 +78,25 @@ public final class InMemoryPlantRepository: PlantRepository, @unchecked Sendable
         careEvents[event.id] = event
     }
 
+    public func updateInstancePhoto(instanceID: UUID, photoData: Data?) async throws {
+        lock.lock()
+        defer { lock.unlock() }
+        guard var instance = instances[instanceID] else {
+            throw InMemoryRepositoryError.instanceNotFound
+        }
+        instance.photoData = photoData
+        instances[instanceID] = instance
+    }
+
+    public func deleteInstance(instanceID: UUID) async throws {
+        lock.lock()
+        defer { lock.unlock() }
+        guard instances.removeValue(forKey: instanceID) != nil else {
+            throw InMemoryRepositoryError.instanceNotFound
+        }
+        careEvents = careEvents.filter { $0.value.instanceID != instanceID }
+    }
+
     public func updateCareProfile(catalogItemID: UUID, profile: PlantCareProfile) async throws {
         lock.lock()
         defer { lock.unlock() }

@@ -11,6 +11,7 @@ struct PlantDetailView: View {
     @State private var printError: String?
     @State private var isPrinting = false
     @State private var showingCareLog = false
+    @State private var showingPhotoEditor = false
 
     private let qrGenerator = CoreImageQRCodeGenerator()
 
@@ -39,6 +40,17 @@ struct PlantDetailView: View {
         .task(id: destination?.id) {
             if autoOpenCareLog, destination != nil {
                 showingCareLog = true
+            }
+        }
+        .sheet(isPresented: $showingPhotoEditor) {
+            if let destination {
+                EditPlantPhotoSheet(
+                    instanceID: destination.instance.id,
+                    plantName: destination.catalog.name,
+                    initialPhoto: destination.instance.photoData
+                ) {
+                    Task { await reload() }
+                }
             }
         }
         .sheet(isPresented: $showingCareLog) {
@@ -91,13 +103,41 @@ struct PlantDetailView: View {
 
     @ViewBuilder
     private func photo(_ destination: PlantInstanceDestination) -> some View {
-        if let data = destination.instance.photoData, let image = UIImage(data: data) {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
+        VStack(alignment: .leading, spacing: 12) {
+            if let data = destination.instance.photoData, let image = UIImage(data: data) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 240)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            } else {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color(.secondarySystemBackground))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 180)
+                    .overlay {
+                        VStack(spacing: 8) {
+                            Image(systemName: "camera")
+                                .font(.title)
+                            Text("No photo yet")
+                                .font(.subheadline)
+                        }
+                        .foregroundStyle(.secondary)
+                    }
+            }
+
+            Button {
+                showingPhotoEditor = true
+            } label: {
+                Label(
+                    destination.instance.photoData == nil ? "Add photo" : "Update photo",
+                    systemImage: "camera"
+                )
                 .frame(maxWidth: .infinity)
-                .frame(height: 240)
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color.accentColor)
         }
     }
 
@@ -181,10 +221,15 @@ struct PlantDetailView: View {
                 showingCareLog = true
             } label: {
                 Label("Log care / health update", systemImage: "plus.circle")
+                    .font(.body.weight(.semibold))
                     .frame(maxWidth: .infinity)
+                    .padding(.vertical, 4)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.borderedProminent)
+            .tint(Color.accentColor)
         }
+        .padding(16)
+        .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     @ViewBuilder
@@ -200,7 +245,9 @@ struct PlantDetailView: View {
 
     @MainActor
     private func reload() async {
-        destination = try? await session.repository.destination(for: instanceID)
+        if let loaded = try? await session.repository.destination(for: instanceID) {
+            destination = loaded
+        }
         if let destination {
             let detail = PlantInstanceDetail(
                 instance: destination.instance,
@@ -224,6 +271,86 @@ struct PlantDetailView: View {
             )
         } catch {
             printError = error.localizedDescription
+        }
+    }
+}
+
+/// Replace the photo on a plant that already exists. The chosen image is shown here before it is saved.
+private struct EditPlantPhotoSheet: View {
+    let instanceID: UUID
+    let plantName: String
+    let initialPhoto: Data?
+    var onSaved: () -> Void
+
+    @EnvironmentObject private var session: GardensSession
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var photoData: Data?
+    @State private var baseline: Data?
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    if let photoData, let image = UIImage(data: photoData) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 280)
+                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    }
+
+                    PlantPhotoPicker(photoData: $photoData, replaceOnly: photoData != nil)
+
+                    if isSaving {
+                        ProgressView("Saving photo…")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .padding()
+            }
+            .background(Color(.systemBackground))
+            .navigationTitle("Edit \(plantName)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                        .disabled(isSaving)
+                }
+            }
+            .onAppear {
+                photoData = initialPhoto
+                baseline = initialPhoto
+            }
+            .onChange(of: photoData) { _, newValue in
+                guard newValue != baseline else { return }
+                Task { await persist(newValue) }
+            }
+            .alert("Couldn’t save photo", isPresented: Binding(
+                get: { errorMessage != nil },
+                set: { if !$0 { errorMessage = nil } }
+            )) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(errorMessage ?? "")
+            }
+        }
+    }
+
+    @MainActor
+    private func persist(_ data: Data?) async {
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            try await session.updatePlantPhoto(instanceID: instanceID, photoData: data)
+            baseline = data
+            onSaved()
+        } catch {
+            photoData = baseline
+            errorMessage = error.localizedDescription
         }
     }
 }

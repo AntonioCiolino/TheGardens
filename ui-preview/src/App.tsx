@@ -207,6 +207,17 @@ export default function App() {
               setSelectedId(id);
               setScreen("detail");
             }}
+            onDelete={(id) => {
+              setPlants((prev) => prev.filter((p) => p.id !== id));
+              if (selectedId === id) setSelectedId(null);
+            }}
+            onRefresh={() => {
+              setSyncStatus(
+                iCloudConnected
+                  ? `iCloud sync · ${plants.length} plants · refreshed`
+                  : `On this phone · ${plants.length} plants · refreshed`
+              );
+            }}
           />
         )}
 
@@ -214,6 +225,9 @@ export default function App() {
           <SyncScreen
             iCloudConnected={iCloudConnected}
             syncStatus={syncStatus}
+            hasSyncTest={plants.some(
+              (p) => p.name === "Gardens Sync Test" && p.genus === "Testus"
+            )}
             onCancel={() => setScreen("list")}
             onConnect={() => {
               setICloudConnected(true);
@@ -335,6 +349,11 @@ export default function App() {
             plant={selected}
             onBack={() => setScreen("list")}
             onLogCare={() => setScreen("care")}
+            onPhoto={(photo) => {
+              setPlants((prev) =>
+                prev.map((p) => (p.id === selected.id ? { ...p, photo } : p))
+              );
+            }}
             onPrint={() => {
               setPrintNote("Print sheet opened (preview) — AirPrint wiring in the iOS app.");
               window.setTimeout(() => setPrintNote(null), 2800);
@@ -379,6 +398,8 @@ function ListScreen({
   onScan,
   onSync,
   onOpen,
+  onDelete,
+  onRefresh,
 }: {
   plants: Plant[];
   syncStatus: string;
@@ -387,9 +408,34 @@ function ListScreen({
   onScan: () => void;
   onSync: () => void;
   onOpen: (id: string) => void;
+  onDelete: (id: string) => void;
+  onRefresh: () => void;
 }) {
+  const scroller = useRef<HTMLDivElement>(null);
+  const pullStart = useRef<number | null>(null);
+  const gesture = useRef<{ id: string; start: number; x: number } | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [swipe, setSwipe] = useState<{ id: string; x: number } | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const dragged = useRef(false);
+  const confirmPlant = plants.find((p) => p.id === confirmId);
+
   return (
-    <div className="screen">
+    <div
+      className="screen"
+      ref={scroller}
+      onPointerDown={(event) => {
+        if ((scroller.current?.scrollTop ?? 0) <= 0) pullStart.current = event.clientY;
+      }}
+      onPointerUp={(event) => {
+        if (pullStart.current != null && event.clientY - pullStart.current > 72) {
+          setRefreshing(true);
+          onRefresh();
+          window.setTimeout(() => setRefreshing(false), 700);
+        }
+        pullStart.current = null;
+      }}
+    >
       <div className="nav">
         <div className="nav-leading">
           <button className="text-btn" onClick={onScan} aria-label="Scan plant">
@@ -404,6 +450,7 @@ function ListScreen({
           +
         </button>
       </div>
+      {refreshing && <p className="pull-note">Refreshing inventory…</p>}
       {plants.length === 0 ? (
         <div className="empty">
           <div className="empty-glyph">🌿</div>
@@ -417,8 +464,38 @@ function ListScreen({
       ) : (
         <ul className="plant-list">
           {plants.map((p) => (
-            <li key={p.id}>
-              <button className="plant-row" onClick={() => onOpen(p.id)}>
+            <li key={p.id} className="plant-swipe">
+              <span className="swipe-delete" aria-hidden>
+                Delete
+              </span>
+              <button
+                className="plant-row"
+                style={{ transform: `translateX(${swipe?.id === p.id ? swipe.x : 0}px)` }}
+                onPointerDown={(event) => {
+                  dragged.current = false;
+                  gesture.current = { id: p.id, start: event.clientX, x: 0 };
+                  setSwipe({ id: p.id, x: 0 });
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                }}
+                onPointerMove={(event) => {
+                  const current = gesture.current;
+                  if (!current || current.id !== p.id) return;
+                  const x = Math.max(-140, Math.min(140, event.clientX - current.start));
+                  current.x = x;
+                  if (Math.abs(x) > 8) dragged.current = true;
+                  setSwipe({ id: p.id, x });
+                }}
+                onPointerUp={() => {
+                  const current = gesture.current;
+                  if (current?.id === p.id && Math.abs(current.x) > 72) setConfirmId(p.id);
+                  gesture.current = null;
+                  setSwipe(null);
+                }}
+                onClick={() => {
+                  if (dragged.current) return;
+                  onOpen(p.id);
+                }}
+              >
                 <img src={p.photo} alt="" />
                 <span>
                   <strong>{p.name}</strong>
@@ -433,6 +510,25 @@ function ListScreen({
           ))}
         </ul>
       )}
+      {confirmPlant && (
+        <div className="confirm-sheet" role="dialog" aria-labelledby="delete-title">
+          <h3 id="delete-title">Delete this plant?</h3>
+          <p>Are you sure? This removes {confirmPlant.name} and its care notes from the inventory.</p>
+          <button
+            type="button"
+            className="danger-btn"
+            onClick={() => {
+              onDelete(confirmPlant.id);
+              setConfirmId(null);
+            }}
+          >
+            Delete {confirmPlant.name}
+          </button>
+          <button type="button" className="secondary-btn" onClick={() => setConfirmId(null)}>
+            Cancel
+          </button>
+        </div>
+      )}
       <p className="sync-footer">{syncStatus}</p>
     </div>
   );
@@ -441,6 +537,7 @@ function ListScreen({
 function SyncScreen({
   iCloudConnected,
   syncStatus,
+  hasSyncTest,
   onCancel,
   onConnect,
   onDisconnect,
@@ -448,6 +545,7 @@ function SyncScreen({
 }: {
   iCloudConnected: boolean;
   syncStatus: string;
+  hasSyncTest: boolean;
   onCancel: () => void;
   onConnect: () => void;
   onDisconnect: () => void;
@@ -482,13 +580,15 @@ function SyncScreen({
             <p className="hint">Simulates signing into iCloud on an iPhone.</p>
           </section>
         )}
-        <section className="sync-card">
-          <strong>Test a record</strong>
-          <button type="button" className="primary-btn" onClick={onWriteTest}>
-            Write test plant + care note
-          </button>
-          <p className="hint">Creates “Gardens Sync Test” (genus Testus) like the iOS smoke test.</p>
-        </section>
+        {!hasSyncTest && (
+          <section className="sync-card">
+            <strong>Test a record</strong>
+            <button type="button" className="primary-btn" onClick={onWriteTest}>
+              Write test plant + care note
+            </button>
+            <p className="hint">Creates one “Gardens Sync Test” plant. This section hides once that plant is in the list.</p>
+          </section>
+        )}
         <p className="sync-footer">{syncStatus}</p>
       </div>
     </div>
@@ -1032,11 +1132,13 @@ function DetailScreen({
   onBack,
   onLogCare,
   onPrint,
+  onPhoto,
 }: {
   plant: Plant;
   onBack: () => void;
   onLogCare: () => void;
   onPrint: () => void;
+  onPhoto: (photo: string) => void;
 }) {
   const payload = compactQR(plant);
 
@@ -1054,6 +1156,36 @@ function DetailScreen({
 
       <div className="detail">
         <img className="hero-photo" src={plant.photo} alt={plant.name} />
+        <div className="photo-edit">
+          <img className="edit-photo" src={plant.photo} alt="" />
+          <label className="solid-btn">
+            Update photo
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                  if (typeof reader.result === "string") onPhoto(reader.result);
+                };
+                reader.readAsDataURL(file);
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            className="solid-btn"
+            onClick={() =>
+              onPhoto(
+                "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80&auto=format&fit=crop"
+              )
+            }
+          >
+            Use a new picture
+          </button>
+        </div>
         <h3>{plant.name}</h3>
         <p className="genus">{plant.genus}</p>
         <dl>
@@ -1090,9 +1222,11 @@ function DetailScreen({
               ))}
             </ul>
           )}
-          <button className="print-btn" type="button" onClick={onLogCare} style={{ marginTop: 12 }}>
-            Log care / health update
-          </button>
+          <div className="care-actions">
+            <button className="print-btn solid-btn" type="button" onClick={onLogCare}>
+              Log care / health update
+            </button>
+          </div>
         </section>
 
         <section className="qr-card">

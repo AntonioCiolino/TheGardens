@@ -80,6 +80,28 @@ final class SwiftDataPlantRepository: PlantRepository {
         try modelContext.save()
     }
 
+    func updateInstancePhoto(instanceID: UUID, photoData: Data?) async throws {
+        let descriptor = FetchDescriptor<PlantInstanceEntity>(
+            predicate: #Predicate { $0.id == instanceID }
+        )
+        guard let instance = try modelContext.fetch(descriptor).first else {
+            throw RepositoryError.instanceNotFound
+        }
+        instance.photoData = photoData
+        try modelContext.save()
+    }
+
+    func deleteInstance(instanceID: UUID) async throws {
+        let descriptor = FetchDescriptor<PlantInstanceEntity>(
+            predicate: #Predicate { $0.id == instanceID }
+        )
+        guard let instance = try modelContext.fetch(descriptor).first else {
+            throw RepositoryError.instanceNotFound
+        }
+        modelContext.delete(instance)
+        try modelContext.save()
+    }
+
     func updateCareProfile(catalogItemID: UUID, profile: PlantCareProfile) async throws {
         let descriptor = FetchDescriptor<CatalogItemEntity>(
             predicate: #Predicate { $0.id == catalogItemID }

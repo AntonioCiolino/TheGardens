@@ -10,6 +10,10 @@ public protocol PlantRepository: AnyObject {
     func saveIntake(_ draft: PlantIntakeDraft) async throws -> PlantArrivalBatch
     func addCareEvent(_ event: CareEvent) async throws
     func updateCareProfile(catalogItemID: UUID, profile: PlantCareProfile) async throws
+    /// Replaces or clears the photo on one physical plant.
+    func updateInstancePhoto(instanceID: UUID, photoData: Data?) async throws
+    /// Deletes one physical plant and its care notes. The shared plant type stays.
+    func deleteInstance(instanceID: UUID) async throws
     /// Most recent photo already stored for this catalog type (for restock intake).
     func referencePhoto(for catalogItemID: UUID) async throws -> Data?
 }

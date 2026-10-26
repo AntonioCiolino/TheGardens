@@ -78,4 +78,31 @@ final class InMemoryPlantRepositoryTests: XCTestCase {
         XCTAssertEqual(catalog.count, 1)
         XCTAssertEqual(try await repo.fetchInstances().count, 3)
     }
+
+    func testPhotoReplaceAndDeleteRemoveOnlyThatPlant() async throws {
+        let repo = InMemoryPlantRepository()
+        let service = PlantIntakeService(repository: repo)
+        let batch = try await service.saveNewArrival(
+            PlantIntakeDraft(name: "Pothos", genus: "Epipremnum", vendor: "Local", quantity: 2)
+        )
+        let keep = batch.instances[0].id
+        let drop = batch.instances[1].id
+        let jpeg = Data([0xFF, 0xD8, 0xFF, 0xD9])
+
+        try await repo.updateInstancePhoto(instanceID: drop, photoData: jpeg)
+        let updated = try await repo.destination(for: drop)
+        XCTAssertEqual(updated?.instance.photoData, jpeg)
+
+        _ = try await service.logCareUpdate(
+            CareUpdateDraft(instanceID: drop, kind: .note, notes: "gone with the plant")
+        )
+        try await repo.deleteInstance(instanceID: drop)
+
+        let remaining = try await repo.fetchInstances()
+        XCTAssertEqual(remaining.map(\.id), [keep])
+        let deleted = try await repo.destination(for: drop)
+        XCTAssertNil(deleted)
+        let kept = try await repo.destination(for: keep)
+        XCTAssertNotNil(kept)
+    }
 }

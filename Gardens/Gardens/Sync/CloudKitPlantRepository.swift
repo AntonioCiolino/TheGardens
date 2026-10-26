@@ -160,6 +160,69 @@ final class CloudKitPlantRepository: PlantRepository {
         throw lastError
     }
 
+    func updateInstancePhoto(instanceID: UUID, photoData: Data?) async throws {
+        try await requireiCloud()
+        var lastError: Error = RepositoryError.instanceNotFound
+        for _ in 0..<4 {
+            let record: CKRecord
+            do {
+                record = try await database.record(for: Self.recordID(instanceID.uuidString))
+            } catch let error as CKError where error.code == .unknownItem {
+                throw RepositoryError.instanceNotFound
+            }
+            if let photoData {
+                record["photo"] = try Self.asset(from: photoData, name: instanceID.uuidString)
+            } else {
+                record["photo"] = nil
+            }
+            do {
+                _ = try await database.save(record)
+                if let photoData {
+                    photoCache[instanceID] = photoData
+                    try await verifySaved(record.recordID, type: RecordType.instance, keys: ["photo"])
+                } else {
+                    photoCache.removeValue(forKey: instanceID)
+                }
+                return
+            } catch let error as CKError where error.code == .serverRecordChanged {
+                lastError = error
+                continue
+            }
+        }
+        throw lastError
+    }
+
+    func deleteInstance(instanceID: UUID) async throws {
+        try await requireiCloud()
+        let record: CKRecord
+        do {
+            record = try await database.record(for: Self.recordID(instanceID.uuidString))
+        } catch let error as CKError where error.code == .unknownItem {
+            throw RepositoryError.instanceNotFound
+        }
+        let careIDs = Self.stringList(record, key: "careEventIDs")
+        for careID in careIDs {
+            try await deleteIfPresent(Self.recordID(careID))
+        }
+        try await deleteIfPresent(record.recordID)
+        photoCache.removeValue(forKey: instanceID)
+
+        for _ in 0..<4 {
+            let manifest = try await loadManifest()
+            guard manifest.recordChangeTag != nil else { return }
+            Self.remove([instanceID.uuidString], from: manifest, key: "instanceIDs")
+            do {
+                _ = try await database.save(manifest)
+                return
+            } catch let error as CKError where error.code == .serverRecordChanged {
+                continue
+            } catch {
+                // The plant record is already gone. A later fetch skips a missing ID.
+                return
+            }
+        }
+    }
+
     func updateCareProfile(catalogItemID: UUID, profile: PlantCareProfile) async throws {
         try await requireiCloud()
         var lastError: Error = RepositoryError.catalogNotFound
@@ -344,6 +407,25 @@ final class CloudKitPlantRepository: PlantRepository {
     private static func setList(_ ids: [String], on record: CKRecord, key: String) {
         guard !ids.isEmpty else { return }
         record[key] = ids as NSArray
+    }
+
+    /// Drops IDs from a list. An empty result clears the field instead of writing `[]`.
+    private static func remove(_ idsToDrop: [String], from record: CKRecord, key: String) {
+        let drop = Set(idsToDrop)
+        let remaining = stringList(record, key: key).filter { !drop.contains($0) }
+        if remaining.isEmpty {
+            record[key] = nil
+        } else {
+            record[key] = remaining as NSArray
+        }
+    }
+
+    private func deleteIfPresent(_ id: CKRecord.ID) async throws {
+        do {
+            try await database.deleteRecord(withID: id)
+        } catch let error as CKError where error.code == .unknownItem {
+            return
+        }
     }
 
     private static func recordIDs(_ names: [String]) -> [CKRecord.ID] {

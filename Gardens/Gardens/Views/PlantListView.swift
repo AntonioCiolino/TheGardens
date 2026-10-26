@@ -13,28 +13,44 @@ struct PlantListView: View {
     @State private var showingSync = false
     @State private var batchToPrint: PlantArrivalBatch?
     @State private var path = NavigationPath()
+    @State private var pendingDelete: PlantInstanceDetail?
+    @State private var isDeleting = false
+    @State private var deleteError: String?
 
     var body: some View {
         NavigationStack(path: $path) {
             ZStack {
                 BrandWatermark(opacity: 0.16)
 
-                Group {
+                List {
                     if session.instances.isEmpty {
                         ContentUnavailableView(
                             "No plants yet",
                             systemImage: "leaf",
                             description: Text(emptyDescription)
                         )
+                        .frame(maxWidth: .infinity, minHeight: 420)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                     } else {
-                        List(session.instances) { detail in
+                        ForEach(session.instances) { detail in
                             NavigationLink(value: detail.instance.id) {
                                 PlantRowView(detail: detail)
                             }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                deleteSwipe(for: detail)
+                            }
+                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                deleteSwipe(for: detail)
+                            }
+                            .listRowBackground(Color(.secondarySystemGroupedBackground))
                         }
-                        .scrollContentBackground(.hidden)
-                        .listStyle(.insetGrouped)
                     }
+                }
+                .listStyle(.insetGrouped)
+                .scrollContentBackground(.hidden)
+                .refreshable {
+                    await session.refresh()
                 }
             }
             .navigationTitle("Gardens")
@@ -84,7 +100,7 @@ struct PlantListView: View {
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 6)
-                        .background(.ultraThinMaterial)
+                        .background(Color(.systemBackground))
                 }
             }
             .sheet(isPresented: $showingAdd) {
@@ -112,9 +128,53 @@ struct PlantListView: View {
                 guard let newID else { return }
                 path.append(newID)
             }
-            .refreshable {
-                await session.refresh()
+            .confirmationDialog(
+                "Delete this plant?",
+                isPresented: Binding(
+                    get: { pendingDelete != nil },
+                    set: { if !$0 { pendingDelete = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button("Delete \(pendingDelete?.catalog.name ?? "plant")", role: .destructive) {
+                    guard let detail = pendingDelete else { return }
+                    pendingDelete = nil
+                    Task { await delete(detail) }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Are you sure? This removes the plant and its care notes from the inventory.")
             }
+            .alert("Couldn’t delete", isPresented: Binding(
+                get: { deleteError != nil },
+                set: { if !$0 { deleteError = nil } }
+            )) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(deleteError ?? "")
+            }
+        }
+    }
+
+    private func deleteSwipe(for detail: PlantInstanceDetail) -> some View {
+        Button(role: .destructive) {
+            pendingDelete = detail
+        } label: {
+            Label("Delete", systemImage: "trash")
+        }
+    }
+
+    @MainActor
+    private func delete(_ detail: PlantInstanceDetail) async {
+        isDeleting = true
+        defer { isDeleting = false }
+        do {
+            try await session.deletePlant(instanceID: detail.instance.id)
+            if path.count > 0 {
+                path = NavigationPath()
+            }
+        } catch {
+            deleteError = error.localizedDescription
         }
     }
 
