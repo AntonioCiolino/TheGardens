@@ -4,12 +4,13 @@ import UIKit
 struct SignInView: View {
     @EnvironmentObject private var session: GardensSession
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
 
     @State private var testResult: String?
     @State private var isTesting = false
 
     var body: some View {
-        Form {
+        List {
             Section {
                 Text("Team inventory lives in iCloud (CloudKit) — one record per plant and care update. Every iPhone needs an Apple ID signed into iCloud. There is no Google login or Google cloud for Gardens.")
                     .font(.subheadline)
@@ -21,7 +22,7 @@ struct SignInView: View {
                     Text(user.displayName ?? "iCloud")
                     Text("Apple ID / iCloud is active on this iPhone.")
                         .foregroundStyle(.secondary)
-                    Button("Use this phone only") {
+                    Button("Use this phone only", role: .destructive) {
                         session.signOutLocally()
                     }
                 }
@@ -34,7 +35,7 @@ struct SignInView: View {
                     }
                     Button {
                         if let url = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(url)
+                            openURL(url)
                         }
                     } label: {
                         Label("Open Settings", systemImage: "gear")
@@ -44,19 +45,22 @@ struct SignInView: View {
                 }
             }
 
-            Section("Test a record") {
+            Section {
                 Button {
                     isTesting = true
                     testResult = nil
                     Task {
-                        testResult = await session.writeTestRecord()
+                        let result = await session.writeTestRecord()
+                        testResult = result
                         isTesting = false
                     }
                 } label: {
-                    if isTesting {
-                        ProgressView()
-                    } else {
+                    HStack {
                         Label("Write test plant + care note", systemImage: "leaf.circle")
+                        if isTesting {
+                            Spacer()
+                            ProgressView()
+                        }
                     }
                 }
                 .disabled(isTesting)
@@ -64,8 +68,10 @@ struct SignInView: View {
                 if let testResult {
                     Text(testResult)
                         .font(.footnote)
-                        .foregroundStyle(testResult.hasPrefix("Test OK") ? .primary : .red)
+                        .foregroundStyle(testResult.hasPrefix("Test OK") ? Color.primary : Color.red)
                 }
+            } header: {
+                Text("Test a record")
             } footer: {
                 Text("Creates a “Gardens Sync Test” plant (genus Testus) and a care note. On iCloud it should show in CloudKit Console → Public Database, and on the main plant list.")
             }
