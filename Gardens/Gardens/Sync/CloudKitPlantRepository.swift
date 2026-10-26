@@ -6,16 +6,17 @@ import GardensCore
 /// Every teammate must be signed into iCloud on their iPhone; no Google services.
 @MainActor
 final class CloudKitPlantRepository: PlantRepository {
-    static let containerID = "iCloud.com.gardens.intake"
+    nonisolated static let containerID = "iCloud.com.gardens.intake"
 
     private let container: CKContainer
     private let database: CKDatabase
     private var photoCache: [UUID: Data] = [:]
 
-    init(container: CKContainer = CKContainer(identifier: CloudKitPlantRepository.containerID)) {
-        self.container = container
+    init(container: CKContainer? = nil) {
+        let resolved = container ?? CKContainer(identifier: Self.containerID)
+        self.container = resolved
         // Public DB = one shared inventory for everyone who uses this app with iCloud.
-        self.database = container.publicCloudDatabase
+        self.database = resolved.publicCloudDatabase
     }
 
     func fetchCatalog() async throws -> [PlantCatalogItem] {
