@@ -12,7 +12,7 @@ struct SignInView: View {
     var body: some View {
         List {
             Section {
-                Text("Team inventory lives in iCloud (CloudKit) — one record per plant and care update. Every iPhone needs an Apple ID signed into iCloud. There is no Google login or Google cloud for Gardens.")
+                Text("Team inventory lives in iCloud. Each plant and each care update is its own record. Every iPhone needs an Apple ID signed into iCloud.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

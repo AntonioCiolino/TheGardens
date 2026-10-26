@@ -53,7 +53,7 @@ final class GardensSession: ObservableObject {
         }
     }
 
-    // MARK: - iCloud (Apple ID) — no Google
+    // MARK: - iCloud (Apple ID)
 
     /// Checks the device iCloud account. Staff must be signed into iCloud in Settings.
     func refreshAccount() async {

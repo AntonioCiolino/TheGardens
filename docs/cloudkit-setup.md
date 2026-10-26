@@ -1,6 +1,6 @@
 # iCloud / CloudKit team sync
 
-Gardens shares inventory with **Apple CloudKit** — not Google, not Firebase.
+Gardens shares inventory with **Apple CloudKit**.
 
 - Login = the **iCloud / Apple ID** already on the iPhone (Settings → [your name]).
 - Each plant type, physical plant, and care event is its **own CloudKit record**.
@@ -21,21 +21,26 @@ Until iCloud is available, the app uses on-device SwiftData for that phone only.
 2. Signing Team set; entitlements file is `Gardens/Resources/Gardens.entitlements`.
 3. Run on a real iPhone signed into iCloud (Simulator iCloud can be flaky).
 
-## 3. CloudKit schema (first run)
+## 3. What the database actually stores
 
-**Development:** the app’s first successful **save** creates record types. If you see `Did not find record type: CatalogItem`, pull the latest app (it treats that as empty and then saves) **or** create the types once in the dashboard:
+Reads do **not** use CloudKit queries. Listing uses **zone changes**, and one plant is loaded by **record ID**. That avoids `Field 'recordName' is not marked queryable`.
 
-1. [CloudKit Console](https://icloud.developer.apple.com/) → container **`iCloud.com.gardens.intake`**
-2. Environment: **Development** → **Public Database** → Schema → Record Types → **+**
+| Record type | Who creates it | Fields |
+| --- | --- | --- |
+| `CatalogItem` | App, on first save of a plant type | `id`, `name`, `genus`, `careInstructions`, `wateringCheckGuidance`, `healthCheckGuidance`, `createdAt` |
+| `PlantInstance` | App, one per physical plant | `id`, `catalogItemID`, `arrivedOn`, `vendor`, `photo` (Asset), `createdAt` |
+| `CareEvent` | App, one per care note | `id`, `instanceID`, `kind`, `performedAt`, `wateringObservation`, `healthObservation`, `notes` |
+| `Users` | **Apple**, automatically | None. Leave it. Empty fields are expected. Do not add fields and do not delete this type. |
 
-| Record type | Fields (type) |
-| --- | --- |
-| `CatalogItem` | `id` String, `name` String, `genus` String, `careInstructions` String, `wateringCheckGuidance` String, `healthCheckGuidance` String, `createdAt` Date/Time |
-| `PlantInstance` | `id` String, `catalogItemID` String, `arrivedOn` Date/Time, `vendor` String, `photo` Asset, `createdAt` Date/Time |
-| `CareEvent` | `id` String, `instanceID` String, `kind` String, `performedAt` Date/Time, `wateringObservation` String, `healthObservation` String, `notes` String |
+After **Write test plant**, confirm in [CloudKit Console](https://icloud.developer.apple.com/) → `iCloud.com.gardens.intake` → Development → Public Database → Records:
 
-3. Save schema. Then retry **Write test plant** in the app.
-4. Deploy Development → Production when you’re ready for TestFlight / App Store.
+- one `CatalogItem` named Gardens Sync Test
+- one `PlantInstance` with vendor Setup Check
+- one `CareEvent`
+
+The app reads those three records back immediately after save and fails the test if a required field is missing.
+
+Deploy Development → Production when you ship TestFlight.
 
 ## 4. Test a record (smoke test)
 
@@ -55,6 +60,5 @@ If the write fails with “not authenticated” / account errors, fix iCloud sig
 
 ## Notes
 
-- No `GoogleService-Info.plist`, no Firebase, no Google Sign-In.
 - GitHub repo private/public does not affect CloudKit sync.
-- Public CloudKit DB is appropriate for an internal staff app; tighten later with private DB + CKShare if you need invite-only sharing.
+- Public CloudKit DB is the shared team inventory. Tighten later with a private database and CKShare if you need invite-only sharing.

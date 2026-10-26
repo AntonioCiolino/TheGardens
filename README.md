@@ -2,7 +2,7 @@
 
 iOS plant intake app (SwiftUI) with a shared `GardensCore` package. Inventory can stay on-device (SwiftData) or sync **record-by-record** across team iPhones via **Apple CloudKit / iCloud**.
 
-No Google login. No Firebase. Staff need an **Apple ID signed into iCloud** on each iPhone.
+Staff need an **Apple ID signed into iCloud** on each iPhone.
 
 ## Open & run
 

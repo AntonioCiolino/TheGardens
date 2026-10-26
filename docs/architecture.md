@@ -10,8 +10,6 @@
 | Platform (iOS) | `Gardens/…/Platform` | Core Image QR, AirPrint, camera scanner. |
 | UI (iOS) | `Gardens/…/Views` | SwiftUI; talks to `GardensSession` / `PlantRepository`. |
 
-No Google services in the stack.
-
 ## Catalog vs instance
 
 - **Catalog** (`PlantCatalogItem`): plant *type* — name, genus, care profile.

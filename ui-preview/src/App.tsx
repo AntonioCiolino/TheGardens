@@ -163,7 +163,7 @@ export default function App() {
         <p className="eyebrow">UI preview · not the Simulator</p>
         <h1>Gardens</h1>
         <p>
-          Web stand-in for the iOS app. Sync simulates <strong>iCloud / CloudKit</strong> (no Google).
+          Web stand-in for the iOS app. Sync simulates <strong>iCloud / CloudKit</strong>.
           Use <strong>Scan</strong> for QR → care log; <strong>Sync</strong> to connect iCloud and write a test plant.
         </p>
         <div className="splash-controls">
@@ -464,8 +464,7 @@ function SyncScreen({
       </div>
       <div className="form sync-form">
         <p className="hint">
-          Inventory syncs plant-by-plant via iCloud (CloudKit). Apple ID on the phone — no Google
-          login.
+          Inventory syncs plant-by-plant via iCloud. Each iPhone uses the Apple ID already signed in.
         </p>
         {iCloudConnected ? (
           <section className="sync-card">
