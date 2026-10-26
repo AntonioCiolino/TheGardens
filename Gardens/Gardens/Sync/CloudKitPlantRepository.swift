@@ -62,7 +62,7 @@ final class CloudKitPlantRepository: PlantRepository {
 
         let predicate = NSPredicate(format: "instanceID == %@", instanceID.uuidString)
         let query = CKQuery(recordType: RecordType.careEvent, predicate: predicate)
-        let historyRecords = try await queryRecords(query)
+        let historyRecords = (try? await queryRecords(query)) ?? []
         let history = historyRecords.compactMap(Self.careEvent(from:))
 
         return PlantInstanceDestination(
@@ -215,27 +215,36 @@ final class CloudKitPlantRepository: PlantRepository {
         }
     }
 
-    private func queryAll(
-        recordType: String,
-        sortKey: String,
-        ascending: Bool = true
-    ) async throws -> [CKRecord] {
+    private func queryAll(recordType: String) async throws -> [CKRecord] {
         let query = CKQuery(recordType: recordType, predicate: NSPredicate(value: true))
-        query.sortDescriptors = [NSSortDescriptor(key: sortKey, ascending: ascending)]
-        return try await queryRecords(query)
+        do {
+            return try await queryRecords(query)
+        } catch {
+            if Self.isMissingRecordType(error) {
+                return []
+            }
+            throw error
+        }
     }
 
     private func queryRecords(_ query: CKQuery) async throws -> [CKRecord] {
         var collected: [CKRecord] = []
         var cursor: CKQueryOperation.Cursor?
 
-        let first = try await database.records(matching: query, inZoneWith: nil)
-        for (_, result) in first.matchResults {
-            if let record = try? result.get() {
-                collected.append(record)
+        do {
+            let first = try await database.records(matching: query, inZoneWith: nil)
+            for (_, result) in first.matchResults {
+                if let record = try? result.get() {
+                    collected.append(record)
+                }
             }
+            cursor = first.queryCursor
+        } catch {
+            if Self.isMissingRecordType(error) {
+                return []
+            }
+            throw error
         }
-        cursor = first.queryCursor
 
         while let current = cursor {
             let page = try await database.records(continuingMatchFrom: current)
@@ -247,6 +256,27 @@ final class CloudKitPlantRepository: PlantRepository {
             cursor = page.queryCursor
         }
         return collected
+    }
+
+    /// CloudKit errors with "Did not find record type" until the first save creates the schema.
+    private static func isMissingRecordType(_ error: Error) -> Bool {
+        let text = error.localizedDescription
+        if text.localizedCaseInsensitiveContains("Did not find record type") {
+            return true
+        }
+        guard let ck = error as? CKError else { return false }
+        if let partial = ck.partialErrorsByItemID {
+            for (_, nested) in partial {
+                if isMissingRecordType(nested) { return true }
+            }
+        }
+        // Some SDKs surface this under unknownItem / invalidArguments / serverRejectedRequest.
+        switch ck.code {
+        case .unknownItem, .invalidArguments, .serverRejectedRequest:
+            return text.localizedCaseInsensitiveContains("record type")
+        default:
+            return false
+        }
     }
 
     private func photoData(from record: CKRecord) -> Data? {
