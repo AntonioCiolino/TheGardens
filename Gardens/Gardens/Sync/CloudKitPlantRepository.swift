@@ -98,6 +98,9 @@ final class CloudKitPlantRepository: PlantRepository {
                 record["photo"] = try Self.asset(from: photoData, name: instanceID.uuidString)
                 photoCache[instanceID] = photoData
             }
+            if let credit = draft.photoCredit, !credit.isEmpty {
+                record["photoCredit"] = credit
+            }
             instanceRecords.append(record)
             details.append(
                 PlantInstanceDetail(
@@ -106,7 +109,8 @@ final class CloudKitPlantRepository: PlantRepository {
                         catalogItemID: catalog.id,
                         arrivedOn: arrivedOn,
                         vendor: vendor,
-                        photoData: draft.photoData
+                        photoData: draft.photoData,
+                        photoCredit: draft.photoCredit
                     ),
                     catalog: catalog
                 )
@@ -160,7 +164,7 @@ final class CloudKitPlantRepository: PlantRepository {
         throw lastError
     }
 
-    func updateInstancePhoto(instanceID: UUID, photoData: Data?) async throws {
+    func updateInstancePhoto(instanceID: UUID, photoData: Data?, photoCredit: String?) async throws {
         try await requireiCloud()
         var lastError: Error = RepositoryError.instanceNotFound
         for _ in 0..<4 {
@@ -174,6 +178,11 @@ final class CloudKitPlantRepository: PlantRepository {
                 record["photo"] = try Self.asset(from: photoData, name: instanceID.uuidString)
             } else {
                 record["photo"] = nil
+            }
+            if let photoCredit, !photoCredit.isEmpty, photoData != nil {
+                record["photoCredit"] = photoCredit
+            } else {
+                record["photoCredit"] = nil
             }
             do {
                 _ = try await database.save(record)
@@ -492,6 +501,7 @@ final class CloudKitPlantRepository: PlantRepository {
             arrivedOn: record["arrivedOn"] as? Date ?? Date(),
             vendor: record["vendor"] as? String ?? "",
             photoData: photoData,
+            photoCredit: record["photoCredit"] as? String,
             createdAt: record["createdAt"] as? Date ?? Date()
         )
     }

@@ -10,6 +10,8 @@ public struct PlantInstance: Identifiable, Hashable, Codable, Sendable {
     public var vendor: String
     /// JPEG (or other) image bytes; platform layers choose encoding.
     public var photoData: Data?
+    /// Set when the photo is a reference image rather than a picture of this plant.
+    public var photoCredit: String?
     public var createdAt: Date
 
     public init(
@@ -18,6 +20,7 @@ public struct PlantInstance: Identifiable, Hashable, Codable, Sendable {
         arrivedOn: Date = Date(),
         vendor: String,
         photoData: Data? = nil,
+        photoCredit: String? = nil,
         createdAt: Date = Date()
     ) {
         self.id = id
@@ -25,6 +28,7 @@ public struct PlantInstance: Identifiable, Hashable, Codable, Sendable {
         self.arrivedOn = Calendar.current.startOfDay(for: arrivedOn)
         self.vendor = vendor.trimmingCharacters(in: .whitespacesAndNewlines)
         self.photoData = photoData
+        self.photoCredit = photoCredit
         self.createdAt = createdAt
     }
 }

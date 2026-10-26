@@ -55,7 +55,8 @@ final class SwiftDataPlantRepository: PlantRepository {
                 catalog: catalog,
                 arrivedOn: arrivedOn,
                 vendor: vendor,
-                photoData: draft.photoData
+                photoData: draft.photoData,
+                photoCredit: draft.photoCredit
             )
             modelContext.insert(instance)
             guard let detail = instance.toDetail() else {
@@ -80,7 +81,7 @@ final class SwiftDataPlantRepository: PlantRepository {
         try modelContext.save()
     }
 
-    func updateInstancePhoto(instanceID: UUID, photoData: Data?) async throws {
+    func updateInstancePhoto(instanceID: UUID, photoData: Data?, photoCredit: String?) async throws {
         let descriptor = FetchDescriptor<PlantInstanceEntity>(
             predicate: #Predicate { $0.id == instanceID }
         )
@@ -88,6 +89,7 @@ final class SwiftDataPlantRepository: PlantRepository {
             throw RepositoryError.instanceNotFound
         }
         instance.photoData = photoData
+        instance.photoCredit = photoData == nil ? nil : photoCredit
         try modelContext.save()
     }
 

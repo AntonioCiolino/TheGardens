@@ -17,6 +17,7 @@ public struct PlantIntakeDraft: Hashable, Sendable {
     public var vendor: String
     public var arrivedOn: Date
     public var photoData: Data?
+    public var photoCredit: String?
     public var careProfile: PlantCareProfile
     /// Number of physical plants in this arrival (each becomes its own instance + QR).
     public var quantity: Int
@@ -28,6 +29,7 @@ public struct PlantIntakeDraft: Hashable, Sendable {
         vendor: String = "",
         arrivedOn: Date = Date(),
         photoData: Data? = nil,
+        photoCredit: String? = nil,
         careProfile: PlantCareProfile = .empty,
         quantity: Int = 1
     ) {
@@ -37,6 +39,7 @@ public struct PlantIntakeDraft: Hashable, Sendable {
         self.vendor = vendor
         self.arrivedOn = arrivedOn
         self.photoData = photoData
+        self.photoCredit = photoCredit
         self.careProfile = careProfile
         self.quantity = max(1, quantity)
     }

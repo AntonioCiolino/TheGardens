@@ -47,7 +47,9 @@ struct PlantDetailView: View {
                 EditPlantPhotoSheet(
                     instanceID: destination.instance.id,
                     plantName: destination.catalog.name,
-                    initialPhoto: destination.instance.photoData
+                    genus: destination.catalog.genus,
+                    initialPhoto: destination.instance.photoData,
+                    initialCredit: destination.instance.photoCredit
                 ) {
                     Task { await reload() }
                 }
@@ -111,6 +113,11 @@ struct PlantDetailView: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 240)
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                if let credit = destination.instance.photoCredit, !credit.isEmpty {
+                    Text(credit)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             } else {
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(Color(.secondarySystemBackground))
@@ -279,7 +286,9 @@ struct PlantDetailView: View {
 private struct EditPlantPhotoSheet: View {
     let instanceID: UUID
     let plantName: String
+    let genus: String
     let initialPhoto: Data?
+    let initialCredit: String?
     var onSaved: () -> Void
 
     @EnvironmentObject private var session: GardensSession
@@ -287,7 +296,9 @@ private struct EditPlantPhotoSheet: View {
 
     @State private var photoData: Data?
     @State private var baseline: Data?
+    @State private var pendingCredit: String?
     @State private var isSaving = false
+    @State private var isLookingUp = false
     @State private var errorMessage: String?
 
     var body: some View {
@@ -302,8 +313,20 @@ private struct EditPlantPhotoSheet: View {
                             .frame(height: 280)
                             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     }
+                    if let pendingCredit, !pendingCredit.isEmpty {
+                        Text(pendingCredit)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
 
-                    PlantPhotoPicker(photoData: $photoData, replaceOnly: photoData != nil)
+                    PlantPhotoPicker(photoData: userPhoto, replaceOnly: photoData != nil)
+                    Button {
+                        Task { await loadReference() }
+                    } label: {
+                        Label(isLookingUp ? "Looking up…" : "Get reference photo", systemImage: "photo.badge.plus")
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(isLookingUp || isSaving)
 
                     if isSaving {
                         ProgressView("Saving photo…")
@@ -322,12 +345,13 @@ private struct EditPlantPhotoSheet: View {
                 }
             }
             .onAppear {
-                photoData = initialPhoto
                 baseline = initialPhoto
+                pendingCredit = initialCredit
+                photoData = initialPhoto
             }
             .onChange(of: photoData) { _, newValue in
                 guard newValue != baseline else { return }
-                Task { await persist(newValue) }
+                Task { await persist(newValue, credit: pendingCredit) }
             }
             .alert("Couldn’t save photo", isPresented: Binding(
                 get: { errorMessage != nil },
@@ -340,16 +364,44 @@ private struct EditPlantPhotoSheet: View {
         }
     }
 
+    private var userPhoto: Binding<Data?> {
+        Binding(
+            get: { photoData },
+            set: { newValue in
+                pendingCredit = nil
+                photoData = newValue
+            }
+        )
+    }
+
     @MainActor
-    private func persist(_ data: Data?) async {
+    private func loadReference() async {
+        isLookingUp = true
+        defer { isLookingUp = false }
+        do {
+            let suggestion = try await PlantReferenceLoader.load(name: plantName, genus: genus)
+            guard let data = suggestion.photoData else {
+                errorMessage = "No reference photo for \(plantName)."
+                return
+            }
+            pendingCredit = suggestion.photoCredit
+            photoData = data
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    @MainActor
+    private func persist(_ data: Data?, credit: String?) async {
         isSaving = true
         defer { isSaving = false }
         do {
-            try await session.updatePlantPhoto(instanceID: instanceID, photoData: data)
+            try await session.updatePlantPhoto(instanceID: instanceID, photoData: data, photoCredit: credit)
             baseline = data
             onSaved()
         } catch {
             photoData = baseline
+            pendingCredit = initialCredit
             errorMessage = error.localizedDescription
         }
     }

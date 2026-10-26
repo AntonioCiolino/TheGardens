@@ -53,6 +53,7 @@ final class PlantInstanceEntity {
     var arrivedOn: Date
     var vendor: String
     @Attribute(.externalStorage) var photoData: Data?
+    var photoCredit: String?
     var createdAt: Date
     var catalog: CatalogItemEntity?
 
@@ -65,6 +66,7 @@ final class PlantInstanceEntity {
         arrivedOn: Date,
         vendor: String,
         photoData: Data?,
+        photoCredit: String? = nil,
         createdAt: Date = Date()
     ) {
         self.id = id
@@ -72,6 +74,7 @@ final class PlantInstanceEntity {
         self.arrivedOn = arrivedOn
         self.vendor = vendor
         self.photoData = photoData
+        self.photoCredit = photoCredit
         self.createdAt = createdAt
         self.careEvents = []
     }
@@ -84,6 +87,7 @@ final class PlantInstanceEntity {
             arrivedOn: arrivedOn,
             vendor: vendor,
             photoData: photoData,
+            photoCredit: photoCredit,
             createdAt: createdAt
         )
     }

@@ -24,7 +24,14 @@ struct AddPlantView: View {
     @State private var arrivedOn = Date()
     @State private var quantity = 1
     @State private var photoData: Data?
+    @State private var photoCredit: String?
+    @State private var photoSource: ReferencePhotoSource = .empty
     @State private var photoIsFromCatalog = false
+    @State private var autoGenus = ""
+    @State private var autoCare = PlantCareProfile.empty
+    @State private var lookupTask: Task<Void, Never>?
+    @State private var isLookingUp = false
+    @State private var lookupNote: String?
     @State private var careInstructions = ""
     @State private var wateringCheck = ""
     @State private var healthCheck = ""
@@ -46,6 +53,7 @@ struct AddPlantView: View {
                 vendor: vendor,
                 arrivedOn: arrivedOn,
                 photoData: photoData,
+                photoCredit: photoCredit,
                 careProfile: PlantCareProfile(
                     careInstructions: careInstructions,
                     wateringCheckGuidance: wateringCheck,
@@ -61,6 +69,7 @@ struct AddPlantView: View {
                 vendor: vendor,
                 arrivedOn: arrivedOn,
                 photoData: photoData,
+                photoCredit: photoCredit,
                 quantity: quantity
             )
         }
@@ -127,12 +136,29 @@ struct AddPlantView: View {
                     Text("Using the photo already on file for this plant type. You can replace it if this shipment looks different.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-                    PlantPhotoPicker(photoData: $photoData, replaceOnly: true)
+                    PlantPhotoPicker(photoData: userPhoto, replaceOnly: true)
                 } else {
-                    PlantPhotoPicker(photoData: $photoData)
+                    if photoData != nil {
+                        catalogPhotoPreview
+                    }
+                    if let photoCredit, photoSource == .reference {
+                        Text(photoCredit)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                    PlantPhotoPicker(photoData: userPhoto, replaceOnly: photoData != nil)
                 }
+                Button {
+                    lookupTask?.cancel()
+                    Task { await lookupReference(forcePhoto: true) }
+                } label: {
+                    Label(isLookingUp ? "Looking up…" : "Get reference photo", systemImage: "photo.badge.plus")
+                }
+                .disabled(isLookingUp || !canLookupReference)
             } header: {
                 Text("Photo")
+            } footer: {
+                Text("A photo you take is the Gardens photo. Get reference photo fills a Wikipedia picture when you don’t have one yet.")
             }
 
             Section("This arrival") {
@@ -149,10 +175,14 @@ struct AddPlantView: View {
             }
 
             if mode == .newType {
-                Section("Care defaults (for new catalog types)") {
+                Section {
                     TextField("Care instructions", text: $careInstructions, axis: .vertical)
                     TextField("How to check watering", text: $wateringCheck, axis: .vertical)
                     TextField("How to check health", text: $healthCheck, axis: .vertical)
+                } header: {
+                    Text("Care defaults (for new catalog types)")
+                } footer: {
+                    Text(lookupNote ?? "Type a common name or a genus. Gardens fills these as suggestions you can edit.")
                 }
             }
         }
@@ -177,8 +207,11 @@ struct AddPlantView: View {
                 }
                 Task { await loadReferencePhoto() }
             } else {
-                if photoIsFromCatalog {
+                lookupTask?.cancel()
+                if photoIsFromCatalog || photoSource == .catalog {
                     photoData = nil
+                    photoCredit = nil
+                    photoSource = .empty
                     photoIsFromCatalog = false
                 }
             }
@@ -195,8 +228,14 @@ struct AddPlantView: View {
                 photoIsFromCatalog = false
             }
         }
-        .onChange(of: name) { _, _ in refreshCatalogHint() }
-        .onChange(of: genus) { _, _ in refreshCatalogHint() }
+        .onChange(of: name) { _, _ in
+            refreshCatalogHint()
+            scheduleLookup()
+        }
+        .onChange(of: genus) { _, _ in
+            refreshCatalogHint()
+            scheduleLookup()
+        }
         .alert("Couldn’t save", isPresented: Binding(
             get: { errorMessage != nil },
             set: { if !$0 { errorMessage = nil } }
@@ -237,9 +276,13 @@ struct AddPlantView: View {
         guard mode == .existingType, let id = selectedCatalogID else { return }
         if let data = try? await session.repository.referencePhoto(for: id) {
             photoData = data
+            photoCredit = nil
+            photoSource = .catalog
             photoIsFromCatalog = true
         } else {
             photoData = nil
+            photoCredit = nil
+            photoSource = .empty
             photoIsFromCatalog = false
         }
     }
@@ -260,6 +303,103 @@ struct AddPlantView: View {
         }
     }
 
+    private var userPhoto: Binding<Data?> {
+        Binding(
+            get: { photoData },
+            set: { newValue in
+                photoData = newValue
+                photoIsFromCatalog = false
+                if newValue == nil {
+                    photoSource = .empty
+                    photoCredit = nil
+                } else {
+                    photoSource = .user
+                    photoCredit = nil
+                }
+            }
+        )
+    }
+
+    private var canLookupReference: Bool {
+        switch mode {
+        case .newType:
+            return name.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3
+                || genus.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3
+        case .existingType:
+            return selectedCatalog != nil
+        }
+    }
+
+    private func scheduleLookup() {
+        lookupTask?.cancel()
+        guard mode == .newType else { return }
+        lookupTask = Task {
+            try? await Task.sleep(for: .milliseconds(700))
+            guard !Task.isCancelled else { return }
+            await lookupReference(forcePhoto: false)
+        }
+    }
+
+    @MainActor
+    private func lookupReference(forcePhoto: Bool) async {
+        let lookupName: String
+        let lookupGenus: String
+        switch mode {
+        case .newType:
+            lookupName = name
+            lookupGenus = genus
+        case .existingType:
+            lookupName = selectedCatalog?.name ?? ""
+            lookupGenus = selectedCatalog?.genus ?? ""
+        }
+        guard lookupName.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3
+            || lookupGenus.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3
+        else { return }
+
+        isLookingUp = true
+        defer { isLookingUp = false }
+        do {
+            let suggestion = try await PlantReferenceLoader.load(name: lookupName, genus: lookupGenus)
+            guard !Task.isCancelled else { return }
+            if mode == .newType {
+                applyTextSuggestions(suggestion)
+            }
+            let mayReplacePhoto = forcePhoto || photoSource == .empty || photoSource == .reference
+            if mayReplacePhoto, let data = suggestion.photoData {
+                photoCredit = suggestion.photoCredit
+                photoSource = .reference
+                photoIsFromCatalog = false
+                photoData = data
+            } else if suggestion.photoData == nil {
+                lookupNote = "No reference photo for that name. \(suggestion.careNote)"
+            }
+        } catch {
+            lookupNote = error.localizedDescription
+        }
+    }
+
+    private func applyTextSuggestions(_ suggestion: PlantReferenceSuggestion) {
+        if genus.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || genus == autoGenus {
+            genus = suggestion.scientificName
+            autoGenus = suggestion.scientificName
+        }
+        if careInstructions.isEmpty || careInstructions == autoCare.careInstructions {
+            careInstructions = suggestion.careProfile.careInstructions
+        }
+        if wateringCheck.isEmpty || wateringCheck == autoCare.wateringCheckGuidance {
+            wateringCheck = suggestion.careProfile.wateringCheckGuidance
+        }
+        if healthCheck.isEmpty || healthCheck == autoCare.healthCheckGuidance {
+            healthCheck = suggestion.careProfile.healthCheckGuidance
+        }
+        autoCare = PlantCareProfile(
+            careInstructions: careInstructions,
+            wateringCheckGuidance: wateringCheck,
+            healthCheckGuidance: healthCheck
+        )
+        lookupNote = suggestion.careNote
+    }
+
     @MainActor
     private func save() async {
         isSaving = true
@@ -273,4 +413,11 @@ struct AddPlantView: View {
             errorMessage = error.localizedDescription
         }
     }
+}
+
+private enum ReferencePhotoSource {
+    case empty
+    case user
+    case reference
+    case catalog
 }

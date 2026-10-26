@@ -60,7 +60,8 @@ public final class InMemoryPlantRepository: PlantRepository, @unchecked Sendable
                 catalogItemID: catalogItem.id,
                 arrivedOn: arrivedOn,
                 vendor: vendor,
-                photoData: draft.photoData
+                photoData: draft.photoData,
+                photoCredit: draft.photoCredit
             )
             instances[instance.id] = instance
             details.append(PlantInstanceDetail(instance: instance, catalog: catalogItem))
@@ -78,13 +79,14 @@ public final class InMemoryPlantRepository: PlantRepository, @unchecked Sendable
         careEvents[event.id] = event
     }
 
-    public func updateInstancePhoto(instanceID: UUID, photoData: Data?) async throws {
+    public func updateInstancePhoto(instanceID: UUID, photoData: Data?, photoCredit: String?) async throws {
         lock.lock()
         defer { lock.unlock() }
         guard var instance = instances[instanceID] else {
             throw InMemoryRepositoryError.instanceNotFound
         }
         instance.photoData = photoData
+        instance.photoCredit = photoData == nil ? nil : photoCredit
         instances[instanceID] = instance
     }
 

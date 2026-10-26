@@ -89,7 +89,7 @@ final class InMemoryPlantRepositoryTests: XCTestCase {
         let drop = batch.instances[1].id
         let jpeg = Data([0xFF, 0xD8, 0xFF, 0xD9])
 
-        try await repo.updateInstancePhoto(instanceID: drop, photoData: jpeg)
+        try await repo.updateInstancePhoto(instanceID: drop, photoData: jpeg, photoCredit: nil)
         let updated = try await repo.destination(for: drop)
         XCTAssertEqual(updated?.instance.photoData, jpeg)
 

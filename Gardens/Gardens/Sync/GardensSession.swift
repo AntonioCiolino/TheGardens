@@ -115,8 +115,8 @@ final class GardensSession: ObservableObject {
 
     // MARK: - Data
 
-    func updatePlantPhoto(instanceID: UUID, photoData: Data?) async throws {
-        try await repository.updateInstancePhoto(instanceID: instanceID, photoData: photoData)
+    func updatePlantPhoto(instanceID: UUID, photoData: Data?, photoCredit: String?) async throws {
+        try await repository.updateInstancePhoto(instanceID: instanceID, photoData: photoData, photoCredit: photoCredit)
         await refresh()
     }
 
