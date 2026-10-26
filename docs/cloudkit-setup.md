@@ -58,7 +58,21 @@ Deploy Development → Production when you ship TestFlight.
 
 If the write fails with “not authenticated” / account errors, fix iCloud sign-in and the App ID CloudKit container first.
 
-## 5. Team use
+## 5. Delete
+
+Swipe a plant and confirm **Delete**. That calls `CKDatabase.deleteRecord` for the plant’s care notes, the `PlantInstance`, and — when no plant of that type remains — the `CatalogItem`. The app then reads each ID back. If the record is still there, Delete fails and the error stays on screen.
+
+Existing type only lists types that still have a plant. A type with other plants still in the list stays, so you can add another of that plant.
+
+CloudKit Console → Schema → Security Roles, Development:
+
+- **World**: Read
+- **Authenticated**: Create
+- **Creator**: Read and Write
+
+on `CatalogItem`, `PlantInstance`, `CareEvent`, and `InventoryManifest`. Creator without Write cannot delete, and the record stays in the public database. Deploy the schema to Production when you ship.
+
+## 6. Team use
 
 1. Each person: iPhone → Settings → signed into **iCloud** with their Apple ID.
 2. Open Gardens → **Sync** → **Connect iCloud**.

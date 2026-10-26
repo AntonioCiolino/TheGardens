@@ -221,36 +221,42 @@ final class CloudKitPlantRepository: PlantRepository {
         let catalogID = record["catalogItemID"] as? String
         let careIDs = Self.stringList(record, key: "careEventIDs")
         for careID in careIDs {
-            try await deleteIfPresent(Self.recordID(careID))
+            let careRecordID = Self.recordID(careID)
+            try await deleteIfPresent(careRecordID)
+            try await assertDeleted(careRecordID, what: "care note")
         }
         try await deleteIfPresent(record.recordID)
+        try await assertDeleted(record.recordID, what: "plant")
         photoCache.removeValue(forKey: instanceID)
+
+        var dropCatalog: String?
+        if let catalogID {
+            let manifest = try await loadManifest()
+            let others = Self.stringList(manifest, key: "instanceIDs").filter { $0 != instanceID.uuidString }
+            let remaining = try await fetchRecords(ids: Self.recordIDs(others))
+            let stillUsed = remaining.contains { ($0["catalogItemID"] as? String) == catalogID }
+            if !stillUsed {
+                let catalogRecordID = Self.recordID(catalogID)
+                try await deleteIfPresent(catalogRecordID)
+                try await assertDeleted(catalogRecordID, what: "plant type")
+                dropCatalog = catalogID
+            }
+        }
 
         for _ in 0..<4 {
             let manifest = try await loadManifest()
             guard manifest.recordChangeTag != nil else { return }
             Self.remove([instanceID.uuidString], from: manifest, key: "instanceIDs")
-            var removedCatalog: String?
-            if let catalogID {
-                let remaining = try await fetchRecords(
-                    ids: Self.recordIDs(Self.stringList(manifest, key: "instanceIDs"))
-                )
-                let stillUsed = remaining.contains { ($0["catalogItemID"] as? String) == catalogID }
-                if !stillUsed {
-                    Self.remove([catalogID], from: manifest, key: "catalogIDs")
-                    removedCatalog = catalogID
-                }
+            if let dropCatalog {
+                Self.remove([dropCatalog], from: manifest, key: "catalogIDs")
             }
             do {
                 _ = try await database.save(manifest)
-                if let removedCatalog {
-                    try? await deleteIfPresent(Self.recordID(removedCatalog))
-                }
                 return
             } catch let error as CKError where error.code == .serverRecordChanged {
                 continue
             } catch {
-                // The plant record is already gone. A later fetch skips a missing ID.
+                // The records are already gone. A later fetch skips a missing ID.
                 return
             }
         }
@@ -482,10 +488,26 @@ final class CloudKitPlantRepository: PlantRepository {
 
     private func deleteIfPresent(_ id: CKRecord.ID) async throws {
         do {
-            try await database.deleteRecord(withID: id)
+            _ = try await database.deleteRecord(withID: id)
         } catch let error as CKError where error.code == .unknownItem {
             return
+        } catch let error as CKError where error.code == .permissionFailure || error.code == .notAuthenticated {
+            throw CloudSaveError(
+                message: "iCloud refused to delete this record (\(error.localizedDescription)). In CloudKit Console → Schema → Security Roles, Creator needs Write on CatalogItem, PlantInstance, CareEvent, and InventoryManifest."
+            )
         }
+    }
+
+    /// `record(for:)` returns unknownItem once CloudKit has actually deleted the record.
+    private func assertDeleted(_ id: CKRecord.ID, what: String) async throws {
+        do {
+            _ = try await database.record(for: id)
+        } catch let error as CKError where error.code == .unknownItem {
+            return
+        } catch {
+            throw error
+        }
+        throw CloudSaveError(message: "iCloud still has this \(what) after delete.")
     }
 
     private static func recordIDs(_ names: [String]) -> [CKRecord.ID] {

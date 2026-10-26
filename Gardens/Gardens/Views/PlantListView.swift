@@ -14,6 +14,7 @@ struct PlantListView: View {
     @State private var batchToPrint: PlantArrivalBatch?
     @State private var path = NavigationPath()
     @State private var pendingDelete: PlantInstanceDetail?
+    @State private var showingDeleteConfirm = false
     @State private var isDeleting = false
     @State private var deleteError: String?
 
@@ -130,20 +131,21 @@ struct PlantListView: View {
             }
             .confirmationDialog(
                 "Delete this plant?",
-                isPresented: Binding(
-                    get: { pendingDelete != nil },
-                    set: { if !$0 { pendingDelete = nil } }
-                ),
+                isPresented: $showingDeleteConfirm,
                 titleVisibility: .visible
             ) {
                 Button("Delete \(pendingDelete?.catalog.name ?? "plant")", role: .destructive) {
-                    guard let detail = pendingDelete else { return }
+                    let detail = pendingDelete
                     pendingDelete = nil
-                    Task { await delete(detail) }
+                    if let detail {
+                        Task { await delete(detail) }
+                    }
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("Cancel", role: .cancel) {
+                    pendingDelete = nil
+                }
             } message: {
-                Text("Are you sure? This removes the plant and its care notes from the inventory.")
+                Text("This deletes the plant and its care notes from iCloud. If it is the last plant of this type, the type is deleted too.")
             }
             .overlay {
                 if isDeleting {
@@ -173,6 +175,7 @@ struct PlantListView: View {
     private func deleteSwipe(for detail: PlantInstanceDetail) -> some View {
         Button(role: .destructive) {
             pendingDelete = detail
+            showingDeleteConfirm = true
         } label: {
             Label("Delete", systemImage: "trash")
         }

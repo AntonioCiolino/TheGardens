@@ -122,6 +122,13 @@ final class GardensSession: ObservableObject {
 
     func deletePlant(instanceID: UUID) async throws {
         try await repository.deleteInstance(instanceID: instanceID)
+        if usesSharedCloud, let localRepo {
+            do {
+                try await localRepo.deleteInstance(instanceID: instanceID)
+            } catch RepositoryError.instanceNotFound {
+                // Shared plants are not copied into the on-device store.
+            }
+        }
         instances.removeAll { $0.instance.id == instanceID }
         await refresh()
     }
