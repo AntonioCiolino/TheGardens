@@ -45,7 +45,7 @@ struct SignInView: View {
                 }
             }
 
-            if !hasSyncTestPlant {
+            if session.instances.isEmpty {
                 Section {
                     Button {
                         isTesting = true
@@ -74,7 +74,7 @@ struct SignInView: View {
                 } header: {
                     Text("Test a record")
                 } footer: {
-                    Text("Creates one “Gardens Sync Test” plant. This section hides once that plant is in the list.")
+                    Text("Creates one “Gardens Sync Test” plant. This section hides once any plant is already in the list.")
                 }
             }
 
@@ -103,10 +103,4 @@ struct SignInView: View {
         }
     }
 
-    private var hasSyncTestPlant: Bool {
-        session.instances.contains {
-            $0.catalog.name == "Gardens Sync Test"
-                && $0.catalog.genus.caseInsensitiveCompare("Testus") == .orderedSame
-        }
-    }
 }

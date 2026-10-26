@@ -225,9 +225,7 @@ export default function App() {
           <SyncScreen
             iCloudConnected={iCloudConnected}
             syncStatus={syncStatus}
-            hasSyncTest={plants.some(
-              (p) => p.name === "Gardens Sync Test" && p.genus === "Testus"
-            )}
+            hasSyncTest={plants.length > 0}
             onCancel={() => setScreen("list")}
             onConnect={() => {
               setICloudConnected(true);
@@ -586,7 +584,7 @@ function SyncScreen({
             <button type="button" className="primary-btn" onClick={onWriteTest}>
               Write test plant + care note
             </button>
-            <p className="hint">Creates one “Gardens Sync Test” plant. This section hides once that plant is in the list.</p>
+            <p className="hint">Creates one “Gardens Sync Test” plant. This section hides once any plant is already in the list.</p>
           </section>
         )}
         <p className="sync-footer">{syncStatus}</p>

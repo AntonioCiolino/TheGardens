@@ -52,7 +52,7 @@ Deploy Development → Production when you ship TestFlight.
 
 1. Run Gardens from Xcode on an iPhone signed into iCloud.
 2. Tap **Sync** → **Connect iCloud** (status should say iCloud connected).
-3. Tap **Write test plant + care note**.
+3. Tap **Write test plant + care note**. This section is hidden when the list already has any plant — an existing record means the write path already succeeded.
 4. Expect **Test OK** and a list row named **Gardens Sync Test**.
 5. In [CloudKit Console](https://icloud.developer.apple.com/) → container `iCloud.com.gardens.intake` → **Public Database** → Records, confirm `CatalogItem` / `PlantInstance` / `CareEvent`.
 
