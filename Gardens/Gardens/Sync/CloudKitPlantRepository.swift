@@ -21,7 +21,8 @@ final class CloudKitPlantRepository: PlantRepository {
 
     func fetchCatalog() async throws -> [PlantCatalogItem] {
         try await requireiCloud()
-        let records = try await queryAll(recordType: RecordType.catalog, sortKey: "name")
+        // Missing record type (first launch) → empty; first save creates the schema.
+        let records = try await queryAll(recordType: RecordType.catalog)
         return records.compactMap(Self.catalog(from:)).sorted {
             $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
         }
@@ -30,7 +31,7 @@ final class CloudKitPlantRepository: PlantRepository {
     func fetchInstances() async throws -> [PlantInstanceDetail] {
         try await requireiCloud()
         let catalogByID = Dictionary(uniqueKeysWithValues: try await fetchCatalog().map { ($0.id, $0) })
-        let records = try await queryAll(recordType: RecordType.instance, sortKey: "arrivedOn", ascending: false)
+        let records = try await queryAll(recordType: RecordType.instance)
         return records.compactMap { record in
             guard
                 let instance = Self.instance(from: record, photoData: photoData(from: record)),
@@ -38,6 +39,7 @@ final class CloudKitPlantRepository: PlantRepository {
             else { return nil }
             return PlantInstanceDetail(instance: instance, catalog: catalog)
         }
+        .sorted { $0.instance.arrivedOn > $1.instance.arrivedOn }
     }
 
     func destination(for instanceID: UUID) async throws -> PlantInstanceDestination? {

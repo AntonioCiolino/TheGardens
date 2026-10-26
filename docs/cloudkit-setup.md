@@ -21,18 +21,21 @@ Until iCloud is available, the app uses on-device SwiftData for that phone only.
 2. Signing Team set; entitlements file is `Gardens/Resources/Gardens.entitlements`.
 3. Run on a real iPhone signed into iCloud (Simulator iCloud can be flaky).
 
-## 3. CloudKit Dashboard (first run)
+## 3. CloudKit schema (first run)
 
-1. [CloudKit Console](https://icloud.developer.apple.com/) → your container → **Public Database**.
-2. After the first successful save from the app, confirm record types exist (or create them):
+**Development:** the app’s first successful **save** creates record types. If you see `Did not find record type: CatalogItem`, pull the latest app (it treats that as empty and then saves) **or** create the types once in the dashboard:
 
-| Record type | Key fields |
+1. [CloudKit Console](https://icloud.developer.apple.com/) → container **`iCloud.com.gardens.intake`**
+2. Environment: **Development** → **Public Database** → Schema → Record Types → **+**
+
+| Record type | Fields (type) |
 | --- | --- |
-| `CatalogItem` | `id`, `name`, `genus`, `careInstructions`, `wateringCheckGuidance`, `healthCheckGuidance`, `createdAt` |
-| `PlantInstance` | `id`, `catalogItemID`, `arrivedOn`, `vendor`, `photo` (Asset), `createdAt` |
-| `CareEvent` | `id`, `instanceID`, `kind`, `performedAt`, `wateringObservation`, `healthObservation`, `notes` |
+| `CatalogItem` | `id` String, `name` String, `genus` String, `careInstructions` String, `wateringCheckGuidance` String, `healthCheckGuidance` String, `createdAt` Date/Time |
+| `PlantInstance` | `id` String, `catalogItemID` String, `arrivedOn` Date/Time, `vendor` String, `photo` Asset, `createdAt` Date/Time |
+| `CareEvent` | `id` String, `instanceID` String, `kind` String, `performedAt` Date/Time, `wateringObservation` String, `healthObservation` String, `notes` String |
 
-3. Deploy Development → Production when you’re ready for TestFlight / App Store.
+3. Save schema. Then retry **Write test plant** in the app.
+4. Deploy Development → Production when you’re ready for TestFlight / App Store.
 
 ## 4. Test a record (smoke test)
 
