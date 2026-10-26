@@ -14,7 +14,18 @@ final class SwiftDataPlantRepository: PlantRepository {
         let descriptor = FetchDescriptor<CatalogItemEntity>(
             sortBy: [SortDescriptor(\.name)]
         )
-        return try modelContext.fetch(descriptor).map { $0.toDomain() }
+        let catalogs = try modelContext.fetch(descriptor)
+        let instances = try modelContext.fetch(FetchDescriptor<PlantInstanceEntity>())
+        let live = Set(instances.compactMap { $0.catalog?.id })
+        var removed = false
+        for item in catalogs where !live.contains(item.id) {
+            modelContext.delete(item)
+            removed = true
+        }
+        if removed {
+            try modelContext.save()
+        }
+        return catalogs.filter { live.contains($0.id) }.map { $0.toDomain() }
     }
 
     func fetchInstances() async throws -> [PlantInstanceDetail] {
@@ -100,8 +111,17 @@ final class SwiftDataPlantRepository: PlantRepository {
         guard let instance = try modelContext.fetch(descriptor).first else {
             throw RepositoryError.instanceNotFound
         }
+        let catalog = instance.catalog
         modelContext.delete(instance)
         try modelContext.save()
+        if let catalog {
+            let stillUsed = try modelContext.fetch(FetchDescriptor<PlantInstanceEntity>())
+                .contains { $0.catalog?.id == catalog.id }
+            if !stillUsed {
+                modelContext.delete(catalog)
+                try modelContext.save()
+            }
+        }
     }
 
     func updateCareProfile(catalogItemID: UUID, profile: PlantCareProfile) async throws {

@@ -15,6 +15,7 @@
 - **Catalog** (`PlantCatalogItem`): plant *type* — name, genus, care profile.
 - **Instance** (`PlantInstance`): one physical plant — photo, vendor, date arrived, `catalogItemID`.
 - Intake matches name+genus and reuses the catalog row when found.
+- Deleting the last physical plant of a type removes that catalog record. Existing type only lists types that still have a plant.
 
 No store-location field.
 

@@ -26,10 +26,19 @@ final class CloudKitPlantRepository: PlantRepository {
     func fetchCatalog() async throws -> [PlantCatalogItem] {
         try await requireiCloud()
         let manifest = try await loadManifest()
-        let records = try await fetchRecords(ids: Self.recordIDs(Self.stringList(manifest, key: "catalogIDs")))
-        return records.compactMap(Self.catalog(from:)).sorted {
-            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        let liveIDs = try await catalogIDsInUse(on: manifest)
+        let catalogIDs = Self.stringList(manifest, key: "catalogIDs")
+        let orphans = catalogIDs.filter { !liveIDs.contains($0) }
+        if !orphans.isEmpty {
+            // Earlier deletes removed the plants but left the type. Drop those so Existing type matches the list.
+            try? await pruneCatalogs(orphans)
         }
+        let records = try await fetchRecords(ids: Self.recordIDs(catalogIDs))
+        return records.compactMap(Self.catalog(from:))
+            .filter { liveIDs.contains($0.id.uuidString) }
+            .sorted {
+                $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+            }
     }
 
     func fetchInstances() async throws -> [PlantInstanceDetail] {
@@ -209,6 +218,7 @@ final class CloudKitPlantRepository: PlantRepository {
         } catch let error as CKError where error.code == .unknownItem {
             throw RepositoryError.instanceNotFound
         }
+        let catalogID = record["catalogItemID"] as? String
         let careIDs = Self.stringList(record, key: "careEventIDs")
         for careID in careIDs {
             try await deleteIfPresent(Self.recordID(careID))
@@ -220,8 +230,22 @@ final class CloudKitPlantRepository: PlantRepository {
             let manifest = try await loadManifest()
             guard manifest.recordChangeTag != nil else { return }
             Self.remove([instanceID.uuidString], from: manifest, key: "instanceIDs")
+            var removedCatalog: String?
+            if let catalogID {
+                let remaining = try await fetchRecords(
+                    ids: Self.recordIDs(Self.stringList(manifest, key: "instanceIDs"))
+                )
+                let stillUsed = remaining.contains { ($0["catalogItemID"] as? String) == catalogID }
+                if !stillUsed {
+                    Self.remove([catalogID], from: manifest, key: "catalogIDs")
+                    removedCatalog = catalogID
+                }
+            }
             do {
                 _ = try await database.save(manifest)
+                if let removedCatalog {
+                    try? await deleteIfPresent(Self.recordID(removedCatalog))
+                }
                 return
             } catch let error as CKError where error.code == .serverRecordChanged {
                 continue
@@ -359,6 +383,33 @@ final class CloudKitPlantRepository: PlantRepository {
             }
             try await verifySaved(recordID, type: RecordType.catalog, keys: ["name", "genus", "createdAt"])
             return item
+        }
+    }
+
+    private func catalogIDsInUse(on manifest: CKRecord) async throws -> Set<String> {
+        let records = try await fetchRecords(ids: Self.recordIDs(Self.stringList(manifest, key: "instanceIDs")))
+        return Set(records.compactMap { $0["catalogItemID"] as? String })
+    }
+
+    /// Removes catalog IDs that no remaining plant references. Recomputes on conflict so a new arrival is not deleted.
+    private func pruneCatalogs(_ orphans: [String]) async throws {
+        guard !orphans.isEmpty else { return }
+        for _ in 0..<4 {
+            let manifest = try await loadManifest()
+            guard manifest.recordChangeTag != nil else { return }
+            let live = try await catalogIDsInUse(on: manifest)
+            let drop = Self.stringList(manifest, key: "catalogIDs").filter { orphans.contains($0) && !live.contains($0) }
+            if drop.isEmpty { return }
+            Self.remove(drop, from: manifest, key: "catalogIDs")
+            do {
+                _ = try await database.save(manifest)
+                for id in drop {
+                    try await deleteIfPresent(Self.recordID(id))
+                }
+                return
+            } catch let error as CKError where error.code == .serverRecordChanged {
+                continue
+            }
         }
     }
 

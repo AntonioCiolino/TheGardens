@@ -13,7 +13,8 @@ public protocol PlantRepository: AnyObject {
     /// Replaces or clears the photo on one physical plant.
     /// `photoCredit` is kept when the image is a reference photo, and cleared for a picture of the plant.
     func updateInstancePhoto(instanceID: UUID, photoData: Data?, photoCredit: String?) async throws
-    /// Deletes one physical plant and its care notes. The shared plant type stays.
+    /// Deletes one physical plant and its care notes.
+    /// When no plants of that type remain, the type is removed so it no longer appears as an existing plant.
     func deleteInstance(instanceID: UUID) async throws
     /// Most recent photo already stored for this catalog type (for restock intake).
     func referencePhoto(for catalogItemID: UUID) async throws -> Data?

@@ -11,7 +11,12 @@ public final class InMemoryPlantRepository: PlantRepository, @unchecked Sendable
 
     public func fetchCatalog() async throws -> [PlantCatalogItem] {
         lock.withLock {
-            catalog.values.sorted {
+            let live = Set(instances.values.map(\.catalogItemID))
+            let stale = catalog.keys.filter { !live.contains($0) }
+            for id in stale {
+                catalog.removeValue(forKey: id)
+            }
+            return catalog.values.sorted {
                 $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
             }
         }
@@ -93,10 +98,14 @@ public final class InMemoryPlantRepository: PlantRepository, @unchecked Sendable
     public func deleteInstance(instanceID: UUID) async throws {
         lock.lock()
         defer { lock.unlock() }
-        guard instances.removeValue(forKey: instanceID) != nil else {
+        guard let removed = instances.removeValue(forKey: instanceID) else {
             throw InMemoryRepositoryError.instanceNotFound
         }
         careEvents = careEvents.filter { $0.value.instanceID != instanceID }
+        let stillUsed = instances.values.contains { $0.catalogItemID == removed.catalogItemID }
+        if !stillUsed {
+            catalog.removeValue(forKey: removed.catalogItemID)
+        }
     }
 
     public func updateCareProfile(catalogItemID: UUID, profile: PlantCareProfile) async throws {

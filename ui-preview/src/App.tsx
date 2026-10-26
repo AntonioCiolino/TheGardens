@@ -208,7 +208,10 @@ export default function App() {
               setScreen("detail");
             }}
             onDelete={(id) => {
-              setPlants((prev) => prev.filter((p) => p.id !== id));
+              const next = plants.filter((p) => p.id !== id);
+              const live = new Set(next.map((p) => p.catalogId));
+              setPlants(next);
+              setCatalog((cats) => cats.filter((c) => live.has(c.id)));
               if (selectedId === id) setSelectedId(null);
             }}
             onRefresh={() => {
@@ -619,10 +622,12 @@ function AddScreen({
   const [watering, setWatering] = useState("");
   const [health, setHealth] = useState("");
 
-  const selected = catalog.find((c) => c.id === catalogId);
+  const stocked = catalog.filter((c) => plants.some((p) => p.catalogId === c.id));
+  const activeCatalogId = stocked.some((c) => c.id === catalogId) ? catalogId : (stocked[0]?.id ?? "");
+  const selected = stocked.find((c) => c.id === activeCatalogId);
   const referencePhoto =
     mode === "existing"
-      ? plants.find((p) => p.catalogId === catalogId && p.photo)?.photo
+      ? plants.find((p) => p.catalogId === activeCatalogId && p.photo)?.photo
       : undefined;
 
   const valid =
@@ -634,7 +639,7 @@ function AddScreen({
 
   const hint =
     mode === "new" && name.trim() && genus.trim()
-      ? catalog.find(
+      ? stocked.find(
           (c) =>
             c.name.toLowerCase() === name.trim().toLowerCase() &&
             c.genus.toLowerCase() === genus.trim().toLowerCase()
@@ -661,7 +666,7 @@ function AddScreen({
             if (mode === "existing" && selected) {
               catalogType = selected;
             } else {
-              const match = catalog.find(
+              const match = stocked.find(
                 (c) =>
                   c.name.toLowerCase() === name.trim().toLowerCase() &&
                   c.genus.toLowerCase() === genus.trim().toLowerCase()
@@ -720,7 +725,7 @@ function AddScreen({
             type="button"
             className={mode === "existing" ? "active" : ""}
             onClick={() => setMode("existing")}
-            disabled={catalog.length === 0}
+            disabled={stocked.length === 0}
           >
             Existing type
           </button>
@@ -761,8 +766,8 @@ function AddScreen({
         ) : (
           <label>
             Catalog plant
-            <select value={catalogId} onChange={(e) => setCatalogId(e.target.value)}>
-              {catalog.map((c) => (
+            <select value={activeCatalogId} onChange={(e) => setCatalogId(e.target.value)}>
+              {stocked.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name} · {c.genus}
                 </option>

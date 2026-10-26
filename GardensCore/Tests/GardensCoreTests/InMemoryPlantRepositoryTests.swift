@@ -104,5 +104,26 @@ final class InMemoryPlantRepositoryTests: XCTestCase {
         XCTAssertNil(deleted)
         let kept = try await repo.destination(for: keep)
         XCTAssertNotNil(kept)
+        let types = try await repo.fetchCatalog()
+        XCTAssertEqual(types.map(\.name), ["Pothos"])
+    }
+
+    func testDeletingTheLastPlantRemovesTheExistingType() async throws {
+        let repo = InMemoryPlantRepository()
+        let service = PlantIntakeService(repository: repo)
+        let batch = try await service.saveNewArrival(
+            PlantIntakeDraft(name: "Pothos", genus: "Epipremnum", vendor: "Local", quantity: 1)
+        )
+
+        try await repo.deleteInstance(instanceID: batch.instances[0].id)
+
+        let types = try await repo.fetchCatalog()
+        XCTAssertTrue(types.isEmpty)
+        XCTAssertTrue(try await repo.fetchInstances().isEmpty)
+
+        let again = try await service.saveNewArrival(
+            PlantIntakeDraft(name: "Pothos", genus: "Epipremnum", vendor: "Local", quantity: 1)
+        )
+        XCTAssertNotEqual(again.catalog.id, batch.catalog.id)
     }
 }
