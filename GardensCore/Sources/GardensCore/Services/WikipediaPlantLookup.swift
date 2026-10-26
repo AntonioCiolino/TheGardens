@@ -46,17 +46,74 @@ public struct WikipediaPlantLookup: Sendable {
     }
 
     public func lookup(name: String, genus: String) async throws -> PlantReferenceSuggestion {
-        let query = [name, genus]
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-            .joined(separator: " ")
-        guard query.count >= 3 else { throw PlantLookupError.noMatch }
+        let terms = Self.searchTerms(name: name, genus: genus)
+        guard !terms.isEmpty else { throw PlantLookupError.noMatch }
 
-        let hits = try await search(query)
-        guard let title = Self.bestTitle(in: hits) else { throw PlantLookupError.noMatch }
-        let page = try await page(titled: title)
-        guard let extract = page.extract, !extract.isEmpty else { throw PlantLookupError.noMatch }
+        var titles: [String] = []
+        var sawResponse = false
+        for term in terms {
+            do {
+                let hits = try await search(term)
+                sawResponse = true
+                for title in Self.rankedTitles(in: hits) where !titles.contains(title) {
+                    titles.append(title)
+                }
+            } catch {
+                continue
+            }
+        }
+        guard sawResponse else { throw PlantLookupError.badResponse }
 
+        for title in titles {
+            let page = try await page(titled: title)
+            guard let extract = page.extract, Self.isPlantDescription(extract) else { continue }
+            return try await suggestion(for: page, extract: extract)
+        }
+        throw PlantLookupError.noMatch
+    }
+
+    /// Loads one Wikipedia article by the title the model chose. Redirects are followed.
+    public func lookup(title: String) async throws -> PlantReferenceSuggestion {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 3 else { throw PlantLookupError.noMatch }
+        let page = try await page(titled: trimmed)
+        guard let extract = page.extract, Self.isPlantDescription(extract) else {
+            throw PlantLookupError.noMatch
+        }
+        return try await suggestion(for: page, extract: extract)
+    }
+
+    /// Genus and name are searched separately so a person’s name cannot pull the plant query off course.
+    static func searchTerms(name: String, genus: String) -> [String] {
+        var terms: [String] = []
+        for raw in [genus, name] {
+            let term = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard term.count >= 3 else { continue }
+            guard !terms.contains(where: { $0.caseInsensitiveCompare(term) == .orderedSame }) else { continue }
+            terms.append(term)
+        }
+        return terms
+    }
+
+    static func rankedTitles(in hits: [SearchHit]) -> [String] {
+        hits
+            .map { ($0, score($0)) }
+            .filter { $0.1 > 0 }
+            .sorted { $0.1 > $1.1 }
+            .map(\.0.title)
+    }
+
+    static func isPlantDescription(_ text: String) -> Bool {
+        let plain = strip(text).lowercased()
+        if isPerson(plain) { return false }
+        let phrases = [
+            "species of", "genus of", "flowering plant", "houseplant", "succulent",
+            "cultivar", "plant in the", "family ", "fern", "cactus", "shrub", "vine"
+        ]
+        return phrases.contains { plain.contains($0) }
+    }
+
+    private func suggestion(for page: ParsedPage, extract: String) async throws -> PlantReferenceSuggestion {
         var photo: Data?
         if let source = page.thumbnailURL, let url = URL(string: source) {
             photo = try? await data(from: url)
@@ -73,11 +130,7 @@ public struct WikipediaPlantLookup: Sendable {
     }
 
     static func bestTitle(in hits: [SearchHit]) -> String? {
-        let ranked = hits
-            .map { hit -> (SearchHit, Int) in (hit, score(hit)) }
-            .filter { $0.1 > 0 }
-            .sorted { $0.1 > $1.1 }
-        return ranked.first?.0.title
+        rankedTitles(in: hits).first
     }
 
     static func careProfile(from extract: String) -> PlantCareProfile {
@@ -181,14 +234,24 @@ public struct WikipediaPlantLookup: Sendable {
     }
 
     private static func score(_ hit: SearchHit) -> Int {
-        let title = hit.title.lowercased()
-        if title.contains("disambiguation") || hit.title.hasPrefix("List of") { return 0 }
-        let text = (hit.title + " " + hit.snippet).lowercased()
-        var score = 1
-        for word in ["plant", "species", "genus", "flower", "leaf", "succulent", "fern", "tree", "vine", "cactus"] {
-            if text.contains(word) { score += 2 }
+        if hit.title.lowercased().contains("disambiguation") || hit.title.hasPrefix("List of") { return 0 }
+        let plain = strip(hit.title + " " + hit.snippet)
+        guard isPlantDescription(plain) else { return 0 }
+        let lower = plain.lowercased()
+        var score = 2
+        if lower.contains("species of") || lower.contains("genus of") || lower.contains("flowering plant") {
+            score += 6
         }
         return score
+    }
+
+    private static func isPerson(_ text: String) -> Bool {
+        let words = ["singer", "songwriter", "musician", "guitarist", "vocalist", "drummer", "actor", "actress", "footballer", "politician", "born"]
+        return words.contains { text.contains($0) }
+    }
+
+    private static func strip(_ text: String) -> String {
+        text.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
     }
 
     private static func matching(_ sentences: [String], words: [String]) -> String {

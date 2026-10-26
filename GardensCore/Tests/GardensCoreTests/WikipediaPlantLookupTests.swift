@@ -13,6 +13,28 @@ final class WikipediaPlantLookupTests: XCTestCase {
         XCTAssertEqual(WikipediaPlantLookup.bestTitle(in: hits), "Dracaena trifasciata")
     }
 
+    func testNameBobDoesNotSelectRobertPlant() {
+        let hits = [
+            WikipediaPlantLookup.SearchHit(
+                title: "Robert Plant",
+                snippet: "Robert Anthony Plant (born 20 August 1948) is an English singer and songwriter. He was the lead vocalist of Led Zeppelin."
+            ),
+            WikipediaPlantLookup.SearchHit(
+                title: "Dracaena trifasciata",
+                snippet: "Dracaena trifasciata is a species of flowering plant in the family Asparagaceae."
+            ),
+        ]
+        XCTAssertEqual(WikipediaPlantLookup.bestTitle(in: hits), "Dracaena trifasciata")
+        XCTAssertNil(
+            WikipediaPlantLookup.bestTitle(in: [hits[0]])
+        )
+        XCTAssertEqual(
+            WikipediaPlantLookup.searchTerms(name: "Bob", genus: "snake plant"),
+            ["snake plant", "Bob"]
+        )
+        XCTAssertFalse(WikipediaPlantLookup.isPlantDescription(hits[0].snippet))
+    }
+
     func testPageParseReadsExtractAndPhoto() throws {
         let data = """
         {"query":{"pages":{"4382912":{
