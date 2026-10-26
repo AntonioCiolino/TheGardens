@@ -17,6 +17,7 @@ struct GardensUser: Equatable {
 final class GardensSession: ObservableObject {
     @Published private(set) var user: GardensUser?
     @Published private(set) var instances: [PlantInstanceDetail] = []
+    @Published private(set) var isLoadingInventory = true
     @Published private(set) var isCloudEnabled = true
     @Published private(set) var isListening = false
     @Published var statusMessage: String?
@@ -26,6 +27,8 @@ final class GardensSession: ObservableObject {
     private let cloudRepo = CloudKitPlantRepository()
     private var localRepo: SwiftDataPlantRepository?
     private var pollTask: Task<Void, Never>?
+    private var photoTask: Task<Void, Never>?
+    private var hasDisplayedCloudList = false
 
     var repository: any PlantRepository {
         if usesSharedCloud {
@@ -62,43 +65,48 @@ final class GardensSession: ObservableObject {
             let status = try await cloudRepo.accountStatus()
             switch status {
             case .available:
-                let recordName = try await cloudRepo.userRecordName()
-                user = GardensUser(
-                    id: recordName,
-                    email: nil,
-                    displayName: "iCloud"
-                )
-                statusMessage = "iCloud connected — inventory syncs across team iPhones"
+                user = GardensUser(id: "icloud", email: nil, displayName: "iCloud")
+                statusMessage = "Loading plants from iCloud…"
+                async let recordName = cloudRepo.userRecordName()
                 startPolling()
                 await refreshCloudInstances()
+                if let name = try? await recordName {
+                    user = GardensUser(id: name, email: nil, displayName: "iCloud")
+                }
             case .noAccount:
                 user = nil
                 stopPolling()
+                isLoadingInventory = false
                 statusMessage = "Sign into iCloud in Settings to share inventory"
                 await refreshLocalInstances()
             case .restricted:
                 user = nil
                 stopPolling()
+                isLoadingInventory = false
                 errorMessage = "iCloud is restricted on this device."
                 await refreshLocalInstances()
             case .couldNotDetermine:
                 user = nil
                 stopPolling()
+                isLoadingInventory = false
                 errorMessage = "Couldn’t determine iCloud status. Try again."
                 await refreshLocalInstances()
             case .temporarilyUnavailable:
                 user = nil
                 stopPolling()
+                isLoadingInventory = false
                 errorMessage = "iCloud is temporarily unavailable."
                 await refreshLocalInstances()
             @unknown default:
                 user = nil
                 stopPolling()
+                isLoadingInventory = false
                 await refreshLocalInstances()
             }
         } catch {
             user = nil
             stopPolling()
+            isLoadingInventory = false
             errorMessage = error.localizedDescription
             await refreshLocalInstances()
         }
@@ -202,16 +210,65 @@ final class GardensSession: ObservableObject {
     private func stopPolling() {
         pollTask?.cancel()
         pollTask = nil
+        photoTask?.cancel()
+        photoTask = nil
         isListening = false
     }
 
     private func refreshCloudInstances() async {
+        if !hasDisplayedCloudList { isLoadingInventory = true }
+        photoTask?.cancel()
         do {
             let list = try await cloudRepo.fetchInstances()
             instances = list
+            hasDisplayedCloudList = true
+            isLoadingInventory = false
             statusMessage = "iCloud sync · \(list.count) plant\(list.count == 1 ? "" : "s")"
+            photoTask = Task { [weak self] in
+                await self?.attachPhotos()
+            }
         } catch {
+            isLoadingInventory = false
             errorMessage = error.localizedDescription
+        }
+    }
+
+    private func attachPhotos() async {
+        let missing = instances.filter { $0.instance.photoData == nil }.map(\.instance.id)
+        let chunks = stride(from: 0, to: missing.count, by: 6).map { start in
+            Array(missing[start..<min(start + 6, missing.count)])
+        }
+        guard !chunks.isEmpty else { return }
+        await withTaskGroup(of: [UUID: Data].self) { group in
+            var next = 0
+            let width = min(4, chunks.count)
+            for _ in 0..<width {
+                let chunk = chunks[next]
+                next += 1
+                group.addTask { await self.cloudRepo.fetchPhotoData(for: chunk) }
+            }
+            while let batch = await group.next() {
+                if Task.isCancelled {
+                    group.cancelAll()
+                    return
+                }
+                applyPhotos(batch)
+                if next < chunks.count {
+                    let chunk = chunks[next]
+                    next += 1
+                    group.addTask { await self.cloudRepo.fetchPhotoData(for: chunk) }
+                }
+            }
+        }
+    }
+
+    private func applyPhotos(_ photos: [UUID: Data]) {
+        guard !photos.isEmpty else { return }
+        instances = instances.map { detail in
+            guard detail.instance.photoData == nil, let data = photos[detail.instance.id] else { return detail }
+            var copy = detail
+            copy.instance.photoData = data
+            return copy
         }
     }
 

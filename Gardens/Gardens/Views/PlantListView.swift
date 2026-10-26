@@ -24,7 +24,16 @@ struct PlantListView: View {
                 BrandWatermark(opacity: 0.16)
 
                 List {
-                    if session.instances.isEmpty {
+                    if session.isLoadingInventory && session.instances.isEmpty {
+                        HStack(spacing: 12) {
+                            ProgressView()
+                            Text("Loading plants from iCloud…")
+                                .font(.subheadline)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 420)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                    } else if session.instances.isEmpty {
                         ContentUnavailableView(
                             "No plants yet",
                             systemImage: "leaf",

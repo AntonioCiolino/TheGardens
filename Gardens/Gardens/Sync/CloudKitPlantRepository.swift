@@ -44,20 +44,45 @@ final class CloudKitPlantRepository: PlantRepository {
     func fetchInstances() async throws -> [PlantInstanceDetail] {
         try await requireiCloud()
         let manifest = try await loadManifest()
-        let catalogRecords = try await fetchRecords(ids: Self.recordIDs(Self.stringList(manifest, key: "catalogIDs")))
-        let instanceRecords = try await fetchRecords(ids: Self.recordIDs(Self.stringList(manifest, key: "instanceIDs")))
-        let catalogByID = Dictionary(uniqueKeysWithValues: catalogRecords.compactMap { record -> (UUID, PlantCatalogItem)? in
+        let catalogIDs = Self.recordIDs(Self.stringList(manifest, key: "catalogIDs"))
+        let instanceIDs = Self.recordIDs(Self.stringList(manifest, key: "instanceIDs"))
+        let (loadedCatalogs, loadedInstances) = try await loadListRecords(catalogIDs: catalogIDs, instanceIDs: instanceIDs)
+        let catalogByID = Dictionary(uniqueKeysWithValues: loadedCatalogs.compactMap { record -> (UUID, PlantCatalogItem)? in
             guard let item = Self.catalog(from: record) else { return nil }
             return (item.id, item)
         })
-        return instanceRecords.compactMap { record in
+        return loadedInstances.compactMap { record in
             guard
-                let instance = Self.instance(from: record, photoData: photoData(from: record)),
+                let instance = Self.instance(from: record, photoData: cachedPhoto(on: record)),
                 let catalog = catalogByID[instance.catalogItemID]
             else { return nil }
             return PlantInstanceDetail(instance: instance, catalog: catalog)
         }
         .sorted { $0.instance.arrivedOn > $1.instance.arrivedOn }
+    }
+
+    private func loadListRecords(
+        catalogIDs: [CKRecord.ID],
+        instanceIDs: [CKRecord.ID]
+    ) async throws -> (catalogs: [CKRecord], instances: [CKRecord]) {
+        try await withThrowingTaskGroup(of: (Bool, [CKRecord]).self) { group in
+            group.addTask {
+                (true, try await self.fetchRecords(ids: catalogIDs, desiredKeys: Self.catalogKeys))
+            }
+            group.addTask {
+                (false, try await self.fetchRecords(ids: instanceIDs, desiredKeys: Self.instanceKeys))
+            }
+            var catalogs: [CKRecord] = []
+            var instances: [CKRecord] = []
+            for try await (isCatalog, records) in group {
+                if isCatalog {
+                    catalogs = records
+                } else {
+                    instances = records
+                }
+            }
+            return (catalogs, instances)
+        }
     }
 
     func destination(for instanceID: UUID) async throws -> PlantInstanceDestination? {
@@ -393,7 +418,10 @@ final class CloudKitPlantRepository: PlantRepository {
     }
 
     private func catalogIDsInUse(on manifest: CKRecord) async throws -> Set<String> {
-        let records = try await fetchRecords(ids: Self.recordIDs(Self.stringList(manifest, key: "instanceIDs")))
+        let records = try await fetchRecords(
+            ids: Self.recordIDs(Self.stringList(manifest, key: "instanceIDs")),
+            desiredKeys: ["catalogItemID"]
+        )
         return Set(records.compactMap { $0["catalogItemID"] as? String })
     }
 
@@ -419,18 +447,102 @@ final class CloudKitPlantRepository: PlantRepository {
         }
     }
 
-    private func fetchRecords(ids: [CKRecord.ID]) async throws -> [CKRecord] {
-        var collected: [CKRecord] = []
-        collected.reserveCapacity(ids.count)
-        for id in ids {
-            do {
-                collected.append(try await database.record(for: id))
-            } catch let error as CKError where error.code == .unknownItem {
-                continue
+    /// JPEG bytes for the list, after the names are already on screen.
+    func fetchPhotoData(for instanceIDs: [UUID]) async -> [UUID: Data] {
+        guard !instanceIDs.isEmpty else { return [:] }
+        let ids = instanceIDs.map { Self.recordID($0.uuidString) }
+        guard let records = try? await fetchChunk(ids, desiredKeys: ["id", "photo"]) else { return [:] }
+        var photos: [UUID: Data] = [:]
+        for record in records {
+            guard let data = photoData(from: record) else { continue }
+            let name = (record["id"] as? String) ?? record.recordID.recordName
+            if let id = UUID(uuidString: name) {
+                photos[id] = data
             }
         }
-        return collected
+        return photos
     }
+
+    /// Fetch-by-ID, several batches at once. Public AppDefaultZone has no query and no change token.
+    private func fetchRecords(ids: [CKRecord.ID], desiredKeys: [CKRecord.FieldKey]? = nil) async throws -> [CKRecord] {
+        let chunks = Self.chunks(of: ids, size: 40)
+        guard !chunks.isEmpty else { return [] }
+        return try await withThrowingTaskGroup(of: [CKRecord].self) { group in
+            var next = 0
+            let width = min(4, chunks.count)
+            for _ in 0..<width {
+                let chunk = chunks[next]
+                next += 1
+                group.addTask { try await self.fetchChunk(chunk, desiredKeys: desiredKeys) }
+            }
+            var collected: [CKRecord] = []
+            collected.reserveCapacity(ids.count)
+            while let batch = try await group.next() {
+                collected.append(contentsOf: batch)
+                if next < chunks.count {
+                    let chunk = chunks[next]
+                    next += 1
+                    group.addTask { try await self.fetchChunk(chunk, desiredKeys: desiredKeys) }
+                }
+            }
+            return collected
+        }
+    }
+
+    private func fetchChunk(_ ids: [CKRecord.ID], desiredKeys: [CKRecord.FieldKey]?) async throws -> [CKRecord] {
+        guard !ids.isEmpty else { return [] }
+        do {
+            let results = try await database.records(for: ids, desiredKeys: desiredKeys)
+            var records: [CKRecord] = []
+            records.reserveCapacity(results.count)
+            for result in results.values {
+                switch result {
+                case .success(let record):
+                    records.append(record)
+                case .failure(let error as CKError) where error.code == .unknownItem:
+                    continue
+                case .failure(let error):
+                    throw error
+                }
+            }
+            return records
+        } catch let error as CKError where error.code == .partialFailure || error.code == .limitExceeded {
+            return try await fetchIndividually(ids)
+        }
+    }
+
+    private func fetchIndividually(_ ids: [CKRecord.ID]) async throws -> [CKRecord] {
+        try await withThrowingTaskGroup(of: CKRecord?.self) { group in
+            for id in ids {
+                group.addTask {
+                    do {
+                        return try await self.database.record(for: id)
+                    } catch let error as CKError where error.code == .unknownItem {
+                        return nil
+                    }
+                }
+            }
+            var records: [CKRecord] = []
+            for try await record in group {
+                if let record { records.append(record) }
+            }
+            return records
+        }
+    }
+
+    private static func chunks(of ids: [CKRecord.ID], size: Int) -> [[CKRecord.ID]] {
+        guard size > 0, !ids.isEmpty else { return [] }
+        return stride(from: 0, to: ids.count, by: size).map { start in
+            Array(ids[start..<min(start + size, ids.count)])
+        }
+    }
+
+    private static let catalogKeys = [
+        "id", "name", "genus", "careInstructions", "wateringCheckGuidance", "healthCheckGuidance", "createdAt"
+    ]
+    private static let instanceKeys = [
+        "id", "catalogItemID", "arrivedOn", "vendor", "photoCredit", "createdAt"
+    ]
 
     private func verifySaved(_ id: CKRecord.ID, type: String, keys: [String]) async throws {
         let record: CKRecord
@@ -512,6 +624,12 @@ final class CloudKitPlantRepository: PlantRepository {
 
     private static func recordIDs(_ names: [String]) -> [CKRecord.ID] {
         names.map { recordID($0) }
+    }
+
+    private func cachedPhoto(on record: CKRecord) -> Data? {
+        let name = (record["id"] as? String) ?? record.recordID.recordName
+        guard let id = UUID(uuidString: name) else { return nil }
+        return photoCache[id]
     }
 
     private func photoData(from record: CKRecord) -> Data? {
