@@ -27,7 +27,7 @@ The public database only has the default zone (`AppDefaultZone`). Apple’s docs
 
 This build only uses `CKDatabase.record(for:)` (read one record by ID) and `CKDatabase.save(_:)` (write one record). Those calls do not need a queryable index, so the dashboard does not need a `recordName` index.
 
-One `InventoryManifest` record named `gardens-inventory` lists `catalogIDs` and `instanceIDs`. Care event IDs live on each `PlantInstance` (`careEventIDs`). The app writes the plant record first, then adds its ID to the manifest. After a save it reads the record back by ID and fails the test if a required field is missing.
+One `InventoryManifest` record named `gardens-inventory` lists `catalogIDs` and `instanceIDs`. Care event IDs live on each `PlantInstance` (`careEventIDs`). A list field is omitted until it has at least one ID — CloudKit rejects an empty list as the first value of a new field (`cannot use an empty list to initialize a new field`). The app writes the plant record first, then adds its ID to the manifest. After a save it reads the record back by ID and fails the test if a required field is missing.
 
 | Record type | Who creates it | Fields |
 | --- | --- | --- |

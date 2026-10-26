@@ -94,7 +94,6 @@ final class CloudKitPlantRepository: PlantRepository {
             record["arrivedOn"] = arrivedOn
             record["vendor"] = vendor
             record["createdAt"] = Date()
-            record["careEventIDs"] = [] as NSArray
             if let photoData = draft.photoData {
                 record["photo"] = try Self.asset(from: photoData, name: instanceID.uuidString)
                 photoCache[instanceID] = photoData
@@ -148,7 +147,7 @@ final class CloudKitPlantRepository: PlantRepository {
             if !careIDs.contains(event.id.uuidString) {
                 careIDs.append(event.id.uuidString)
             }
-            instanceRecord["careEventIDs"] = careIDs as NSArray
+            Self.setList(careIDs, on: instanceRecord, key: "careEventIDs")
             do {
                 _ = try await database.save(instanceRecord)
                 try await verifySaved(care.recordID, type: RecordType.careEvent, keys: ["instanceID", "kind", "performedAt"])
@@ -231,10 +230,8 @@ final class CloudKitPlantRepository: PlantRepository {
         do {
             return try await database.record(for: Self.manifestID)
         } catch let error as CKError where error.code == .unknownItem {
-            let record = CKRecord(recordType: RecordType.manifest, recordID: Self.manifestID)
-            record["catalogIDs"] = [] as NSArray
-            record["instanceIDs"] = [] as NSArray
-            return record
+            // Leave list fields unset. CloudKit rejects an empty list as the first value of a new field.
+            return CKRecord(recordType: RecordType.manifest, recordID: Self.manifestID)
         }
     }
 
@@ -340,6 +337,12 @@ final class CloudKitPlantRepository: PlantRepository {
         for id in newIDs where !ids.contains(id) {
             ids.append(id)
         }
+        setList(ids, on: record, key: key)
+    }
+
+    /// CloudKit returns "cannot use an empty list to initialize a new field" if the first write of a list is empty.
+    private static func setList(_ ids: [String], on record: CKRecord, key: String) {
+        guard !ids.isEmpty else { return }
         record[key] = ids as NSArray
     }
 
