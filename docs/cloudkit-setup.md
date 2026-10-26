@@ -23,22 +23,28 @@ Until iCloud is available, the app uses on-device SwiftData for that phone only.
 
 ## 3. What the database actually stores
 
-Reads do **not** use CloudKit queries. Listing uses **zone changes**, and one plant is loaded by **record ID**. That avoids `Field 'recordName' is not marked queryable`.
+The public database only has the default zone (`AppDefaultZone`). Apple’s docs for `CKRecordZone.default()` say that zone cannot fetch record changes and cannot save a group of records atomically. The phone error `appdefaultzone does not support getChanges` is that limit — the previous build called `CKFetchRecordZoneChangesOperation`, and that call is gone.
+
+This build only uses `CKDatabase.record(for:)` (read one record by ID) and `CKDatabase.save(_:)` (write one record). Those calls do not need a queryable index, so the dashboard does not need a `recordName` index.
+
+One `InventoryManifest` record named `gardens-inventory` lists `catalogIDs` and `instanceIDs`. Care event IDs live on each `PlantInstance` (`careEventIDs`). The app writes the plant record first, then adds its ID to the manifest. After a save it reads the record back by ID and fails the test if a required field is missing.
 
 | Record type | Who creates it | Fields |
 | --- | --- | --- |
+| `InventoryManifest` | App, record name `gardens-inventory` | `catalogIDs` (String list), `instanceIDs` (String list) |
 | `CatalogItem` | App, on first save of a plant type | `id`, `name`, `genus`, `careInstructions`, `wateringCheckGuidance`, `healthCheckGuidance`, `createdAt` |
-| `PlantInstance` | App, one per physical plant | `id`, `catalogItemID`, `arrivedOn`, `vendor`, `photo` (Asset), `createdAt` |
+| `PlantInstance` | App, one per physical plant | `id`, `catalogItemID`, `arrivedOn`, `vendor`, `photo` (Asset), `createdAt`, `careEventIDs` (String list) |
 | `CareEvent` | App, one per care note | `id`, `instanceID`, `kind`, `performedAt`, `wateringObservation`, `healthObservation`, `notes` |
 | `Users` | **Apple**, automatically | None. Leave it. Empty fields are expected. Do not add fields and do not delete this type. |
 
 After **Write test plant**, confirm in [CloudKit Console](https://icloud.developer.apple.com/) → `iCloud.com.gardens.intake` → Development → Public Database → Records:
 
+- one `InventoryManifest` named `gardens-inventory`
 - one `CatalogItem` named Gardens Sync Test
 - one `PlantInstance` with vendor Setup Check
 - one `CareEvent`
 
-The app reads those three records back immediately after save and fails the test if a required field is missing.
+The app reads the catalog, plant, and care records back by ID immediately after save and fails the test if a required field is missing. `Users` stays empty.
 
 Deploy Development → Production when you ship TestFlight.
 

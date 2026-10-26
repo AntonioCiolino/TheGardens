@@ -2,27 +2,13 @@ import Foundation
 import CloudKit
 import GardensCore
 
-/// Thread-safe bag for CloudKit callbacks (they are not on the main actor).
-private final class CloudKitRecordBox: @unchecked Sendable {
-    private let lock = NSLock()
-    private var items: [CKRecord] = []
-
-    func append(_ record: CKRecord) {
-        lock.lock()
-        items.append(record)
-        lock.unlock()
-    }
-
-    func all() -> [CKRecord] {
-        lock.lock()
-        defer { lock.unlock() }
-        return items
-    }
-}
-
-/// Shared nursery inventory in the **CloudKit public database** (record-per-plant).
-/// Reads use zone changes + record IDs so fields do not need to be queryable.
-/// The system `Users` record type is left alone (Apple creates it with no custom fields).
+/// Shared nursery inventory in the CloudKit **public** database.
+///
+/// The public database has only the default zone. That zone does not support
+/// `CKFetchRecordZoneChanges` (`getChanges`) and does not support atomic batches.
+/// Every read is `CKDatabase.record(for:)`. Every write is `CKDatabase.save(_:)`.
+/// A single `InventoryManifest` record (`gardens-inventory`) lists catalog and instance IDs.
+/// Apple's `Users` type is never written.
 @MainActor
 final class CloudKitPlantRepository: PlantRepository {
     nonisolated static let containerID = "iCloud.com.gardens.intake"
@@ -34,13 +20,13 @@ final class CloudKitPlantRepository: PlantRepository {
     init(container: CKContainer? = nil) {
         let resolved = container ?? CKContainer(identifier: Self.containerID)
         self.container = resolved
-        // Public DB = one shared inventory for everyone who uses this app with iCloud.
         self.database = resolved.publicCloudDatabase
     }
 
     func fetchCatalog() async throws -> [PlantCatalogItem] {
         try await requireiCloud()
-        let records = try await ownedRecords(ofType: RecordType.catalog)
+        let manifest = try await loadManifest()
+        let records = try await fetchRecords(ids: Self.recordIDs(Self.stringList(manifest, key: "catalogIDs")))
         return records.compactMap(Self.catalog(from:)).sorted {
             $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
         }
@@ -48,9 +34,14 @@ final class CloudKitPlantRepository: PlantRepository {
 
     func fetchInstances() async throws -> [PlantInstanceDetail] {
         try await requireiCloud()
-        let catalogByID = Dictionary(uniqueKeysWithValues: try await fetchCatalog().map { ($0.id, $0) })
-        let records = try await ownedRecords(ofType: RecordType.instance)
-        return records.compactMap { record in
+        let manifest = try await loadManifest()
+        let catalogRecords = try await fetchRecords(ids: Self.recordIDs(Self.stringList(manifest, key: "catalogIDs")))
+        let instanceRecords = try await fetchRecords(ids: Self.recordIDs(Self.stringList(manifest, key: "instanceIDs")))
+        let catalogByID = Dictionary(uniqueKeysWithValues: catalogRecords.compactMap { record -> (UUID, PlantCatalogItem)? in
+            guard let item = Self.catalog(from: record) else { return nil }
+            return (item.id, item)
+        })
+        return instanceRecords.compactMap { record in
             guard
                 let instance = Self.instance(from: record, photoData: photoData(from: record)),
                 let catalog = catalogByID[instance.catalogItemID]
@@ -62,24 +53,21 @@ final class CloudKitPlantRepository: PlantRepository {
 
     func destination(for instanceID: UUID) async throws -> PlantInstanceDestination? {
         try await requireiCloud()
-        let instanceRecordID = CKRecord.ID(recordName: instanceID.uuidString)
         let instanceRecord: CKRecord
         do {
-            instanceRecord = try await database.record(for: instanceRecordID)
+            instanceRecord = try await database.record(for: Self.recordID(instanceID.uuidString))
         } catch let error as CKError where error.code == .unknownItem {
             return nil
         }
-
         guard let instance = Self.instance(from: instanceRecord, photoData: photoData(from: instanceRecord))
         else { return nil }
 
-        let catalogRecord = try await database.record(
-            for: CKRecord.ID(recordName: instance.catalogItemID.uuidString)
-        )
+        let catalogRecord = try await database.record(for: Self.recordID(instance.catalogItemID.uuidString))
         guard let catalog = Self.catalog(from: catalogRecord) else { return nil }
 
-        let historyRecords = try await ownedRecords(ofType: RecordType.careEvent)
-        let history = historyRecords.compactMap(Self.careEvent(from:)).filter { $0.instanceID == instanceID }
+        let careIDs = Self.stringList(instanceRecord, key: "careEventIDs")
+        let careRecords = try await fetchRecords(ids: Self.recordIDs(careIDs))
+        let history = careRecords.compactMap(Self.careEvent(from:))
 
         return PlantInstanceDestination(
             instance: instance,
@@ -95,102 +83,121 @@ final class CloudKitPlantRepository: PlantRepository {
         let arrivedOn = Calendar.current.startOfDay(for: draft.arrivedOn)
         let vendor = draft.vendor.trimmingCharacters(in: .whitespacesAndNewlines)
 
+        var instanceRecords: [CKRecord] = []
         var details: [PlantInstanceDetail] = []
-        details.reserveCapacity(draft.quantity)
 
         for _ in 0..<draft.quantity {
             let instanceID = UUID()
-            let record = CKRecord(recordType: RecordType.instance, recordID: CKRecord.ID(recordName: instanceID.uuidString))
+            let record = CKRecord(recordType: RecordType.instance, recordID: Self.recordID(instanceID.uuidString))
             record["id"] = instanceID.uuidString
             record["catalogItemID"] = catalog.id.uuidString
             record["arrivedOn"] = arrivedOn
             record["vendor"] = vendor
             record["createdAt"] = Date()
-
+            record["careEventIDs"] = [] as NSArray
             if let photoData = draft.photoData {
                 record["photo"] = try Self.asset(from: photoData, name: instanceID.uuidString)
                 photoCache[instanceID] = photoData
             }
-
-            _ = try await database.save(record)
-            try await verifySaved(
-                record.recordID,
-                type: RecordType.instance,
-                keys: ["catalogItemID", "vendor", "arrivedOn"]
+            instanceRecords.append(record)
+            details.append(
+                PlantInstanceDetail(
+                    instance: PlantInstance(
+                        id: instanceID,
+                        catalogItemID: catalog.id,
+                        arrivedOn: arrivedOn,
+                        vendor: vendor,
+                        photoData: draft.photoData
+                    ),
+                    catalog: catalog
+                )
             )
-
-            let instance = PlantInstance(
-                id: instanceID,
-                catalogItemID: catalog.id,
-                arrivedOn: arrivedOn,
-                vendor: vendor,
-                photoData: draft.photoData,
-                createdAt: Date()
-            )
-            details.append(PlantInstanceDetail(instance: instance, catalog: catalog))
         }
 
+        let newIDs = instanceRecords.map(\.recordID.recordName)
+        try await commit(saving: instanceRecords) { manifest in
+            Self.append(newIDs, to: manifest, key: "instanceIDs")
+        }
+        for record in instanceRecords {
+            try await verifySaved(record.recordID, type: RecordType.instance, keys: ["catalogItemID", "vendor", "arrivedOn"])
+        }
         return PlantArrivalBatch(catalog: catalog, instances: details)
     }
 
     func addCareEvent(_ event: CareEvent) async throws {
         try await requireiCloud()
-        let instanceID = CKRecord.ID(recordName: event.instanceID.uuidString)
-        do {
-            _ = try await database.record(for: instanceID)
-        } catch {
-            throw RepositoryError.instanceNotFound
-        }
+        let care = CKRecord(recordType: RecordType.careEvent, recordID: Self.recordID(event.id.uuidString))
+        care["id"] = event.id.uuidString
+        care["instanceID"] = event.instanceID.uuidString
+        care["kind"] = event.kind.rawValue
+        care["performedAt"] = event.performedAt
+        care["wateringObservation"] = event.wateringObservation
+        care["healthObservation"] = event.healthObservation
+        care["notes"] = event.notes
+        try await saveRecord(care)
 
-        let record = CKRecord(recordType: RecordType.careEvent, recordID: CKRecord.ID(recordName: event.id.uuidString))
-        record["id"] = event.id.uuidString
-        record["instanceID"] = event.instanceID.uuidString
-        record["kind"] = event.kind.rawValue
-        record["performedAt"] = event.performedAt
-        record["wateringObservation"] = event.wateringObservation
-        record["healthObservation"] = event.healthObservation
-        record["notes"] = event.notes
-        _ = try await database.save(record)
-        try await verifySaved(
-            record.recordID,
-            type: RecordType.careEvent,
-            keys: ["instanceID", "kind", "performedAt"]
-        )
+        var lastError: Error = CloudSaveError(message: "Saved the care note but couldn’t attach it to the plant.")
+        for _ in 0..<4 {
+            let instanceRecord: CKRecord
+            do {
+                instanceRecord = try await database.record(for: Self.recordID(event.instanceID.uuidString))
+            } catch let error as CKError where error.code == .unknownItem {
+                throw RepositoryError.instanceNotFound
+            }
+            var careIDs = Self.stringList(instanceRecord, key: "careEventIDs")
+            if !careIDs.contains(event.id.uuidString) {
+                careIDs.append(event.id.uuidString)
+            }
+            instanceRecord["careEventIDs"] = careIDs as NSArray
+            do {
+                _ = try await database.save(instanceRecord)
+                try await verifySaved(care.recordID, type: RecordType.careEvent, keys: ["instanceID", "kind", "performedAt"])
+                return
+            } catch let error as CKError where error.code == .serverRecordChanged {
+                lastError = error
+                continue
+            }
+        }
+        throw lastError
     }
 
     func updateCareProfile(catalogItemID: UUID, profile: PlantCareProfile) async throws {
         try await requireiCloud()
-        let recordID = CKRecord.ID(recordName: catalogItemID.uuidString)
-        let record: CKRecord
-        do {
-            record = try await database.record(for: recordID)
-        } catch {
-            throw RepositoryError.catalogNotFound
+        var lastError: Error = RepositoryError.catalogNotFound
+        for _ in 0..<4 {
+            let record: CKRecord
+            do {
+                record = try await database.record(for: Self.recordID(catalogItemID.uuidString))
+            } catch {
+                throw RepositoryError.catalogNotFound
+            }
+            record["careInstructions"] = profile.careInstructions
+            record["wateringCheckGuidance"] = profile.wateringCheckGuidance
+            record["healthCheckGuidance"] = profile.healthCheckGuidance
+            do {
+                _ = try await database.save(record)
+                return
+            } catch let error as CKError where error.code == .serverRecordChanged {
+                lastError = error
+                continue
+            }
         }
-        record["careInstructions"] = profile.careInstructions
-        record["wateringCheckGuidance"] = profile.wateringCheckGuidance
-        record["healthCheckGuidance"] = profile.healthCheckGuidance
-        _ = try await database.save(record)
+        throw lastError
     }
 
     func referencePhoto(for catalogItemID: UUID) async throws -> Data? {
         try await requireiCloud()
-        let records = try await ownedRecords(ofType: RecordType.instance)
+        let manifest = try await loadManifest()
+        let records = try await fetchRecords(ids: Self.recordIDs(Self.stringList(manifest, key: "instanceIDs")))
             .filter { ($0["catalogItemID"] as? String) == catalogItemID.uuidString }
             .sorted { lhs, rhs in
-                let left = lhs["createdAt"] as? Date ?? .distantPast
-                let right = rhs["createdAt"] as? Date ?? .distantPast
-                return left > right
+                (lhs["createdAt"] as? Date ?? .distantPast) > (rhs["createdAt"] as? Date ?? .distantPast)
             }
         for record in records.prefix(12) {
-            if let data = photoData(from: record) {
-                return data
-            }
+            if let data = photoData(from: record) { return data }
         }
         return nil
     }
-
-    // MARK: - Account
 
     func accountStatus() async throws -> CKAccountStatus {
         try await container.accountStatus()
@@ -200,190 +207,153 @@ final class CloudKitPlantRepository: PlantRepository {
         try await container.userRecordID().recordName
     }
 
-    // MARK: - Private
+    // MARK: - Manifest
 
     private enum RecordType {
         static let catalog = "CatalogItem"
         static let instance = "PlantInstance"
         static let careEvent = "CareEvent"
+        static let manifest = "InventoryManifest"
     }
 
-    private static let ownedTypes: Set<String> = [
-        RecordType.catalog,
-        RecordType.instance,
-        RecordType.careEvent,
-    ]
+    /// Stable id in the public default zone. Fetch-by-ID does not need a queryable index.
+    nonisolated private static let manifestID = CKRecord.ID(
+        recordName: "gardens-inventory",
+        zoneID: CKRecordZone.default().zoneID
+    )
 
-    private func requireiCloud() async throws {
-        let status = try await container.accountStatus()
-        guard status == .available else {
-            throw RepositoryError.notSignedIn
+    /// Public default zone. Custom zones are not allowed in the public database.
+    nonisolated private static func recordID(_ name: String) -> CKRecord.ID {
+        CKRecord.ID(recordName: name, zoneID: CKRecordZone.default().zoneID)
+    }
+
+    private func loadManifest() async throws -> CKRecord {
+        do {
+            return try await database.record(for: Self.manifestID)
+        } catch let error as CKError where error.code == .unknownItem {
+            let record = CKRecord(recordType: RecordType.manifest, recordID: Self.manifestID)
+            record["catalogIDs"] = [] as NSArray
+            record["instanceIDs"] = [] as NSArray
+            return record
+        }
+    }
+
+    /// Saves each data record on its own, then appends their IDs to the manifest.
+    /// The default zone ignores atomic batches, so the manifest update is a separate save and retries on conflict.
+    private func commit(saving extra: [CKRecord], mutate: (CKRecord) -> Void) async throws {
+        for record in extra {
+            try await saveRecord(record)
+        }
+        var lastError: Error = CloudSaveError(message: "Saved the plant records but couldn’t update the inventory list.")
+        for _ in 0..<4 {
+            let manifest = try await loadManifest()
+            mutate(manifest)
+            do {
+                _ = try await database.save(manifest)
+                return
+            } catch let error as CKError where error.code == .serverRecordChanged {
+                lastError = error
+                continue
+            }
+        }
+        throw lastError
+    }
+
+    /// Insert, or accept the record if this ID was already saved (a retry after a successful write).
+    private func saveRecord(_ record: CKRecord) async throws {
+        do {
+            _ = try await database.save(record)
+        } catch let error as CKError where error.code == .serverRecordChanged {
+            let existing = try await database.record(for: record.recordID)
+            guard existing.recordType == record.recordType else { throw error }
         }
     }
 
     private func resolveCatalog(for draft: PlantIntakeDraft) async throws -> PlantCatalogItem {
         switch draft.catalogMode {
         case .existingType(let catalogItemID):
-            let record = try await database.record(for: CKRecord.ID(recordName: catalogItemID.uuidString))
+            let record = try await database.record(for: Self.recordID(catalogItemID.uuidString))
             guard let item = Self.catalog(from: record) else { throw RepositoryError.catalogNotFound }
             return item
 
         case .newOrMatchType:
             let existing = try await fetchCatalog()
-            if let match = PlantCatalogMatcher.findExisting(
-                name: draft.name,
-                genus: draft.genus,
-                in: existing
-            ) {
+            if let match = PlantCatalogMatcher.findExisting(name: draft.name, genus: draft.genus, in: existing) {
                 return match
             }
-
-            let item = PlantCatalogItem(
-                name: draft.name,
-                genus: draft.genus,
-                careProfile: draft.careProfile
-            )
-            let recordID = CKRecord.ID(recordName: item.id.uuidString)
+            let item = PlantCatalogItem(name: draft.name, genus: draft.genus, careProfile: draft.careProfile)
+            let recordID = Self.recordID(item.id.uuidString)
             let record = CKRecord(recordType: RecordType.catalog, recordID: recordID)
             Self.apply(item, to: record)
-            _ = try await database.save(record)
-            try await verifySaved(
-                recordID,
-                type: RecordType.catalog,
-                keys: ["name", "genus", "createdAt"]
-            )
+            try await commit(saving: [record]) { manifest in
+                Self.append([item.id.uuidString], to: manifest, key: "catalogIDs")
+            }
+            try await verifySaved(recordID, type: RecordType.catalog, keys: ["name", "genus", "createdAt"])
             return item
         }
     }
 
-    /// All Gardens records in the public default zone.
-    /// Zone changes do not require `recordName` (or any field) to be queryable.
-    /// Apple's `Users` type is skipped — it has no app fields.
-    private func ownedRecords(ofType type: String) async throws -> [CKRecord] {
-        try await fetchOwnedRecords().filter { $0.recordType == type }
-    }
-
-    private func fetchOwnedRecords() async throws -> [CKRecord] {
-        let zoneID = CKRecordZone.default().zoneID
-        var token: CKServerChangeToken?
-        var byID: [CKRecord.ID: CKRecord] = [:]
-
-        for _ in 0..<30 {
-            let page = try await fetchZonePage(zoneID: zoneID, since: token)
-            for record in page.records where Self.ownedTypes.contains(record.recordType) {
-                byID[record.recordID] = record
+    private func fetchRecords(ids: [CKRecord.ID]) async throws -> [CKRecord] {
+        var collected: [CKRecord] = []
+        collected.reserveCapacity(ids.count)
+        for id in ids {
+            do {
+                collected.append(try await database.record(for: id))
+            } catch let error as CKError where error.code == .unknownItem {
+                continue
             }
-            token = page.changeToken
-            if !page.moreComing { break }
         }
-        return Array(byID.values)
-    }
-
-    private struct ZonePage {
-        var records: [CKRecord]
-        var changeToken: CKServerChangeToken?
-        var moreComing: Bool
-    }
-
-    private func fetchZonePage(
-        zoneID: CKRecordZone.ID,
-        since token: CKServerChangeToken?
-    ) async throws -> ZonePage {
-        try await withCheckedThrowingContinuation { continuation in
-            let config = CKFetchRecordZoneChangesOperation.ZoneConfiguration()
-            config.previousServerChangeToken = token
-            // The no-argument initializer leaves zone IDs empty and CloudKit rejects the op.
-            let operation = CKFetchRecordZoneChangesOperation(
-                recordZoneIDs: [zoneID],
-                configurationsByRecordZoneID: [zoneID: config]
-            )
-
-            let box = CloudKitRecordBox()
-            operation.recordWasChangedBlock = { _, result in
-                if case .success(let record) = result {
-                    box.append(record)
-                }
-            }
-
-            var pageToken: CKServerChangeToken?
-            var moreComing = false
-            var zoneError: Error?
-
-            operation.recordZoneFetchResultBlock = { _, result in
-                switch result {
-                case .failure(let error):
-                    zoneError = error
-                case .success(let info):
-                    pageToken = info.serverChangeToken
-                    moreComing = info.moreComing
-                }
-            }
-
-            operation.fetchRecordZoneChangesResultBlock = { result in
-                switch result {
-                case .failure(let error):
-                    if Self.isBenignEmpty(error) {
-                        continuation.resume(returning: ZonePage(records: [], changeToken: nil, moreComing: false))
-                    } else {
-                        continuation.resume(throwing: error)
-                    }
-                case .success:
-                    if let zoneError, !Self.isBenignEmpty(zoneError) {
-                        continuation.resume(throwing: zoneError)
-                    } else {
-                        continuation.resume(
-                            returning: ZonePage(
-                                records: box.all(),
-                                changeToken: pageToken,
-                                moreComing: moreComing
-                            )
-                        )
-                    }
-                }
-            }
-
-            database.add(operation)
-        }
+        return collected
     }
 
     private func verifySaved(_ id: CKRecord.ID, type: String, keys: [String]) async throws {
-        let record = try await database.record(for: id)
-        guard record.recordType == type else { throw RepositoryError.saveFailed }
-        for key in keys where record[key] == nil {
-            throw RepositoryError.saveFailed
+        let record: CKRecord
+        do {
+            record = try await database.record(for: id)
+        } catch {
+            throw CloudSaveError(message: "Saved \(type) but couldn’t read it back: \(error.localizedDescription)")
+        }
+        guard record.recordType == type else {
+            throw CloudSaveError(message: "Read back \(record.recordType) for \(id.recordName), expected \(type).")
+        }
+        let missing = keys.filter { record[$0] == nil }
+        guard missing.isEmpty else {
+            throw CloudSaveError(message: "\(type) \(id.recordName) is missing \(missing.joined(separator: ", ")) after save.")
         }
     }
 
-    /// Empty schema / first launch. `Users` is Apple's account type and is ignored.
-    private static func isBenignEmpty(_ error: Error) -> Bool {
-        let text = error.localizedDescription
-        if text.localizedCaseInsensitiveContains("Did not find record type") {
-            return true
+    private func requireiCloud() async throws {
+        let status = try await container.accountStatus()
+        guard status == .available else { throw RepositoryError.notSignedIn }
+    }
+
+    private static func stringList(_ record: CKRecord, key: String) -> [String] {
+        if let list = record[key] as? [String] { return list }
+        if let list = record[key] as? NSArray {
+            return list.compactMap { $0 as? String }
         }
-        guard let ck = error as? CKError else { return false }
-        if let partial = ck.partialErrorsByItemID {
-            for (_, nested) in partial {
-                if isBenignEmpty(nested) { return true }
-            }
+        return []
+    }
+
+    private static func append(_ newIDs: [String], to record: CKRecord, key: String) {
+        var ids = stringList(record, key: key)
+        for id in newIDs where !ids.contains(id) {
+            ids.append(id)
         }
-        // Some SDKs surface this under unknownItem / invalidArguments / serverRejectedRequest.
-        switch ck.code {
-        case .unknownItem, .invalidArguments, .serverRejectedRequest:
-            return text.localizedCaseInsensitiveContains("record type")
-        default:
-            return false
-        }
+        record[key] = ids as NSArray
+    }
+
+    private static func recordIDs(_ names: [String]) -> [CKRecord.ID] {
+        names.map { recordID($0) }
     }
 
     private func photoData(from record: CKRecord) -> Data? {
-        if let idString = record["id"] as? String, let id = UUID(uuidString: idString),
-           let cached = photoCache[id] {
+        if let idString = record["id"] as? String, let id = UUID(uuidString: idString), let cached = photoCache[id] {
             return cached
         }
-        guard let asset = record["photo"] as? CKAsset,
-              let url = asset.fileURL,
-              let data = try? Data(contentsOf: url)
-        else { return nil }
+        guard let asset = record["photo"] as? CKAsset, let url = asset.fileURL, let data = try? Data(contentsOf: url) else {
+            return nil
+        }
         if let idString = record["id"] as? String, let id = UUID(uuidString: idString) {
             photoCache[id] = data
         }
@@ -460,4 +430,9 @@ final class CloudKitPlantRepository: PlantRepository {
             notes: record["notes"] as? String ?? ""
         )
     }
+}
+
+private struct CloudSaveError: LocalizedError {
+    let message: String
+    var errorDescription: String? { message }
 }
