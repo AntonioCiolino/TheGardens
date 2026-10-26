@@ -104,8 +104,8 @@ struct PlantListView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                if let status = session.statusMessage, !session.instances.isEmpty {
-                    Text(status)
+                if let note = session.errorMessage ?? (session.instances.isEmpty ? nil : session.statusMessage) {
+                    Text(note)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
@@ -205,6 +205,9 @@ struct PlantListView: View {
     }
 
     private var emptyDescription: String {
+        if let error = session.errorMessage {
+            return error
+        }
         if session.user == nil {
             return "Connect iCloud under Sync to share inventory with your team, or add a plant to keep it on this device for now."
         }

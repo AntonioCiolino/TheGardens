@@ -229,7 +229,11 @@ final class GardensSession: ObservableObject {
             }
         } catch {
             isLoadingInventory = false
-            errorMessage = error.localizedDescription
+            let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            statusMessage = message
+            if !hasDisplayedCloudList {
+                errorMessage = message
+            }
         }
     }
 

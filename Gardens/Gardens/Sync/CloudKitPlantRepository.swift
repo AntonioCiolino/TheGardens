@@ -89,14 +89,14 @@ final class CloudKitPlantRepository: PlantRepository {
         try await requireiCloud()
         let instanceRecord: CKRecord
         do {
-            instanceRecord = try await database.record(for: Self.recordID(instanceID.uuidString))
+            instanceRecord = try await cloudRecord(for: Self.recordID(instanceID.uuidString))
         } catch let error as CKError where error.code == .unknownItem {
             return nil
         }
         guard let instance = Self.instance(from: instanceRecord, photoData: photoData(from: instanceRecord))
         else { return nil }
 
-        let catalogRecord = try await database.record(for: Self.recordID(instance.catalogItemID.uuidString))
+        let catalogRecord = try await cloudRecord(for: Self.recordID(instance.catalogItemID.uuidString))
         guard let catalog = Self.catalog(from: catalogRecord) else { return nil }
 
         let careIDs = Self.stringList(instanceRecord, key: "careEventIDs")
@@ -177,7 +177,7 @@ final class CloudKitPlantRepository: PlantRepository {
         for _ in 0..<4 {
             let instanceRecord: CKRecord
             do {
-                instanceRecord = try await database.record(for: Self.recordID(event.instanceID.uuidString))
+                instanceRecord = try await cloudRecord(for: Self.recordID(event.instanceID.uuidString))
             } catch let error as CKError where error.code == .unknownItem {
                 throw RepositoryError.instanceNotFound
             }
@@ -187,7 +187,7 @@ final class CloudKitPlantRepository: PlantRepository {
             }
             Self.setList(careIDs, on: instanceRecord, key: "careEventIDs")
             do {
-                _ = try await database.save(instanceRecord)
+                _ = try await cloudSave(instanceRecord)
                 try await verifySaved(care.recordID, type: RecordType.careEvent, keys: ["instanceID", "kind", "performedAt"])
                 return
             } catch let error as CKError where error.code == .serverRecordChanged {
@@ -204,7 +204,7 @@ final class CloudKitPlantRepository: PlantRepository {
         for _ in 0..<4 {
             let record: CKRecord
             do {
-                record = try await database.record(for: Self.recordID(instanceID.uuidString))
+                record = try await cloudRecord(for: Self.recordID(instanceID.uuidString))
             } catch let error as CKError where error.code == .unknownItem {
                 throw RepositoryError.instanceNotFound
             }
@@ -219,7 +219,7 @@ final class CloudKitPlantRepository: PlantRepository {
                 record["photoCredit"] = nil
             }
             do {
-                _ = try await database.save(record)
+                _ = try await cloudSave(record)
                 if let photoData {
                     photoCache[instanceID] = photoData
                     try await verifySaved(record.recordID, type: RecordType.instance, keys: ["photo"])
@@ -239,7 +239,7 @@ final class CloudKitPlantRepository: PlantRepository {
         try await requireiCloud()
         let record: CKRecord
         do {
-            record = try await database.record(for: Self.recordID(instanceID.uuidString))
+            record = try await cloudRecord(for: Self.recordID(instanceID.uuidString))
         } catch let error as CKError where error.code == .unknownItem {
             throw RepositoryError.instanceNotFound
         }
@@ -276,7 +276,7 @@ final class CloudKitPlantRepository: PlantRepository {
                 Self.remove([dropCatalog], from: manifest, key: "catalogIDs")
             }
             do {
-                _ = try await database.save(manifest)
+                _ = try await cloudSave(manifest)
                 return
             } catch let error as CKError where error.code == .serverRecordChanged {
                 continue
@@ -293,7 +293,7 @@ final class CloudKitPlantRepository: PlantRepository {
         for _ in 0..<4 {
             let record: CKRecord
             do {
-                record = try await database.record(for: Self.recordID(catalogItemID.uuidString))
+                record = try await cloudRecord(for: Self.recordID(catalogItemID.uuidString))
             } catch {
                 throw RepositoryError.catalogNotFound
             }
@@ -301,7 +301,7 @@ final class CloudKitPlantRepository: PlantRepository {
             record["wateringCheckGuidance"] = profile.wateringCheckGuidance
             record["healthCheckGuidance"] = profile.healthCheckGuidance
             do {
-                _ = try await database.save(record)
+                _ = try await cloudSave(record)
                 return
             } catch let error as CKError where error.code == .serverRecordChanged {
                 lastError = error
@@ -326,11 +326,11 @@ final class CloudKitPlantRepository: PlantRepository {
     }
 
     func accountStatus() async throws -> CKAccountStatus {
-        try await container.accountStatus()
+        try await within(.seconds(8)) { try await self.container.accountStatus() }
     }
 
     func userRecordName() async throws -> String {
-        try await container.userRecordID().recordName
+        try await within(.seconds(8)) { try await self.container.userRecordID().recordName }
     }
 
     // MARK: - Manifest
@@ -355,7 +355,7 @@ final class CloudKitPlantRepository: PlantRepository {
 
     private func loadManifest() async throws -> CKRecord {
         do {
-            return try await database.record(for: Self.manifestID)
+            return try await cloudRecord(for: Self.manifestID)
         } catch let error as CKError where error.code == .unknownItem {
             // Leave list fields unset. CloudKit rejects an empty list as the first value of a new field.
             return CKRecord(recordType: RecordType.manifest, recordID: Self.manifestID)
@@ -373,7 +373,7 @@ final class CloudKitPlantRepository: PlantRepository {
             let manifest = try await loadManifest()
             mutate(manifest)
             do {
-                _ = try await database.save(manifest)
+                _ = try await cloudSave(manifest)
                 return
             } catch let error as CKError where error.code == .serverRecordChanged {
                 lastError = error
@@ -386,9 +386,9 @@ final class CloudKitPlantRepository: PlantRepository {
     /// Insert, or accept the record if this ID was already saved (a retry after a successful write).
     private func saveRecord(_ record: CKRecord) async throws {
         do {
-            _ = try await database.save(record)
+            _ = try await cloudSave(record)
         } catch let error as CKError where error.code == .serverRecordChanged {
-            let existing = try await database.record(for: record.recordID)
+            let existing = try await cloudRecord(for: record.recordID)
             guard existing.recordType == record.recordType else { throw error }
         }
     }
@@ -396,7 +396,7 @@ final class CloudKitPlantRepository: PlantRepository {
     private func resolveCatalog(for draft: PlantIntakeDraft) async throws -> PlantCatalogItem {
         switch draft.catalogMode {
         case .existingType(let catalogItemID):
-            let record = try await database.record(for: Self.recordID(catalogItemID.uuidString))
+            let record = try await cloudRecord(for: Self.recordID(catalogItemID.uuidString))
             guard let item = Self.catalog(from: record) else { throw RepositoryError.catalogNotFound }
             return item
 
@@ -436,7 +436,7 @@ final class CloudKitPlantRepository: PlantRepository {
             if drop.isEmpty { return }
             Self.remove(drop, from: manifest, key: "catalogIDs")
             do {
-                _ = try await database.save(manifest)
+                _ = try await cloudSave(manifest)
                 for id in drop {
                     try await deleteIfPresent(Self.recordID(id))
                 }
@@ -492,7 +492,7 @@ final class CloudKitPlantRepository: PlantRepository {
     private func fetchChunk(_ ids: [CKRecord.ID], desiredKeys: [CKRecord.FieldKey]?) async throws -> [CKRecord] {
         guard !ids.isEmpty else { return [] }
         do {
-            let results = try await database.records(for: ids, desiredKeys: desiredKeys)
+            let results = try await cloudRecords(for: ids, desiredKeys: desiredKeys)
             var records: [CKRecord] = []
             records.reserveCapacity(results.count)
             for result in results.values {
@@ -516,7 +516,7 @@ final class CloudKitPlantRepository: PlantRepository {
             for id in ids {
                 group.addTask {
                     do {
-                        return try await self.database.record(for: id)
+                        return try await self.cloudRecord(for: id)
                     } catch let error as CKError where error.code == .unknownItem {
                         return nil
                     }
@@ -547,7 +547,7 @@ final class CloudKitPlantRepository: PlantRepository {
     private func verifySaved(_ id: CKRecord.ID, type: String, keys: [String]) async throws {
         let record: CKRecord
         do {
-            record = try await database.record(for: id)
+            record = try await cloudRecord(for: id)
         } catch {
             throw CloudSaveError(message: "Saved \(type) but couldn’t read it back: \(error.localizedDescription)")
         }
@@ -560,8 +560,54 @@ final class CloudKitPlantRepository: PlantRepository {
         }
     }
 
+    /// CloudKit’s own request timer retries for a long time. Give up so the screen can move on.
+    private func cloudRecord(for id: CKRecord.ID) async throws -> CKRecord {
+        try await within(.seconds(12)) { try await self.database.record(for: id) }
+    }
+
+    @discardableResult
+    private func cloudSave(_ record: CKRecord) async throws -> CKRecord {
+        try await within(.seconds(12)) { try await self.database.save(record) }
+    }
+
+    private func cloudDelete(_ id: CKRecord.ID) async throws {
+        try await within(.seconds(12)) { _ = try await self.database.deleteRecord(withID: id) }
+    }
+
+    private func cloudRecords(
+        for ids: [CKRecord.ID],
+        desiredKeys: [CKRecord.FieldKey]?
+    ) async throws -> [CKRecord.ID: Result<CKRecord, Error>] {
+        try await within(.seconds(12)) { try await self.database.records(for: ids, desiredKeys: desiredKeys) }
+    }
+
+    private func within<T>(_ limit: Duration, _ work: @escaping @MainActor () async throws -> T) async throws -> T {
+        let gate = CloudResumeGate()
+        return try await withCheckedThrowingContinuation { continuation in
+            let attempt = Task { @MainActor in
+                do {
+                    let value = try await work()
+                    gate.finish {
+                        continuation.resume(returning: value)
+                    }
+                } catch {
+                    gate.finish {
+                        continuation.resume(throwing: error)
+                    }
+                }
+            }
+            Task { @MainActor in
+                try? await Task.sleep(for: limit)
+                gate.finish {
+                    attempt.cancel()
+                    continuation.resume(throwing: CloudTimeout())
+                }
+            }
+        }
+    }
+
     private func requireiCloud() async throws {
-        let status = try await container.accountStatus()
+        let status = try await accountStatus()
         guard status == .available else { throw RepositoryError.notSignedIn }
     }
 
@@ -600,7 +646,7 @@ final class CloudKitPlantRepository: PlantRepository {
 
     private func deleteIfPresent(_ id: CKRecord.ID) async throws {
         do {
-            _ = try await database.deleteRecord(withID: id)
+            _ = try await cloudDelete(id)
         } catch let error as CKError where error.code == .unknownItem {
             return
         } catch let error as CKError where error.code == .permissionFailure || error.code == .notAuthenticated {
@@ -613,7 +659,7 @@ final class CloudKitPlantRepository: PlantRepository {
     /// `record(for:)` returns unknownItem once CloudKit has actually deleted the record.
     private func assertDeleted(_ id: CKRecord.ID, what: String) async throws {
         do {
-            _ = try await database.record(for: id)
+            _ = try await cloudRecord(for: id)
         } catch let error as CKError where error.code == .unknownItem {
             return
         } catch {
@@ -721,4 +767,20 @@ final class CloudKitPlantRepository: PlantRepository {
 private struct CloudSaveError: LocalizedError {
     let message: String
     var errorDescription: String? { message }
+}
+
+private struct CloudTimeout: LocalizedError {
+    var errorDescription: String? {
+        "iCloud didn’t answer. The list stays as it is — pull to refresh when you have a connection."
+    }
+}
+
+private final class CloudResumeGate {
+    private var finished = false
+
+    func finish(_ body: () -> Void) {
+        guard !finished else { return }
+        finished = true
+        body()
+    }
 }
