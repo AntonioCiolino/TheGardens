@@ -152,9 +152,21 @@ struct AddPlantView: View {
                     lookupTask?.cancel()
                     Task { await lookupReference(forcePhoto: true) }
                 } label: {
-                    Label(isLookingUp ? "Looking up…" : "Get reference photo", systemImage: "photo.badge.plus")
+                    HStack {
+                        Label("Get reference photo", systemImage: "photo.badge.plus")
+                        if isLookingUp {
+                            ProgressView()
+                        }
+                    }
                 }
                 .disabled(isLookingUp || !canLookupReference)
+                if isLookingUp {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                        Text("Looking up the plant…")
+                            .font(.subheadline)
+                    }
+                }
             } header: {
                 Text("Photo")
             } footer: {
@@ -186,6 +198,11 @@ struct AddPlantView: View {
                 }
             }
         }
+        .overlay {
+            if isSaving {
+                savingOverlay("Saving plant…")
+            }
+        }
         .navigationTitle(mode == .newType ? "New arrival" : "Add more")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -193,10 +210,14 @@ struct AddPlantView: View {
                 Button("Cancel") { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button(quantity > 1 ? "Save \(quantity)" : "Save") {
-                    Task { await save() }
+                if isSaving {
+                    ProgressView()
+                } else {
+                    Button(quantity > 1 ? "Save \(quantity)" : "Save") {
+                        Task { await save() }
+                    }
+                    .disabled(!canSave)
                 }
-                .disabled(!canSave)
             }
         }
         .task { await loadCatalog() }
@@ -412,6 +433,19 @@ struct AddPlantView: View {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+}
+
+private func savingOverlay(_ title: String) -> some View {
+    ZStack {
+        Color.black.opacity(0.2).ignoresSafeArea()
+        VStack(spacing: 12) {
+            ProgressView()
+            Text(title)
+                .font(.headline)
+        }
+        .padding(24)
+        .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 

@@ -78,6 +78,20 @@ struct LogCareUpdateView: View {
                     .lineLimit(2...5)
             }
         }
+        .overlay {
+            if isSaving {
+                ZStack {
+                    Color.black.opacity(0.2).ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("Saving care note…")
+                            .font(.headline)
+                    }
+                    .padding(24)
+                    .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+            }
+        }
         .navigationTitle("Log care")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -85,10 +99,14 @@ struct LogCareUpdateView: View {
                 Button("Cancel") { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    Task { await save() }
+                if isSaving {
+                    ProgressView()
+                } else {
+                    Button("Save") {
+                        Task { await save() }
+                    }
+                    .disabled(!draft.isValid)
                 }
-                .disabled(!draft.isValid || isSaving)
             }
         }
         .alert("Couldn’t save", isPresented: Binding(

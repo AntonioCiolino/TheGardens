@@ -91,7 +91,13 @@ struct ScanPlantView: View {
                 )
                 .padding(.top, 24)
 
-            Text(statusMessage)
+            HStack(spacing: 8) {
+                if isLookingUp {
+                    ProgressView()
+                        .tint(.white)
+                }
+                Text(statusMessage)
+            }
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white)
                 .padding(.horizontal, 14)

@@ -323,14 +323,30 @@ private struct EditPlantPhotoSheet: View {
                     Button {
                         Task { await loadReference() }
                     } label: {
-                        Label(isLookingUp ? "Looking up…" : "Get reference photo", systemImage: "photo.badge.plus")
+                        HStack {
+                            Label("Get reference photo", systemImage: "photo.badge.plus")
+                            if isLookingUp {
+                                ProgressView()
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
                     .disabled(isLookingUp || isSaving)
 
+                    if isLookingUp {
+                        HStack(spacing: 10) {
+                            ProgressView()
+                            Text("Looking up the plant…")
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
                     if isSaving {
-                        ProgressView("Saving photo…")
-                            .frame(maxWidth: .infinity)
+                        HStack(spacing: 10) {
+                            ProgressView()
+                            Text("Saving photo…")
+                        }
+                        .frame(maxWidth: .infinity)
                     }
                 }
                 .padding()

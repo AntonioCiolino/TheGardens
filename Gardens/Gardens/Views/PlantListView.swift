@@ -145,6 +145,20 @@ struct PlantListView: View {
             } message: {
                 Text("Are you sure? This removes the plant and its care notes from the inventory.")
             }
+            .overlay {
+                if isDeleting {
+                    ZStack {
+                        Color.black.opacity(0.2).ignoresSafeArea()
+                        VStack(spacing: 12) {
+                            ProgressView()
+                            Text("Deleting plant…")
+                                .font(.headline)
+                        }
+                        .padding(24)
+                        .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                }
+            }
             .alert("Couldn’t delete", isPresented: Binding(
                 get: { deleteError != nil },
                 set: { if !$0 { deleteError = nil } }
