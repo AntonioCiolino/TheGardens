@@ -100,7 +100,7 @@ enum SupvanLabel {
 
     static func printBuffers(raster: [UInt8], columns: UInt16) throws -> [[UInt8]] {
         let margin = marginDots
-        let contentCols = columns.saturatingSub(margin * 2)
+        let contentCols = columns > margin * 2 ? columns - margin * 2 : 0
         guard contentCols > 0 else { throw T50PrinterError.renderFailed }
         let stride = bytesPerLine
         let maxCols = 4074 / stride
