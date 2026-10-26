@@ -4,6 +4,11 @@ import GardensCore
 
 @main
 struct GardensApp: App {
+    /// Local SwiftData only. The CloudKit entitlement would otherwise turn
+    /// `.modelContainer(for:)` into a private-database mirror, which rejects
+    /// these models. Shared inventory is `CloudKitPlantRepository`.
+    private let modelContainer = LocalPlantStore.makeContainer()
+
     @StateObject private var session = GardensSession()
     @State private var showSplash = true
     @State private var splashStyle = SplashBrandStyle.random()
@@ -30,11 +35,7 @@ struct GardensApp: App {
                 handleIncomingURL(url)
             }
         }
-        .modelContainer(for: [
-            CatalogItemEntity.self,
-            PlantInstanceEntity.self,
-            CareEventEntity.self,
-        ])
+        .modelContainer(modelContainer)
     }
 
     private func handleIncomingURL(_ url: URL) {
@@ -44,6 +45,23 @@ struct GardensApp: App {
         showSplash = false
         openCareFromDeepLink = true
         deepLinkPlantID = id
+    }
+}
+
+/// On-device fallback store. `cloudKitDatabase: .none` keeps SwiftData off iCloud.
+private enum LocalPlantStore {
+    static func makeContainer() -> ModelContainer {
+        let schema = Schema([
+            CatalogItemEntity.self,
+            PlantInstanceEntity.self,
+            CareEventEntity.self,
+        ])
+        let configuration = ModelConfiguration(schema: schema, cloudKitDatabase: .none)
+        do {
+            return try ModelContainer(for: schema, configurations: [configuration])
+        } catch {
+            fatalError("Could not open the local plant store: \(error)")
+        }
     }
 }
 
