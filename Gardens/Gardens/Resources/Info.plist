@@ -35,6 +35,8 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Gardens uses Bluetooth to print a plant label on the T50M.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Gardens uses the camera to scan plant label QR codes and to photograph plants at intake.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

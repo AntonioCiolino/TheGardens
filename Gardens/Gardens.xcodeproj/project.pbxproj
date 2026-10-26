@@ -29,6 +29,13 @@
 		A08E2174BEBE4C18B01C1656 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49E4DF803244D9B1691A54 /* SignInView.swift */; };
 		D63295D02D5A4983A63C7A53 /* CloudKitPlantRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899F6D6A3D214902BDB2C832 /* CloudKitPlantRepository.swift */; };
 		D4E2B9F35C7E401B8F2D8E66 /* PlantReferenceLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3F1A8E24B6D4F0A9E1C7D55 /* PlantReferenceLoader.swift */; };
+		A11LABEL0JOB00000000002 /* SupvanLabelJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11LABEL0JOB00000000001 /* SupvanLabelJob.swift */; };
+		A11T50BTPRINTER000000002 /* T50BluetoothPrinter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11T50BTPRINTER000000001 /* T50BluetoothPrinter.swift */; };
+		A11LABELSHEET00000000002 /* LabelPrinterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11LABELSHEET00000000001 /* LabelPrinterSheet.swift */; };
+		A11LZMACSOURCE0000000002 /* gardens_lzma.c in Sources */ = {isa = PBXBuildFile; fileRef = A11LZMACSOURCE0000000001 /* gardens_lzma.c */; settings = {COMPILER_FLAGS = "-DZ7_ST"; }; };
+		A11LZMAENCSOURCE000000002 /* LzmaEnc.c in Sources */ = {isa = PBXBuildFile; fileRef = A11LZMAENCSOURCE000000001 /* LzmaEnc.c */; settings = {COMPILER_FLAGS = "-DZ7_ST"; }; };
+		A11LZFINDSOURCE0000000002 /* LzFind.c in Sources */ = {isa = PBXBuildFile; fileRef = A11LZFINDSOURCE0000000001 /* LzFind.c */; settings = {COMPILER_FLAGS = "-DZ7_ST"; }; };
+		A11CPUARCHSOURCE000000002 /* CpuArch.c in Sources */ = {isa = PBXBuildFile; fileRef = A11CPUARCHSOURCE000000001 /* CpuArch.c */; settings = {COMPILER_FLAGS = "-DZ7_ST"; }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,6 +63,14 @@
 		4C6798F5A79C4A21B92A8219 /* Gardens.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Gardens.entitlements; sourceTree = "<group>"; };
 		899F6D6A3D214902BDB2C832 /* CloudKitPlantRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitPlantRepository.swift; sourceTree = "<group>"; };
 		C3F1A8E24B6D4F0A9E1C7D55 /* PlantReferenceLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantReferenceLoader.swift; sourceTree = "<group>"; };
+		A11LABEL0JOB00000000001 /* SupvanLabelJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupvanLabelJob.swift; sourceTree = "<group>"; };
+		A11T50BTPRINTER000000001 /* T50BluetoothPrinter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = T50BluetoothPrinter.swift; sourceTree = "<group>"; };
+		A11LABELSHEET00000000001 /* LabelPrinterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelPrinterSheet.swift; sourceTree = "<group>"; };
+		A11BRIDGEHEADER0000000001 /* Gardens-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Gardens-Bridging-Header.h"; sourceTree = "<group>"; };
+		A11LZMACSOURCE0000000001 /* gardens_lzma.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = gardens_lzma.c; sourceTree = "<group>"; };
+		A11LZMAENCSOURCE000000001 /* LzmaEnc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = LzmaEnc.c; sourceTree = "<group>"; };
+		A11LZFINDSOURCE0000000001 /* LzFind.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = LzFind.c; sourceTree = "<group>"; };
+		A11CPUARCHSOURCE000000001 /* CpuArch.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = CpuArch.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -123,8 +138,23 @@
 				90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */,
 				651C84A8EE9D423B8BEECF87 /* UIKitPlantLabelPrinter.swift */,
 				D488314D7F3D4988A311217C /* PlantQRScannerView.swift */,
+				A11LABEL0JOB00000000001 /* SupvanLabelJob.swift */,
+				A11T50BTPRINTER000000001 /* T50BluetoothPrinter.swift */,
+				A11BRIDGEHEADER0000000001 /* Gardens-Bridging-Header.h */,
+				A11LZMAGROUP0000000000001 /* LZMA */,
 			);
 			path = Platform;
+			sourceTree = "<group>";
+		};
+		A11LZMAGROUP0000000000001 /* LZMA */ = {
+			isa = PBXGroup;
+			children = (
+				A11LZMACSOURCE0000000001 /* gardens_lzma.c */,
+				A11LZMAENCSOURCE000000001 /* LzmaEnc.c */,
+				A11LZFINDSOURCE0000000001 /* LzFind.c */,
+				A11CPUARCHSOURCE000000001 /* CpuArch.c */,
+			);
+			path = LZMA;
 			sourceTree = "<group>";
 		};
 		374309B2DCEA46E19A86607B /* Views */ = {
@@ -134,6 +164,7 @@
 				E2AC03ED2C4141C2B07FF9AB /* SplashView.swift */,
 				497F8E156F1E487D96C3B314 /* AddPlantView.swift */,
 				F5E5172D9BBB4DB4AA9D58BA /* BatchLabelPrintView.swift */,
+				A11LABELSHEET00000000001 /* LabelPrinterSheet.swift */,
 				69375AC8E2CC46DCBEF3B660 /* PlantDetailView.swift */,
 				B350954A98F34C8F88A4D742 /* LogCareUpdateView.swift */,
 				6BB76F0BFB6D4AC8B5AC26A5 /* ScanPlantView.swift */,
@@ -268,6 +299,13 @@
 				1EA70580002F467A8E3FA025 /* PlantQRScannerView.swift in Sources */,
 				D63295D02D5A4983A63C7A53 /* CloudKitPlantRepository.swift in Sources */,
 				D4E2B9F35C7E401B8F2D8E66 /* PlantReferenceLoader.swift in Sources */,
+				A11LABEL0JOB00000000002 /* SupvanLabelJob.swift in Sources */,
+				A11T50BTPRINTER000000002 /* T50BluetoothPrinter.swift in Sources */,
+				A11LABELSHEET00000000002 /* LabelPrinterSheet.swift in Sources */,
+				A11LZMACSOURCE0000000002 /* gardens_lzma.c in Sources */,
+				A11LZMAENCSOURCE000000002 /* LzmaEnc.c in Sources */,
+				A11LZFINDSOURCE0000000002 /* LzFind.c in Sources */,
+				A11CPUARCHSOURCE000000002 /* CpuArch.c in Sources */,
 				87B70E6D4AAB45D0B80C6B0D /* GardensSession.swift in Sources */,
 				A08E2174BEBE4C18B01C1656 /* SignInView.swift in Sources */,
 			);
@@ -317,6 +355,7 @@
 				CODE_SIGN_ENTITLEMENTS = Gardens/Resources/Gardens.entitlements;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Gardens/Resources/Info.plist;
+				SWIFT_OBJC_BRIDGING_HEADER = Gardens/Platform/Gardens-Bridging-Header.h;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -341,6 +380,7 @@
 				CODE_SIGN_ENTITLEMENTS = Gardens/Resources/Gardens.entitlements;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Gardens/Resources/Info.plist;
+				SWIFT_OBJC_BRIDGING_HEADER = Gardens/Platform/Gardens-Bridging-Header.h;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

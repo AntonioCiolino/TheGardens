@@ -8,11 +8,7 @@ struct BatchLabelPrintView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var payloads: [(PlantInstanceDetail, String)] = []
-    @State private var isPrinting = false
-    @State private var printError: String?
-    @State private var printMessage: String?
-
-    private let qrGenerator = CoreImageQRCodeGenerator()
+    @State private var printRequest: LabelPrintRequest?
 
     var body: some View {
         NavigationStack {
@@ -21,24 +17,16 @@ struct BatchLabelPrintView: View {
                     header
 
                     Button {
-                        Task { await printAll() }
+                        printRequest = LabelPrintRequest(jobs: jobs)
                     } label: {
                         Label(
-                            isPrinting
-                                ? "Preparing…"
-                                : "Print \(batch.count) label\(batch.count == 1 ? "" : "s")",
+                            "Print \(batch.count) label\(batch.count == 1 ? "" : "s")",
                             systemImage: "printer"
                         )
                         .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(isPrinting || payloads.isEmpty)
-
-                    if let printMessage {
-                        Text(printMessage)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
+                    .disabled(payloads.isEmpty)
 
                     ForEach(Array(payloads.enumerated()), id: \.element.0.id) { index, pair in
                         let (detail, payload) = pair
@@ -52,7 +40,14 @@ struct BatchLabelPrintView: View {
                                 .minimumScaleFactor(0.6)
                             QRCodeImageView(payload: payload, dimension: 180)
                             Button("Print this label") {
-                                Task { await printOne(detail: detail, payload: payload) }
+                                printRequest = LabelPrintRequest(jobs: [
+                                    PlantLabelJob(
+                                        id: detail.instance.id,
+                                        title: detail.catalog.name,
+                                        subtitle: detail.catalog.genus,
+                                        qrPayload: payload
+                                    )
+                                ])
                             }
                             .buttonStyle(.bordered)
                         }
@@ -71,14 +66,20 @@ struct BatchLabelPrintView: View {
                 }
             }
             .task { loadPayloads() }
-            .alert("Print", isPresented: Binding(
-                get: { printError != nil },
-                set: { if !$0 { printError = nil } }
-            )) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(printError ?? "")
+            .sheet(item: $printRequest) { request in
+                LabelPrinterSheet(jobs: request.jobs)
             }
+        }
+    }
+
+    private var jobs: [PlantLabelJob] {
+        payloads.map { detail, payload in
+            PlantLabelJob(
+                id: detail.instance.id,
+                title: detail.catalog.name,
+                subtitle: detail.catalog.genus,
+                qrPayload: payload
+            )
         }
     }
 
@@ -103,39 +104,4 @@ struct BatchLabelPrintView: View {
         }
     }
 
-    @MainActor
-    private func printAll() async {
-        isPrinting = true
-        defer { isPrinting = false }
-        do {
-            var images: [Data] = []
-            for (_, payload) in payloads {
-                images.append(try qrGenerator.makeQRCodeImageData(from: payload, dimension: 280))
-            }
-            let printer = UIKitPlantLabelPrinter()
-            try await printer.printLabels(
-                title: batch.catalog.name,
-                subtitle: "\(batch.catalog.genus) · \(batch.count) labels",
-                qrImageDataList: images
-            )
-            printMessage = "Print sheet opened for \(batch.count) label\(batch.count == 1 ? "" : "s")."
-        } catch {
-            printError = error.localizedDescription
-        }
-    }
-
-    @MainActor
-    private func printOne(detail: PlantInstanceDetail, payload: String) async {
-        do {
-            let image = try qrGenerator.makeQRCodeImageData(from: payload, dimension: 300)
-            let printer = UIKitPlantLabelPrinter()
-            try await printer.printLabel(
-                title: detail.catalog.name,
-                subtitle: "\(detail.catalog.genus) · \(detail.instance.vendor)",
-                qrImageData: image
-            )
-        } catch {
-            printError = error.localizedDescription
-        }
-    }
 }

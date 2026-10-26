@@ -8,12 +8,9 @@ struct PlantDetailView: View {
     @EnvironmentObject private var session: GardensSession
     @State private var destination: PlantInstanceDestination?
     @State private var qrPayload: String?
-    @State private var printError: String?
-    @State private var isPrinting = false
+    @State private var printRequest: LabelPrintRequest?
     @State private var showingCareLog = false
     @State private var showingPhotoEditor = false
-
-    private let qrGenerator = CoreImageQRCodeGenerator()
 
     var body: some View {
         Group {
@@ -64,13 +61,8 @@ struct PlantDetailView: View {
                 }
             }
         }
-        .alert("Print", isPresented: Binding(
-            get: { printError != nil },
-            set: { if !$0 { printError = nil } }
-        )) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(printError ?? "")
+        .sheet(item: $printRequest) { request in
+            LabelPrinterSheet(jobs: request.jobs)
         }
     }
 
@@ -170,16 +162,19 @@ struct PlantDetailView: View {
                     .textSelection(.enabled)
 
                 Button {
-                    Task { await printLabel(destination: destination, payload: qrPayload) }
+                    printRequest = LabelPrintRequest(jobs: [
+                        PlantLabelJob(
+                            id: destination.instance.id,
+                            title: destination.catalog.name,
+                            subtitle: destination.catalog.genus,
+                            qrPayload: qrPayload
+                        )
+                    ])
                 } label: {
-                    Label(
-                        isPrinting ? "Preparing print…" : "Print label",
-                        systemImage: "printer"
-                    )
-                    .frame(maxWidth: .infinity)
+                    Label("Print label", systemImage: "printer")
+                        .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(isPrinting)
             }
         }
         .padding()
@@ -264,22 +259,6 @@ struct PlantDetailView: View {
         }
     }
 
-    @MainActor
-    private func printLabel(destination: PlantInstanceDestination, payload: String) async {
-        isPrinting = true
-        defer { isPrinting = false }
-        do {
-            let imageData = try qrGenerator.makeQRCodeImageData(from: payload, dimension: 300)
-            let printer = UIKitPlantLabelPrinter()
-            try await printer.printLabel(
-                title: destination.catalog.name,
-                subtitle: "\(destination.catalog.genus) · \(destination.instance.vendor)",
-                qrImageData: imageData
-            )
-        } catch {
-            printError = error.localizedDescription
-        }
-    }
 }
 
 /// Replace the photo on a plant that already exists. The chosen image is shown here before it is saved.
