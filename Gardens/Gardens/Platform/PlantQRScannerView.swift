@@ -3,17 +3,26 @@ import SwiftUI
 
 /// Live camera preview that detects QR codes via AVFoundation.
 struct PlantQRScannerView: UIViewRepresentable {
+    var isActive: Bool = true
     var onCode: (String) -> Void
 
     func makeUIView(context: Context) -> ScannerPreviewView {
         let view = ScannerPreviewView()
         view.onCode = onCode
         context.coordinator.preview = view
+        context.coordinator.isActive = isActive
         return view
     }
 
     func updateUIView(_ uiView: ScannerPreviewView, context: Context) {
         uiView.onCode = onCode
+        guard context.coordinator.isActive != isActive else { return }
+        context.coordinator.isActive = isActive
+        if isActive {
+            uiView.start()
+        } else {
+            uiView.stop()
+        }
     }
 
     func makeCoordinator() -> Coordinator {
@@ -22,6 +31,7 @@ struct PlantQRScannerView: UIViewRepresentable {
 
     final class Coordinator {
         weak var preview: ScannerPreviewView?
+        var isActive = true
     }
 }
 

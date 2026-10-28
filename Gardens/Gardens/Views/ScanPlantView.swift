@@ -1,17 +1,18 @@
-import AVFoundation
 import SwiftUI
 import GardensCore
 
-/// Live camera QR scan → plant lookup → care logging.
+/// Live camera QR scan. A match opens that plant's record.
 struct ScanPlantView: View {
     @EnvironmentObject private var session: GardensSession
     @Environment(\.dismiss) private var dismiss
+
+    var onOpenPlant: (UUID) -> Void = { _ in }
 
     @State private var scannedText = ""
     @State private var destination: PlantInstanceDestination?
     @State private var errorMessage: String?
     @State private var isLookingUp = false
-    @State private var showCareLog = false
+    @State private var scannerPaused = false
     @State private var cameraAuthorized = false
     @State private var cameraChecked = false
     @State private var showManualEntry = false
@@ -22,7 +23,7 @@ struct ScanPlantView: View {
             Color.black.ignoresSafeArea()
 
             if cameraAuthorized {
-                PlantQRScannerView { code in
+                PlantQRScannerView(isActive: !scannerPaused) { code in
                     Task { await handleScan(code) }
                 }
                 .ignoresSafeArea()
@@ -60,15 +61,6 @@ struct ScanPlantView: View {
                 manualEntryForm
             }
             .presentationDetents([.medium])
-        }
-        .sheet(isPresented: $showCareLog) {
-            if let destination {
-                NavigationStack {
-                    LogCareUpdateView(destination: destination) {
-                        dismiss()
-                    }
-                }
-            }
         }
         .alert("Scan", isPresented: Binding(
             get: { errorMessage != nil },
@@ -114,13 +106,9 @@ struct ScanPlantView: View {
                     .font(.title3.bold())
                 Text(destination.catalog.genus)
                     .foregroundStyle(.secondary)
-                Button {
-                    showCareLog = true
-                } label: {
-                    Label("Log care / health update", systemImage: "heart.text.clipboard")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
+                Text("Opening this plant…")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             } else {
                 Text("Camera needs permission to scan plant labels. Use Paste if you’re testing without a printed QR.")
                     .font(.footnote)
@@ -186,21 +174,29 @@ struct ScanPlantView: View {
     private func handleScan(_ raw: String) async {
         let code = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !code.isEmpty else { return }
-        guard !isLookingUp else { return }
+        guard !scannerPaused, !isLookingUp else { return }
 
+        scannerPaused = true
         isLookingUp = true
         statusMessage = "Looking up plant…"
-        defer { isLookingUp = false }
 
         do {
             let service = PlantIntakeService(repository: session.repository)
             let match = try await service.destination(fromScannedQR: code)
             destination = match
             scannedText = code
+            isLookingUp = false
             statusMessage = "Matched \(match.catalog.name)"
             UINotificationFeedbackGenerator().notificationOccurred(.success)
+            try await Task.sleep(for: .milliseconds(500))
+            guard !Task.isCancelled else { return }
+            onOpenPlant(match.instance.id)
+        } catch is CancellationError {
+            return
         } catch {
             destination = nil
+            isLookingUp = false
+            scannerPaused = false
             statusMessage = "No match — try again"
             errorMessage = "No plant matched that QR. Check the label or paste the code."
             UINotificationFeedbackGenerator().notificationOccurred(.error)

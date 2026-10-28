@@ -123,7 +123,13 @@ struct PlantListView: View {
             }
             .sheet(isPresented: $showingScan) {
                 NavigationStack {
-                    ScanPlantView()
+                    ScanPlantView { plantID in
+                        showingScan = false
+                        Task { @MainActor in
+                            await Task.yield()
+                            path.append(plantID)
+                        }
+                    }
                 }
             }
             .sheet(isPresented: $showingSync) {
