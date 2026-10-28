@@ -30,6 +30,7 @@ final class T50BluetoothPrinter: NSObject, ObservableObject {
     private var foundChannels: [(service: CBUUID, write: CBCharacteristic, notify: CBCharacteristic?)] = []
     /// First link often drops when notifications are enabled. The retry holds the write channel only.
     private var retryWithoutNotify = false
+    private var didRetryServiceDiscovery = false
 
     private let rememberedKey = "gardens.t50.peripheral"
 
@@ -49,6 +50,7 @@ final class T50BluetoothPrinter: NSObject, ObservableObject {
         guard let central else { return }
         isBusy = true
         retryWithoutNotify = false
+        didRetryServiceDiscovery = false
         statusText = "Connecting to \(printer.name)…"
         central.stopScan()
         if let connected, connected.identifier != printer.identifier {
@@ -65,8 +67,9 @@ final class T50BluetoothPrinter: NSObject, ObservableObject {
     }
 
     func printJobs(_ jobs: [PlantLabelJob]) async throws {
-        guard connected != nil, writeCharacteristic != nil, notifyCharacteristic != nil else {
-            throw T50PrinterError.notConnected
+        guard connected != nil else { throw T50PrinterError.notConnected }
+        guard writeCharacteristic != nil, notifyCharacteristic != nil else {
+            throw T50PrinterError.unrecognizedDevice
         }
         isBusy = true
         defer { isBusy = false }
@@ -254,7 +257,9 @@ final class T50BluetoothPrinter: NSObject, ObservableObject {
 
     private func subscribeToBestChannel(on peripheral: CBPeripheral) {
         guard let best = foundChannels.first(where: { Self.matches($0.service) }) ?? foundChannels.first else {
-            statusText = "Connected to \(connectedName ?? "T50M"), but it has no print channel yet."
+            let services = (peripheral.services ?? []).map { Self.shortID($0.uuid) }
+            let listed = services.isEmpty ? "no services" : services.joined(separator: ", ")
+            statusText = "Connected, but no print channel yet (\(listed))."
             isBusy = false
             return
         }
@@ -395,6 +400,11 @@ extension T50BluetoothPrinter: CBPeripheralDelegate {
                 return
             }
             let services = peripheral.services ?? []
+            if services.isEmpty, !self.didRetryServiceDiscovery {
+                self.didRetryServiceDiscovery = true
+                peripheral.discoverServices(nil)
+                return
+            }
             let preferred = services.filter { Self.matches($0.uuid) }
             let rest = services.filter { !Self.matches($0.uuid) }
             self.foundChannels = []
@@ -459,28 +469,44 @@ extension T50BluetoothPrinter: CBPeripheralDelegate {
         }
     }
 
+    private static func compactUUID(_ uuid: CBUUID) -> String {
+        uuid.uuidString.uppercased().replacingOccurrences(of: "-", with: "")
+    }
+
+    private static func shortID(_ uuid: CBUUID) -> String {
+        let compact = compactUUID(uuid)
+        if compact.hasPrefix("0000"), compact.count >= 8 {
+            return String(compact.dropFirst(4).prefix(4))
+        }
+        return String(compact.prefix(8))
+    }
+
     private static func matches(_ uuid: CBUUID) -> Bool {
-        let token = uuid.uuidString.uppercased()
-        return token.hasPrefix("FEE7") || token.hasPrefix("FF00") || token.contains("E0FF")
+        let token = compactUUID(uuid)
+        return ["FEE7", "FEC1", "FFE0", "FFE1", "FFE9", "FF00", "FF01", "FF02", "E0FF", "49535343"]
+            .contains { token.contains($0) }
+    }
+
+    private static func isWritable(_ characteristic: CBCharacteristic) -> Bool {
+        let props = characteristic.properties
+        if props.contains(.write) || props.contains(.writeWithoutResponse) || props.contains(.authenticatedSignedWrites) {
+            return true
+        }
+        let token = compactUUID(characteristic.uuid)
+        return ["FEC1", "FFE9", "FF02", "FFE1", "8841"].contains { token.contains($0) }
+    }
+
+    private static func isNotifying(_ characteristic: CBCharacteristic) -> Bool {
+        let props = characteristic.properties
+        if props.contains(.notify) || props.contains(.indicate) { return true }
+        let token = compactUUID(characteristic.uuid)
+        return ["FEC1", "FFE1", "FF01", "1E4D"].contains { token.contains($0) }
     }
 
     private static func writeAndNotify(in service: CBUUID, characteristics: [CBCharacteristic]) -> (write: CBCharacteristic?, notify: CBCharacteristic?) {
-        func find(_ id: String) -> CBCharacteristic? {
-            characteristics.first { $0.uuid.uuidString.uppercased().hasPrefix(id) }
-        }
-        let token = service.uuidString.uppercased()
-        if token.hasPrefix("FEE7") {
-            let shared = find("FEC1")
-            return (shared, shared)
-        }
-        if token.contains("E0FF") {
-            return (find("FFE9"), find("FFE1"))
-        }
-        if token.hasPrefix("FF00") {
-            return (find("FF02"), find("FF01"))
-        }
-        let write = characteristics.first { $0.properties.contains(.write) || $0.properties.contains(.writeWithoutResponse) }
-        let notify = characteristics.first { $0.properties.contains(.notify) || $0.properties.contains(.indicate) }
+        _ = service
+        let write = characteristics.first(where: isWritable)
+        let notify = characteristics.first(where: isNotifying)
         return (write, notify ?? write)
     }
 }
