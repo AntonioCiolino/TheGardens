@@ -61,18 +61,7 @@ final class T50BluetoothPrinter: NSObject, ObservableObject {
         }
         connected = printer.peripheral
         printer.peripheral.delegate = self
-        central.connect(printer.peripheral, options: Self.connectOptions())
-    }
-
-    /// T50M is classic Bluetooth plus BLE. Bridging keeps the phone session from being dropped.
-    private static func connectOptions() -> [String: Any] {
-        var options: [String: Any] = [
-            CBConnectPeripheralOptionEnableTransportBridgingKey: true
-        ]
-        if #available(iOS 17.0, *) {
-            options[CBConnectPeripheralOptionEnableAutoReconnect] = true
-        }
-        return options
+        central.connect(printer.peripheral, options: nil)
     }
 
     func printJobs(_ jobs: [PlantLabelJob]) async throws {
@@ -381,7 +370,7 @@ extension T50BluetoothPrinter: CBCentralManagerDelegate {
                 self.connectedName = name
                 self.isBusy = true
                 self.statusText = "Printer dropped the link. Holding \(name)…"
-                self.central?.connect(peripheral, options: Self.connectOptions())
+                self.central?.connect(peripheral, options: nil)
                 return
             }
             let reason = error?.localizedDescription
