@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Splash layout variants — the official BrandMark logo is always shown.
+/// Splash layout variants — the tall G monogram is always shown.
 enum SplashBrandStyle: String, CaseIterable, Identifiable, Sendable {
     case centered
     case lifted
@@ -21,7 +21,7 @@ enum SplashBrandStyle: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-/// Launch splash featuring the official The Gardens G badge.
+/// Launch splash. The full oval mark stays in the asset catalog; this screen shows the G.
 struct SplashView: View {
     var style: SplashBrandStyle = .random()
 
@@ -38,10 +38,16 @@ struct SplashView: View {
             }
 
             VStack(spacing: 22) {
-                Image("BrandMark")
+                Image("QRMonogram")
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: logoWidth, maxHeight: 340)
+                    .padding(.horizontal, 36)
+                    .padding(.vertical, 28)
+                    .background {
+                        Capsule()
+                            .fill(Color(red: 0.94, green: 0.93, blue: 0.88))
+                    }
                     .shadow(color: .black.opacity(0.4), radius: 20, y: 10)
                     .offset(y: style == .lifted ? -24 : 0)
                     .accessibilityHidden(true)
