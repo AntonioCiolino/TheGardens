@@ -54,74 +54,71 @@ public final class InMemoryPlantRepository: PlantRepository, @unchecked Sendable
         let arrivedOn = Calendar.current.startOfDay(for: draft.arrivedOn)
         let vendor = draft.vendor.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        var details: [PlantInstanceDetail] = []
-        details.reserveCapacity(draft.quantity)
-
-        lock.lock()
-        defer { lock.unlock() }
-
-        for _ in 0..<draft.quantity {
-            let instance = PlantInstance(
-                catalogItemID: catalogItem.id,
-                arrivedOn: arrivedOn,
-                vendor: vendor,
-                photoData: draft.photoData,
-                photoCredit: draft.photoCredit
-            )
-            instances[instance.id] = instance
-            details.append(PlantInstanceDetail(instance: instance, catalog: catalogItem))
+        return try lock.withLock {
+            var details: [PlantInstanceDetail] = []
+            details.reserveCapacity(draft.quantity)
+            for _ in 0..<draft.quantity {
+                let instance = PlantInstance(
+                    catalogItemID: catalogItem.id,
+                    arrivedOn: arrivedOn,
+                    vendor: vendor,
+                    photoData: draft.photoData,
+                    photoCredit: draft.photoCredit
+                )
+                instances[instance.id] = instance
+                details.append(PlantInstanceDetail(instance: instance, catalog: catalogItem))
+            }
+            return PlantArrivalBatch(catalog: catalogItem, instances: details)
         }
-
-        return PlantArrivalBatch(catalog: catalogItem, instances: details)
     }
 
     public func addCareEvent(_ event: CareEvent) async throws {
-        lock.lock()
-        defer { lock.unlock() }
-        guard instances[event.instanceID] != nil else {
-            throw InMemoryRepositoryError.instanceNotFound
+        try lock.withLock {
+            guard instances[event.instanceID] != nil else {
+                throw InMemoryRepositoryError.instanceNotFound
+            }
+            careEvents[event.id] = event
         }
-        careEvents[event.id] = event
     }
 
     public func updateInstancePhoto(instanceID: UUID, photoData: Data?, photoCredit: String?) async throws {
-        lock.lock()
-        defer { lock.unlock() }
-        guard var instance = instances[instanceID] else {
-            throw InMemoryRepositoryError.instanceNotFound
+        try lock.withLock {
+            guard var instance = instances[instanceID] else {
+                throw InMemoryRepositoryError.instanceNotFound
+            }
+            instance.photoData = photoData
+            instance.photoCredit = photoData == nil ? nil : photoCredit
+            instances[instanceID] = instance
         }
-        instance.photoData = photoData
-        instance.photoCredit = photoData == nil ? nil : photoCredit
-        instances[instanceID] = instance
     }
 
     public func deleteInstance(instanceID: UUID) async throws {
-        lock.lock()
-        defer { lock.unlock() }
-        guard let removed = instances.removeValue(forKey: instanceID) else {
-            throw InMemoryRepositoryError.instanceNotFound
-        }
-        careEvents = careEvents.filter { $0.value.instanceID != instanceID }
-        let stillUsed = instances.values.contains { $0.catalogItemID == removed.catalogItemID }
-        if !stillUsed {
-            catalog.removeValue(forKey: removed.catalogItemID)
+        try lock.withLock {
+            guard let removed = instances.removeValue(forKey: instanceID) else {
+                throw InMemoryRepositoryError.instanceNotFound
+            }
+            careEvents = careEvents.filter { $0.value.instanceID != instanceID }
+            let stillUsed = instances.values.contains { $0.catalogItemID == removed.catalogItemID }
+            if !stillUsed {
+                catalog.removeValue(forKey: removed.catalogItemID)
+            }
         }
     }
 
     public func updateCareProfile(catalogItemID: UUID, profile: PlantCareProfile) async throws {
-        lock.lock()
-        defer { lock.unlock() }
-        guard var item = catalog[catalogItemID] else {
-            throw InMemoryRepositoryError.catalogNotFound
+        try lock.withLock {
+            guard var item = catalog[catalogItemID] else {
+                throw InMemoryRepositoryError.catalogNotFound
+            }
+            item = PlantCatalogItem(
+                id: item.id,
+                name: item.name,
+                genus: item.genus,
+                careProfile: profile,
+                createdAt: item.createdAt
+            )
+            catalog[catalogItemID] = item
         }
-        item = PlantCatalogItem(
-            id: item.id,
-            name: item.name,
-            genus: item.genus,
-            careProfile: profile,
-            createdAt: item.createdAt
-        )
-        catalog[catalogItemID] = item
     }
 
     public func referencePhoto(for catalogItemID: UUID) async throws -> Data? {
@@ -137,12 +134,12 @@ public final class InMemoryPlantRepository: PlantRepository, @unchecked Sendable
     private func resolveCatalog(for draft: PlantIntakeDraft) throws -> PlantCatalogItem {
         switch draft.catalogMode {
         case .existingType(let catalogItemID):
-            lock.lock()
-            defer { lock.unlock() }
-            guard let item = catalog[catalogItemID] else {
-                throw InMemoryRepositoryError.catalogNotFound
+            return try lock.withLock {
+                guard let item = catalog[catalogItemID] else {
+                    throw InMemoryRepositoryError.catalogNotFound
+                }
+                return item
             }
-            return item
 
         case .newOrMatchType:
             let existing = lock.withLock { Array(catalog.values) }
