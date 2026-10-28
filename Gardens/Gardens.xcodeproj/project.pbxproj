@@ -21,6 +21,7 @@
 		5178BEFEF5E642928333351F /* SwiftDataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0028F7F188EB4BAA9609F0F2 /* SwiftDataModels.swift */; };
 		4F3E46DDF2984D87BEE52CC0 /* SwiftDataPlantRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E277E42F1F4676BEA88A61 /* SwiftDataPlantRepository.swift */; };
 		2E96E2D9DADF4E1988847624 /* CoreImageQRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */; };
+		A11BRANDEDQR000000000002 /* BrandedQRImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11BRANDEDQR000000000001 /* BrandedQRImage.swift */; };
 		94AFC090BA7A461EAC2B5E40 /* UIKitPlantLabelPrinter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 651C84A8EE9D423B8BEECF87 /* UIKitPlantLabelPrinter.swift */; };
 		1EA70580002F467A8E3FA025 /* PlantQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D488314D7F3D4988A311217C /* PlantQRScannerView.swift */; };
 		8385BA678B1C48AD9F964661 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A4952323A68541608D1A286F /* Assets.xcassets */; };
@@ -53,6 +54,7 @@
 		0028F7F188EB4BAA9609F0F2 /* SwiftDataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataModels.swift; sourceTree = "<group>"; };
 		80E277E42F1F4676BEA88A61 /* SwiftDataPlantRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataPlantRepository.swift; sourceTree = "<group>"; };
 		90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreImageQRCodeGenerator.swift; sourceTree = "<group>"; };
+		A11BRANDEDQR000000000001 /* BrandedQRImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandedQRImage.swift; sourceTree = "<group>"; };
 		651C84A8EE9D423B8BEECF87 /* UIKitPlantLabelPrinter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIKitPlantLabelPrinter.swift; sourceTree = "<group>"; };
 		D488314D7F3D4988A311217C /* PlantQRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantQRScannerView.swift; sourceTree = "<group>"; };
 		A4952323A68541608D1A286F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 			isa = PBXGroup;
 			children = (
 				90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */,
+				A11BRANDEDQR000000000001 /* BrandedQRImage.swift */,
 				651C84A8EE9D423B8BEECF87 /* UIKitPlantLabelPrinter.swift */,
 				D488314D7F3D4988A311217C /* PlantQRScannerView.swift */,
 				A11LABEL0JOB00000000001 /* SupvanLabelJob.swift */,
@@ -295,6 +298,7 @@
 				5178BEFEF5E642928333351F /* SwiftDataModels.swift in Sources */,
 				4F3E46DDF2984D87BEE52CC0 /* SwiftDataPlantRepository.swift in Sources */,
 				2E96E2D9DADF4E1988847624 /* CoreImageQRCodeGenerator.swift in Sources */,
+				A11BRANDEDQR000000000002 /* BrandedQRImage.swift in Sources */,
 				94AFC090BA7A461EAC2B5E40 /* UIKitPlantLabelPrinter.swift in Sources */,
 				1EA70580002F467A8E3FA025 /* PlantQRScannerView.swift in Sources */,
 				D63295D02D5A4983A63C7A53 /* CloudKitPlantRepository.swift in Sources */,

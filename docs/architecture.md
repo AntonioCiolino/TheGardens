@@ -40,3 +40,5 @@ gardens://plant/<instance-uuid>?n=Snake%20Plant
 ```
 
 Care/history are not in the QR; they load via `PlantRepository.destination(for:)`.
+
+The drawn code uses error correction H and clears an oval of whole modules in the center for `BrandMark` (the tall G). That oval is the same mark on screen and on the T50M label.
