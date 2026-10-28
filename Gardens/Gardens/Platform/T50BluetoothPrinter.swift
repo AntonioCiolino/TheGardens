@@ -27,15 +27,11 @@ final class T50BluetoothPrinter: NSObject, ObservableObject {
     private var connectWait: CheckedContinuation<Void, Error>?
     private var readyWait: CheckedContinuation<Void, Error>?
     private var serviceQueue: [CBService] = []
-    private var didBroadenDiscovery = false
+    private var foundChannels: [(service: CBUUID, write: CBCharacteristic, notify: CBCharacteristic?)] = []
+    /// First link often drops when notifications are enabled. The retry holds the write channel only.
+    private var retryWithoutNotify = false
 
     private let rememberedKey = "gardens.t50.peripheral"
-    /// Services the Katasymbol / SUPVAN printers actually advertise.
-    private static let printerServiceUUIDs: [CBUUID] = [
-        CBUUID(string: "FEE7"),
-        CBUUID(string: "FF00"),
-        CBUUID(string: "0000E0FF-3C17-D293-8E48-14FE2E4DA212")
-    ]
 
     func start() {
         if central == nil {
@@ -52,7 +48,7 @@ final class T50BluetoothPrinter: NSObject, ObservableObject {
     func connect(_ printer: DiscoveredT50) {
         guard let central else { return }
         isBusy = true
-        didBroadenDiscovery = false
+        retryWithoutNotify = false
         statusText = "Connecting to \(printer.name)…"
         central.stopScan()
         if let connected, connected.identifier != printer.identifier {
@@ -65,7 +61,18 @@ final class T50BluetoothPrinter: NSObject, ObservableObject {
         }
         connected = printer.peripheral
         printer.peripheral.delegate = self
-        central.connect(printer.peripheral, options: nil)
+        central.connect(printer.peripheral, options: Self.connectOptions())
+    }
+
+    /// T50M is classic Bluetooth plus BLE. Bridging keeps the phone session from being dropped.
+    private static func connectOptions() -> [String: Any] {
+        var options: [String: Any] = [
+            CBConnectPeripheralOptionEnableTransportBridgingKey: true
+        ]
+        if #available(iOS 17.0, *) {
+            options[CBConnectPeripheralOptionEnableAutoReconnect] = true
+        }
+        return options
     }
 
     func printJobs(_ jobs: [PlantLabelJob]) async throws {
@@ -242,8 +249,6 @@ final class T50BluetoothPrinter: NSObject, ObservableObject {
         serviceQueue = []
         if let error {
             statusText = error.localizedDescription
-            connectedName = nil
-            connectedIdentifier = nil
             connectWait?.resume(throwing: error)
             connectWait = nil
         }
@@ -251,11 +256,29 @@ final class T50BluetoothPrinter: NSObject, ObservableObject {
 
     private func openNextService(on peripheral: CBPeripheral) {
         guard let service = serviceQueue.first else {
-            finishConnect(error: T50PrinterError.unrecognizedDevice)
+            subscribeToBestChannel(on: peripheral)
             return
         }
         serviceQueue.removeFirst()
         peripheral.discoverCharacteristics(nil, for: service)
+    }
+
+    private func subscribeToBestChannel(on peripheral: CBPeripheral) {
+        guard let best = foundChannels.first(where: { Self.matches($0.service) }) ?? foundChannels.first else {
+            statusText = "Connected to \(connectedName ?? "T50M"), but it has no print channel yet."
+            isBusy = false
+            return
+        }
+        writeCharacteristic = best.write
+        let notify = best.notify
+        let canNotify = notify.map { $0.properties.contains(.notify) || $0.properties.contains(.indicate) } ?? false
+        if !retryWithoutNotify, let notify, canNotify {
+            notifyCharacteristic = notify
+            peripheral.setNotifyValue(true, for: notify)
+        } else {
+            notifyCharacteristic = best.write
+            markConnected()
+        }
     }
 }
 
@@ -324,32 +347,52 @@ extension T50BluetoothPrinter: CBCentralManagerDelegate {
         Task { @MainActor in
             peripheral.delegate = self
             self.connected = peripheral
-            self.connectedName = peripheral.name ?? "T50M"
+            self.connectedName = peripheral.name ?? self.connectedName ?? "T50M"
             self.connectedIdentifier = peripheral.identifier
             UserDefaults.standard.set(peripheral.identifier.uuidString, forKey: self.rememberedKey)
-            peripheral.discoverServices(Self.printerServiceUUIDs)
+            self.statusText = "Connected to \(self.connectedName ?? "T50M"). Checking the print channel…"
+            self.foundChannels = []
+            peripheral.discoverServices(nil)
         }
     }
 
     nonisolated func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         Task { @MainActor in
             self.finishConnect(error: error ?? T50PrinterError.timeout)
+            self.connected = nil
+            self.connectedName = nil
+            self.connectedIdentifier = nil
+            let message = (error ?? T50PrinterError.timeout).localizedDescription
+            self.scan()
+            self.statusText = message
         }
     }
 
     nonisolated func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         Task { @MainActor in
-            if self.connected?.identifier == peripheral.identifier {
-                self.connected = nil
-                self.writeCharacteristic = nil
-                self.notifyCharacteristic = nil
-                self.connectedName = nil
-                self.connectedIdentifier = nil
-                self.statusText = "Printer disconnected. Quit Katasymbol if it is open, then tap the T50M again."
-                self.isBusy = false
-                self.didBroadenDiscovery = false
-                self.scan()
+            guard self.connected?.identifier == peripheral.identifier || self.connectedIdentifier == peripheral.identifier else { return }
+            self.writeCharacteristic = nil
+            self.notifyCharacteristic = nil
+            self.serviceQueue = []
+            let name = self.connectedName ?? peripheral.name ?? "T50M"
+            if !self.retryWithoutNotify {
+                self.retryWithoutNotify = true
+                self.connected = peripheral
+                self.connectedName = name
+                self.isBusy = true
+                self.statusText = "Printer dropped the link. Holding \(name)…"
+                self.central?.connect(peripheral, options: Self.connectOptions())
+                return
             }
+            let reason = error?.localizedDescription
+            self.connected = nil
+            self.connectedName = nil
+            self.connectedIdentifier = nil
+            self.isBusy = false
+            self.retryWithoutNotify = false
+            self.statusText = reason.map { "Printer disconnected. \($0)" }
+                ?? "Printer disconnected. Quit Katasymbol if it is open, then tap the T50M again."
+            self.scan()
         }
     }
 }
@@ -362,13 +405,9 @@ extension T50BluetoothPrinter: CBPeripheralDelegate {
                 return
             }
             let services = peripheral.services ?? []
-            if services.isEmpty, !self.didBroadenDiscovery {
-                self.didBroadenDiscovery = true
-                peripheral.discoverServices(nil)
-                return
-            }
             let preferred = services.filter { Self.matches($0.uuid) }
             let rest = services.filter { !Self.matches($0.uuid) }
+            self.foundChannels = []
             self.serviceQueue = preferred + rest
             self.openNextService(on: peripheral)
         }
@@ -377,24 +416,16 @@ extension T50BluetoothPrinter: CBPeripheralDelegate {
     nonisolated func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         Task { @MainActor in
             if let error {
-                self.finishConnect(error: error)
+                self.statusText = error.localizedDescription
+                self.openNextService(on: peripheral)
                 return
             }
             let chars = service.characteristics ?? []
             let pair = Self.writeAndNotify(in: service.uuid, characteristics: chars)
-            guard let write = pair.write else {
-                self.openNextService(on: peripheral)
-                return
+            if let write = pair.write {
+                self.foundChannels.append((service.uuid, write, pair.notify))
             }
-            self.serviceQueue = []
-            self.writeCharacteristic = write
-            self.notifyCharacteristic = pair.notify ?? write
-            if let notify = pair.notify,
-               notify.properties.contains(.notify) || notify.properties.contains(.indicate) {
-                peripheral.setNotifyValue(true, for: notify)
-            } else {
-                self.markConnected()
-            }
+            self.openNextService(on: peripheral)
         }
     }
 
