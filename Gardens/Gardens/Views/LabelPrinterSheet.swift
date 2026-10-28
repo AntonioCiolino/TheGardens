@@ -14,7 +14,7 @@ struct LabelPrinterSheet: View {
         NavigationStack {
             List {
                 Section {
-                    Text("Turn the T50M on and hold it near this iPhone. Gardens talks to it over Bluetooth. You do not pair it in Settings.")
+                    Text("Turn the T50M on and hold it near this iPhone. Quit the Katasymbol app first — the printer stays connected to only one app. Gardens lists that printer, not every Bluetooth device nearby.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -33,25 +33,6 @@ struct LabelPrinterSheet: View {
                             } label: {
                                 HStack {
                                     Label(item.name, systemImage: "printer")
-                                    Spacer()
-                                    if printer.connectedIdentifier == item.identifier {
-                                        Image(systemName: "checkmark.circle.fill")
-                                    }
-                                }
-                            }
-                            .disabled(printer.isBusy)
-                        }
-                    }
-                    if !printer.otherDevices.isEmpty {
-                        Text("If the T50M is not named above, try the device from this list.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                        ForEach(printer.otherDevices) { item in
-                            Button {
-                                printer.connect(item)
-                            } label: {
-                                HStack {
-                                    Label(item.name, systemImage: "dot.radiowaves.left.and.right")
                                     Spacer()
                                     if printer.connectedIdentifier == item.identifier {
                                         Image(systemName: "checkmark.circle.fill")

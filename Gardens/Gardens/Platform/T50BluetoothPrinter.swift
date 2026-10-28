@@ -11,7 +11,6 @@ struct DiscoveredT50: Identifiable {
 @MainActor
 final class T50BluetoothPrinter: NSObject, ObservableObject {
     @Published private(set) var discovered: [DiscoveredT50] = []
-    @Published private(set) var otherDevices: [DiscoveredT50] = []
     @Published private(set) var statusText = "Looking for a T50M…"
     @Published private(set) var connectedName: String?
     @Published private(set) var connectedIdentifier: UUID?
@@ -28,8 +27,15 @@ final class T50BluetoothPrinter: NSObject, ObservableObject {
     private var connectWait: CheckedContinuation<Void, Error>?
     private var readyWait: CheckedContinuation<Void, Error>?
     private var serviceQueue: [CBService] = []
+    private var didBroadenDiscovery = false
 
     private let rememberedKey = "gardens.t50.peripheral"
+    /// Services the Katasymbol / SUPVAN printers actually advertise.
+    private static let printerServiceUUIDs: [CBUUID] = [
+        CBUUID(string: "FEE7"),
+        CBUUID(string: "FF00"),
+        CBUUID(string: "0000E0FF-3C17-D293-8E48-14FE2E4DA212")
+    ]
 
     func start() {
         if central == nil {
@@ -46,7 +52,9 @@ final class T50BluetoothPrinter: NSObject, ObservableObject {
     func connect(_ printer: DiscoveredT50) {
         guard let central else { return }
         isBusy = true
+        didBroadenDiscovery = false
         statusText = "Connecting to \(printer.name)…"
+        central.stopScan()
         if let connected, connected.identifier != printer.identifier {
             central.cancelPeripheralConnection(connected)
             self.connected = nil
@@ -302,19 +310,12 @@ extension T50BluetoothPrinter: CBCentralManagerDelegate {
         let services = advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID]
         let name = advertised ?? peripheral.name ?? "Unnamed device"
         Task { @MainActor in
+            guard Self.isPrinter(name: name, services: services) else { return }
             let item = DiscoveredT50(identifier: peripheral.identifier, name: name, peripheral: peripheral)
-            let printer = Self.isPrinter(name: name, services: services)
-            var list = printer ? self.discovered : self.otherDevices
-            if let index = list.firstIndex(where: { $0.identifier == item.identifier }) {
-                list[index] = item
+            if let index = self.discovered.firstIndex(where: { $0.identifier == item.identifier }) {
+                self.discovered[index] = item
             } else {
-                list.append(item)
-            }
-            if printer {
-                self.discovered = list
-                self.otherDevices.removeAll { $0.identifier == item.identifier }
-            } else {
-                self.otherDevices = list
+                self.discovered.append(item)
             }
         }
     }
@@ -326,7 +327,7 @@ extension T50BluetoothPrinter: CBCentralManagerDelegate {
             self.connectedName = peripheral.name ?? "T50M"
             self.connectedIdentifier = peripheral.identifier
             UserDefaults.standard.set(peripheral.identifier.uuidString, forKey: self.rememberedKey)
-            peripheral.discoverServices(nil)
+            peripheral.discoverServices(Self.printerServiceUUIDs)
         }
     }
 
@@ -344,8 +345,10 @@ extension T50BluetoothPrinter: CBCentralManagerDelegate {
                 self.notifyCharacteristic = nil
                 self.connectedName = nil
                 self.connectedIdentifier = nil
-                self.statusText = "Printer disconnected."
+                self.statusText = "Printer disconnected. Quit Katasymbol if it is open, then tap the T50M again."
                 self.isBusy = false
+                self.didBroadenDiscovery = false
+                self.scan()
             }
         }
     }
@@ -359,6 +362,11 @@ extension T50BluetoothPrinter: CBPeripheralDelegate {
                 return
             }
             let services = peripheral.services ?? []
+            if services.isEmpty, !self.didBroadenDiscovery {
+                self.didBroadenDiscovery = true
+                peripheral.discoverServices(nil)
+                return
+            }
             let preferred = services.filter { Self.matches($0.uuid) }
             let rest = services.filter { !Self.matches($0.uuid) }
             self.serviceQueue = preferred + rest
@@ -374,26 +382,39 @@ extension T50BluetoothPrinter: CBPeripheralDelegate {
             }
             let chars = service.characteristics ?? []
             let pair = Self.writeAndNotify(in: service.uuid, characteristics: chars)
-            guard let write = pair.write, let notify = pair.notify else {
+            guard let write = pair.write else {
                 self.openNextService(on: peripheral)
                 return
             }
             self.serviceQueue = []
             self.writeCharacteristic = write
-            self.notifyCharacteristic = notify
-            peripheral.setNotifyValue(true, for: notify)
+            self.notifyCharacteristic = pair.notify ?? write
+            if let notify = pair.notify,
+               notify.properties.contains(.notify) || notify.properties.contains(.indicate) {
+                peripheral.setNotifyValue(true, for: notify)
+            } else {
+                self.markConnected()
+            }
         }
     }
 
     nonisolated func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
         Task { @MainActor in
             if let error {
-                self.finishConnect(error: error)
+                if self.writeCharacteristic != nil {
+                    self.markConnected()
+                } else {
+                    self.finishConnect(error: error)
+                }
                 return
             }
-            self.isBusy = false
-            self.statusText = "Connected to \(self.connectedName ?? "T50M")."
+            self.markConnected()
         }
+    }
+
+    private func markConnected() {
+        isBusy = false
+        statusText = "Connected to \(connectedName ?? "T50M")."
     }
 
     nonisolated func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
