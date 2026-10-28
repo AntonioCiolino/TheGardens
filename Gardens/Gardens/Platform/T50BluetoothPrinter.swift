@@ -390,9 +390,10 @@ extension T50BluetoothPrinter: CBCentralManagerDelegate {
             self.connectedIdentifier = nil
             self.isBusy = false
             self.retryWithoutNotify = false
-            self.statusText = reason.map { "Printer disconnected. \($0)" }
+            let message = reason.map { "Printer disconnected. \($0)" }
                 ?? "Printer disconnected. Quit Katasymbol if it is open, then tap the T50M again."
             self.scan()
+            self.statusText = message
         }
     }
 }
