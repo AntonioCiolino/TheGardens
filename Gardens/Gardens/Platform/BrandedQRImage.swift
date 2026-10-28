@@ -3,13 +3,12 @@ import CoreImage.CIFilterBuiltins
 import UIKit
 
 enum BrandedQRImage {
-    /// Opaque width ÷ height of `BrandMark.png`. The G is a tall oval, so the
-    /// quiet zone matches that shape instead of a circle.
-    static let markAspect: CGFloat = 1450.0 / 1990.0
+    /// Width ÷ height of `QRMonogram.png`, the G cut from the tall brand mark.
+    static let markAspect: CGFloat = 714.0 / 1244.0
 
-    /// QR at error-correction H with the Gardens mark in the middle.
-    /// H can rebuild about 30% of the code; the oval covers well under that,
-    /// and only whole modules under the oval are cleared.
+    /// QR at error-correction H with the G in the middle.
+    /// H can rebuild about 30% of the code. The oval covers well under that,
+    /// and only whole modules under it are cleared.
     static func image(payload: String, side: CGFloat) -> UIImage? {
         guard side > 0 else { return nil }
         let filter = CIFilter.qrCodeGenerator()
@@ -24,7 +23,7 @@ enum BrandedQRImage {
 
         let clearance = 16
         let maxSpan = max(7, modules - clearance)
-        var holeHeight = odd(Int((Double(modules) * 0.36).rounded()), limit: maxSpan)
+        var holeHeight = odd(Int((Double(modules) * 0.42).rounded()), limit: maxSpan)
         var holeWidth = odd(Int((CGFloat(holeHeight) * markAspect).rounded()), limit: maxSpan)
         if holeWidth < 7 {
             holeWidth = min(7, maxSpan)
@@ -75,7 +74,7 @@ enum BrandedQRImage {
 
             let pad = module * 1.15
             let inner = hole.insetBy(dx: pad, dy: pad)
-            guard inner.width > 4, inner.height > 4, let logo = UIImage(named: "BrandMark") else { return }
+            guard inner.width > 4, inner.height > 4, let logo = UIImage(named: "QRMonogram") else { return }
             logo.draw(in: inner)
         }
     }
