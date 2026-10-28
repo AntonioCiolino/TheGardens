@@ -447,7 +447,7 @@ extension T50BluetoothPrinter: CBPeripheralDelegate {
         func find(_ id: String) -> CBCharacteristic? {
             characteristics.first { $0.uuid.uuidString.uppercased().hasPrefix(id) }
         }
-        let token = service.uuid.uuidString.uppercased()
+        let token = service.uuidString.uppercased()
         if token.hasPrefix("FEE7") {
             let shared = find("FEC1")
             return (shared, shared)
