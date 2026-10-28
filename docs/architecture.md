@@ -7,7 +7,7 @@
 | Domain | `GardensCore` | Pure Swift + Foundation. Models, matching, compact QR, repository protocols. No UIKit/SwiftUI/SwiftData/CloudKit. |
 | Persistence (iOS) | `Gardens/…/Persistence` | SwiftData entities. Local-only `PlantRepository` fallback. The store is opened with CloudKit mirroring off; the iCloud entitlement does not sync these rows. |
 | Sync (iOS) | `Gardens/…/Sync` | **CloudKit** shared inventory + iCloud account check. |
-| Platform (iOS) | `Gardens/…/Platform` | Core Image QR, AirPrint, T50M Bluetooth labels, camera scanner. T50M label size is a first guess (240×200 pt, centered on the 384-dot head) until a test print. |
+| Platform (iOS) | `Gardens/…/Platform` | Core Image QR, AirPrint, T50M Bluetooth labels, camera scanner. T50M artwork is 360×300 dots, mirrored across the head, centered in a 50 mm feed for a large round label. |
 | UI (iOS) | `Gardens/…/Views` | SwiftUI; talks to `GardensSession` / `PlantRepository`. |
 
 ## Catalog vs instance

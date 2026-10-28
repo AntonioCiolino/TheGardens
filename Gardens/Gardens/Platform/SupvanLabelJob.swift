@@ -17,13 +17,16 @@ struct LabelPrintRequest: Identifiable {
 enum SupvanLabel {
     static let headDots = 384
     static let bytesPerLine = 48
-    static let marginDots: UInt16 = 8
+    /// Blank feed before and after the artwork so it sits in the middle of a large round label.
+    static let marginDots: UInt16 = 50
     static let printSpeed: UInt16 = 8
 
-    /// Column-major, LSB-first raster for a 48 mm / 384-dot T50 printhead.
+    /// Column-major raster for a 48 mm / 384-dot T50 printhead.
+    /// The test print mirrored the name, so dots run from the right side of the head.
+    /// Artwork is 1.5× the first guess so it fills a large circular label.
     static func raster(title: String, subtitle: String, qrPayload: String) throws -> (data: [UInt8], columns: UInt16) {
-        let contentWidth = 240
-        let contentHeight = 200
+        let contentWidth = 360
+        let contentHeight = 300
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
         format.opaque = true
@@ -35,10 +38,10 @@ enum SupvanLabel {
             UIColor.white.setFill()
             ctx.fill(CGRect(x: 0, y: 0, width: contentWidth, height: contentHeight))
 
-            let titleFont = UIFont.systemFont(ofSize: 22, weight: .bold)
-            let subtitleFont = UIFont.systemFont(ofSize: 14, weight: .regular)
-            let titleRect = CGRect(x: 8, y: 6, width: contentWidth - 16, height: 28)
-            let subtitleRect = CGRect(x: 8, y: 34, width: contentWidth - 16, height: 18)
+            let titleFont = UIFont.systemFont(ofSize: 33, weight: .bold)
+            let subtitleFont = UIFont.systemFont(ofSize: 21, weight: .regular)
+            let titleRect = CGRect(x: 12, y: 6, width: contentWidth - 24, height: 42)
+            let subtitleRect = CGRect(x: 12, y: 50, width: contentWidth - 24, height: 28)
             (title as NSString).draw(
                 in: titleRect,
                 withAttributes: [
@@ -55,9 +58,10 @@ enum SupvanLabel {
                     .paragraphStyle: centered
                 ]
             )
-            if let qr = qrImage(payload: qrPayload, points: 140) {
-                let x = CGFloat(contentWidth - 140) / 2
-                qr.draw(in: CGRect(x: x, y: 54, width: 140, height: 140))
+            let qrSide: CGFloat = 210
+            if let qr = qrImage(payload: qrPayload, points: qrSide) {
+                let x = (CGFloat(contentWidth) - qrSide) / 2
+                qr.draw(in: CGRect(x: x, y: 82, width: qrSide, height: qrSide))
             }
         }
 
@@ -89,7 +93,7 @@ enum SupvanLabel {
                 let pixel = (y * width + x) * 4
                 let dark = rgba[pixel] < 140
                 if dark {
-                    let dot = x0 + x
+                    let dot = (headDots - 1) - (x0 + x)
                     let index = col * bytesPerLine + dot / 8
                     packed[index] |= 1 << (dot % 8)
                 }
