@@ -10,6 +10,19 @@
 | Platform (iOS) | `Gardens/…/Platform` | Core Image QR, AirPrint, T50M Bluetooth labels, camera scanner. T50M artwork is 360×300 dots, mirrored across the head, centered in a 50 mm feed for a large round label. |
 | UI (iOS) | `Gardens/…/Views` | SwiftUI; talks to `GardensSession` / `PlantRepository`. |
 
+## The Gardens Experience
+
+Guest app. Xcode target `Experience`, display name **The Gardens Experience**, bundle `com.gardens.experience`. Same layering as Intake, different product.
+
+| Layer | Location | Rules |
+| --- | --- | --- |
+| Guest domain | `ExperienceCore` | Posts and garden places. Pure Swift. No UIKit/SwiftUI/SwiftData/CloudKit. |
+| Plant domain | `GardensCore` | Linked so a later screen can show plants. No guest screen uses it yet. |
+| Persistence | `Experience/…/Persistence` | SwiftData cache. CloudKit mirroring off. |
+| Sync | `Experience/…/Sync` | CloudKit public database `iCloud.com.gardens.experience`. Any guest may publish. |
+| Platform | `Experience/…/Platform` | One `CLCircularRegion` per enabled place. No continuous GPS. |
+| UI | `Experience/…/Views` | Feed, compose, arrival welcome. Logo files are copies of the Intake brand mark and app icon. |
+
 ## Catalog vs instance
 
 - **Catalog** (`PlantCatalogItem`): plant *type* — name, genus, care profile.

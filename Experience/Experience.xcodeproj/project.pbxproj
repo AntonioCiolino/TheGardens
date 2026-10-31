@@ -1,0 +1,394 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		E1A200000000000000000001 /* ExperienceApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000001 /* ExperienceApp.swift */; };
+		E1A200000000000000000002 /* PlantDomainLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000002 /* PlantDomainLink.swift */; };
+		E1A200000000000000000003 /* SwiftDataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000003 /* SwiftDataModels.swift */; };
+		E1A200000000000000000004 /* SwiftDataFeedRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000004 /* SwiftDataFeedRepository.swift */; };
+		E1A200000000000000000005 /* CloudKitFeedRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000005 /* CloudKitFeedRepository.swift */; };
+		E1A200000000000000000006 /* ExperienceSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000006 /* ExperienceSession.swift */; };
+		E1A200000000000000000007 /* GardenGeofenceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000007 /* GardenGeofenceMonitor.swift */; };
+		E1A200000000000000000008 /* PostImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000008 /* PostImage.swift */; };
+		E1A200000000000000000009 /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000009 /* FeedView.swift */; };
+		E1A20000000000000000000A /* ComposePostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A10000000000000000000A /* ComposePostView.swift */; };
+		E1A20000000000000000000B /* WelcomeBounceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A10000000000000000000B /* WelcomeBounceView.swift */; };
+		E1A20000000000000000000C /* BrandWatermark.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A10000000000000000000C /* BrandWatermark.swift */; };
+		E1A200000000000000000014 /* PlantQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000014 /* PlantQRScannerView.swift */; };
+		E1A200000000000000000015 /* IntakePlantLookup.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000015 /* IntakePlantLookup.swift */; };
+		E1A200000000000000000016 /* ViewedPlantCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000016 /* ViewedPlantCache.swift */; };
+		E1A200000000000000000017 /* GuestPlantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000017 /* GuestPlantView.swift */; };
+		E1A200000000000000000018 /* PlantScanCover.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000018 /* PlantScanCover.swift */; };
+		E1A20000000000000000000D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E1A10000000000000000000D /* Assets.xcassets */; };
+		E1A200000000000000000010 /* garden-places.json in Resources */ = {isa = PBXBuildFile; fileRef = E1A100000000000000000010 /* garden-places.json */; };
+		E1A200000000000000000012 /* ExperienceCore in Frameworks */ = {isa = PBXBuildFile; productRef = E1A800000000000000000003 /* ExperienceCore */; };
+		E1A200000000000000000013 /* GardensCore in Frameworks */ = {isa = PBXBuildFile; productRef = E1A800000000000000000004 /* GardensCore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		E1A100000000000000000001 /* ExperienceApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperienceApp.swift; sourceTree = "<group>"; };
+		E1A100000000000000000002 /* PlantDomainLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantDomainLink.swift; sourceTree = "<group>"; };
+		E1A100000000000000000003 /* SwiftDataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataModels.swift; sourceTree = "<group>"; };
+		E1A100000000000000000004 /* SwiftDataFeedRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataFeedRepository.swift; sourceTree = "<group>"; };
+		E1A100000000000000000005 /* CloudKitFeedRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitFeedRepository.swift; sourceTree = "<group>"; };
+		E1A100000000000000000006 /* ExperienceSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperienceSession.swift; sourceTree = "<group>"; };
+		E1A100000000000000000007 /* GardenGeofenceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GardenGeofenceMonitor.swift; sourceTree = "<group>"; };
+		E1A100000000000000000008 /* PostImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostImage.swift; sourceTree = "<group>"; };
+		E1A100000000000000000009 /* FeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedView.swift; sourceTree = "<group>"; };
+		E1A10000000000000000000A /* ComposePostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposePostView.swift; sourceTree = "<group>"; };
+		E1A10000000000000000000B /* WelcomeBounceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeBounceView.swift; sourceTree = "<group>"; };
+		E1A10000000000000000000C /* BrandWatermark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandWatermark.swift; sourceTree = "<group>"; };
+		E1A100000000000000000014 /* PlantQRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantQRScannerView.swift; sourceTree = "<group>"; };
+		E1A100000000000000000015 /* IntakePlantLookup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntakePlantLookup.swift; sourceTree = "<group>"; };
+		E1A100000000000000000016 /* ViewedPlantCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewedPlantCache.swift; sourceTree = "<group>"; };
+		E1A100000000000000000017 /* GuestPlantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestPlantView.swift; sourceTree = "<group>"; };
+		E1A100000000000000000018 /* PlantScanCover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantScanCover.swift; sourceTree = "<group>"; };
+		E1A10000000000000000000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E1A10000000000000000000E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E1A10000000000000000000F /* Experience.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Experience.entitlements; sourceTree = "<group>"; };
+		E1A100000000000000000010 /* garden-places.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "garden-places.json"; sourceTree = "<group>"; };
+		E1A100000000000000000011 /* Experience.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Experience.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E1A400000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1A200000000000000000012 /* ExperienceCore in Frameworks */,
+				E1A200000000000000000013 /* GardensCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E1A300000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				E1A300000000000000000003 /* Experience */,
+				E1A300000000000000000002 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E1A300000000000000000002 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E1A100000000000000000011 /* Experience.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E1A300000000000000000003 /* Experience */ = {
+			isa = PBXGroup;
+			children = (
+				E1A300000000000000000004 /* App */,
+				E1A300000000000000000005 /* Persistence */,
+				E1A300000000000000000006 /* Sync */,
+				E1A300000000000000000007 /* Platform */,
+				E1A300000000000000000008 /* Views */,
+				E1A300000000000000000009 /* Resources */,
+			);
+			path = Experience;
+			sourceTree = "<group>";
+		};
+		E1A300000000000000000004 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				E1A100000000000000000001 /* ExperienceApp.swift */,
+				E1A100000000000000000002 /* PlantDomainLink.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		E1A300000000000000000005 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				E1A100000000000000000003 /* SwiftDataModels.swift */,
+				E1A100000000000000000004 /* SwiftDataFeedRepository.swift */,
+				E1A100000000000000000016 /* ViewedPlantCache.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		E1A300000000000000000006 /* Sync */ = {
+			isa = PBXGroup;
+			children = (
+				E1A100000000000000000005 /* CloudKitFeedRepository.swift */,
+				E1A100000000000000000015 /* IntakePlantLookup.swift */,
+				E1A100000000000000000006 /* ExperienceSession.swift */,
+			);
+			path = Sync;
+			sourceTree = "<group>";
+		};
+		E1A300000000000000000007 /* Platform */ = {
+			isa = PBXGroup;
+			children = (
+				E1A100000000000000000007 /* GardenGeofenceMonitor.swift */,
+				E1A100000000000000000008 /* PostImage.swift */,
+				E1A100000000000000000014 /* PlantQRScannerView.swift */,
+			);
+			path = Platform;
+			sourceTree = "<group>";
+		};
+		E1A300000000000000000008 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				E1A100000000000000000009 /* FeedView.swift */,
+				E1A10000000000000000000A /* ComposePostView.swift */,
+				E1A10000000000000000000B /* WelcomeBounceView.swift */,
+				E1A100000000000000000017 /* GuestPlantView.swift */,
+				E1A100000000000000000018 /* PlantScanCover.swift */,
+				E1A30000000000000000000A /* Components */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		E1A30000000000000000000A /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				E1A10000000000000000000C /* BrandWatermark.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		E1A300000000000000000009 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				E1A10000000000000000000D /* Assets.xcassets */,
+				E1A10000000000000000000E /* Info.plist */,
+				E1A10000000000000000000F /* Experience.entitlements */,
+				E1A100000000000000000010 /* garden-places.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E1A500000000000000000001 /* Experience */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E1A700000000000000000006 /* Build configuration list for PBXNativeTarget "Experience" */;
+			buildPhases = (
+				E1A400000000000000000001 /* Sources */,
+				E1A400000000000000000002 /* Frameworks */,
+				E1A400000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Experience;
+			packageProductDependencies = (
+				E1A800000000000000000003 /* ExperienceCore */,
+				E1A800000000000000000004 /* GardensCore */,
+			);
+			productName = Experience;
+			productReference = E1A100000000000000000011 /* Experience.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E1A600000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+			};
+			buildConfigurationList = E1A700000000000000000005 /* Build configuration list for PBXProject "Experience" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E1A300000000000000000001;
+			packageReferences = (
+				E1A800000000000000000001 /* XCLocalSwiftPackageReference "../ExperienceCore" */,
+				E1A800000000000000000002 /* XCLocalSwiftPackageReference "../GardensCore" */,
+			);
+			productRefGroup = E1A300000000000000000002 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E1A500000000000000000001 /* Experience */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E1A400000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1A20000000000000000000D /* Assets.xcassets in Resources */,
+				E1A200000000000000000010 /* garden-places.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E1A400000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1A200000000000000000001 /* ExperienceApp.swift in Sources */,
+				E1A200000000000000000002 /* PlantDomainLink.swift in Sources */,
+				E1A200000000000000000003 /* SwiftDataModels.swift in Sources */,
+				E1A200000000000000000004 /* SwiftDataFeedRepository.swift in Sources */,
+				E1A200000000000000000005 /* CloudKitFeedRepository.swift in Sources */,
+				E1A200000000000000000006 /* ExperienceSession.swift in Sources */,
+				E1A200000000000000000007 /* GardenGeofenceMonitor.swift in Sources */,
+				E1A200000000000000000008 /* PostImage.swift in Sources */,
+				E1A200000000000000000009 /* FeedView.swift in Sources */,
+				E1A20000000000000000000A /* ComposePostView.swift in Sources */,
+				E1A20000000000000000000B /* WelcomeBounceView.swift in Sources */,
+				E1A20000000000000000000C /* BrandWatermark.swift in Sources */,
+				E1A200000000000000000014 /* PlantQRScannerView.swift in Sources */,
+				E1A200000000000000000015 /* IntakePlantLookup.swift in Sources */,
+				E1A200000000000000000016 /* ViewedPlantCache.swift in Sources */,
+				E1A200000000000000000017 /* GuestPlantView.swift in Sources */,
+				E1A200000000000000000018 /* PlantScanCover.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		E1A700000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		E1A700000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		E1A700000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Experience/Resources/Experience.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Experience/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.gardens.experience;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E1A700000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Experience/Resources/Experience.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Experience/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.gardens.experience;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E1A700000000000000000005 /* Build configuration list for PBXProject "Experience" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E1A700000000000000000001 /* Debug */,
+				E1A700000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E1A700000000000000000006 /* Build configuration list for PBXNativeTarget "Experience" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E1A700000000000000000003 /* Debug */,
+				E1A700000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		E1A800000000000000000001 /* XCLocalSwiftPackageReference "../ExperienceCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../ExperienceCore;
+		};
+		E1A800000000000000000002 /* XCLocalSwiftPackageReference "../GardensCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../GardensCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E1A800000000000000000003 /* ExperienceCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1A800000000000000000001 /* XCLocalSwiftPackageReference "../ExperienceCore" */;
+			productName = ExperienceCore;
+		};
+		E1A800000000000000000004 /* GardensCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1A800000000000000000002 /* XCLocalSwiftPackageReference "../GardensCore" */;
+			productName = GardensCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = E1A600000000000000000001 /* Project object */;
+}

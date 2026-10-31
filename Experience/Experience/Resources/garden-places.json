@@ -1,0 +1,27 @@
+[
+  {
+    "id" : "B7E2A1C4-6D58-4F0A-9C31-8A4E2F6B1D70",
+    "name" : "Home",
+    "latitude" : 39.1290784,
+    "longitude" : -84.4746211,
+    "radiusMeters" : 100,
+    "enabled" : true,
+    "note" : "Testing only. 2728 Hackberry Street, Cincinnati, OH 45206. Center is the OpenStreetMap building (way 83428193) from Nominatim, not the Woodburn parcel."
+  },
+  {
+    "id" : "C3A91F08-2E47-4B6D-A15C-7D90E4F82B16",
+    "name" : "The Gardens",
+    "latitude" : 39.1289487,
+    "longitude" : -84.4768209,
+    "radiusMeters" : 100,
+    "enabled" : true,
+    "note" : "Indoor primary space. 2800 Woodburn Avenue, Cincinnati, OH 45206. Center is the OpenStreetMap building (way 1473478916) from Nominatim."
+  },
+  {
+    "id" : "D4B82E19-3F58-4C7E-B26D-8E01F5A93C27",
+    "name" : "The Garden Park",
+    "radiusMeters" : 100,
+    "enabled" : false,
+    "note" : "Outdoor third space on a different open lot with no street address. Disabled until it has its own latitude and longitude. Do not copy the Woodburn or Hackberry coordinates. No public source identified that lot."
+  }
+]

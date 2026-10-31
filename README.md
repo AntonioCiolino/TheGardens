@@ -24,9 +24,14 @@ Staff need an **Apple ID signed into iCloud** on each iPhone.
 ## Layout
 
 ```
-GardensCore/     Shared models + QR + PlantRepository protocol
-Gardens/         iOS app (SwiftUI, SwiftData, CloudKit, camera, print)
-docs/            Architecture + CloudKit setup
+GardensCore/       Shared plant models + QR + PlantRepository (both apps)
+ExperienceCore/    Guest feed posts + garden places
+Gardens/           Gardens Intake (staff)
+Experience/        The Gardens Experience (guests). Display name on device.
+TheGardens.xcworkspace
+docs/              Architecture, CloudKit, and Experience setup
 ```
+
+Open `TheGardens.xcworkspace` and pick the **Gardens** or **Experience** scheme. The Experience setup is in **[docs/experience-setup.md](docs/experience-setup.md)**.
 
 No store-location field (intentionally omitted).

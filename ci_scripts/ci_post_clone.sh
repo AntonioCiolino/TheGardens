@@ -12,4 +12,12 @@ xcodebuild -resolvePackageDependencies \
   -project Gardens.xcodeproj \
   -scheme Gardens
 
+echo "ci_post_clone: resolving Swift packages for Experience…"
+
+cd "$CI_PRIMARY_REPOSITORY_PATH/Experience"
+
+xcodebuild -resolvePackageDependencies \
+  -project Experience.xcodeproj \
+  -scheme Experience
+
 echo "ci_post_clone: done."
