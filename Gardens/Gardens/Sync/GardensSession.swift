@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import SwiftData
 import CloudKit
+import UIKit
 import GardensCore
 
 struct GardensUser: Equatable {
@@ -22,6 +23,20 @@ final class GardensSession: ObservableObject {
     @Published private(set) var isListening = false
     @Published var statusMessage: String?
     @Published var errorMessage: String?
+
+    /// Team member display name shown next to plants and care notes this iPhone adds.
+    /// Stored per-device; defaults to the device name until the user sets their own.
+    @Published var displayName: String {
+        didSet {
+            let trimmed = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+            UserDefaults.standard.set(trimmed, forKey: Self.displayNameKey)
+        }
+    }
+
+    /// Stable CloudKit user record name for the signed-in Apple ID. `nil` until resolved / offline.
+    private(set) var userRecordName: String?
+
+    private static let displayNameKey = "gardens.teamMemberDisplayName"
 
     private var modelContext: ModelContext?
     private let cloudRepo = CloudKitPlantRepository()
@@ -45,6 +60,13 @@ final class GardensSession: ObservableObject {
     }
 
     init() {
+        let stored = UserDefaults.standard.string(forKey: Self.displayNameKey)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let stored, !stored.isEmpty {
+            displayName = stored
+        } else {
+            displayName = UIDevice.current.name
+        }
         Task { await refreshAccount() }
     }
 
@@ -72,6 +94,7 @@ final class GardensSession: ObservableObject {
                 await refreshCloudInstances()
                 if let name = try? await recordName {
                     user = GardensUser(id: name, email: nil, displayName: "iCloud")
+                    userRecordName = name
                 }
             case .noAccount:
                 user = nil
@@ -123,6 +146,28 @@ final class GardensSession: ObservableObject {
 
     // MARK: - Data
 
+    /// Display name used to attribute new records, falling back to the device name.
+    var attributionName: String {
+        let trimmed = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? UIDevice.current.name : trimmed
+    }
+
+    /// Stamps the current team member onto an intake draft before saving.
+    func attributed(_ draft: PlantIntakeDraft) -> PlantIntakeDraft {
+        var copy = draft
+        copy.createdByName = attributionName
+        copy.createdByRecordName = userRecordName
+        return copy
+    }
+
+    /// Stamps the current team member onto a care update draft before saving.
+    func attributed(_ draft: CareUpdateDraft) -> CareUpdateDraft {
+        var copy = draft
+        copy.performedByName = attributionName
+        copy.performedByRecordName = userRecordName
+        return copy
+    }
+
     func updatePlantPhoto(instanceID: UUID, photoData: Data?, photoCredit: String?) async throws {
         try await repository.updateInstancePhoto(instanceID: instanceID, photoData: photoData, photoCredit: photoCredit)
         await refresh()
@@ -149,49 +194,6 @@ final class GardensSession: ObservableObject {
             if !usesSharedCloud {
                 await refreshLocalInstances()
             }
-        }
-    }
-
-    /// Writes one catalog + instance + care event through the active repository, then reloads.
-    /// Use after Connect iCloud to verify CloudKit accepts a real record.
-    @discardableResult
-    func writeTestRecord() async -> String {
-        errorMessage = nil
-        do {
-            if user == nil {
-                await refreshAccount()
-            }
-            let service = PlantIntakeService(repository: repository)
-            let stamp = Date().formatted(date: .numeric, time: .shortened)
-            let batch = try await service.saveNewArrival(
-                PlantIntakeDraft(
-                    catalogMode: .newOrMatchType,
-                    name: "Gardens Sync Test",
-                    genus: "Testus",
-                    vendor: "Setup Check",
-                    careProfile: PlantCareProfile(
-                        careInstructions: "Created by Sync → Write test record",
-                        wateringCheckGuidance: "Ignore — smoke test",
-                        healthCheckGuidance: "Ignore — smoke test"
-                    ),
-                    quantity: 1
-                )
-            )
-            let instanceID = batch.instances[0].id
-            _ = try await service.logCareUpdate(
-                CareUpdateDraft(
-                    instanceID: instanceID,
-                    kind: .note,
-                    notes: "CloudKit smoke test at \(stamp)"
-                )
-            )
-            await refresh()
-            let message = "Test OK — plant \(instanceID.uuidString.prefix(8))… with care note (\(usesSharedCloud ? "iCloud" : "this iPhone only"))"
-            statusMessage = message
-            return message
-        } catch {
-            errorMessage = error.localizedDescription
-            return "Test failed: \(error.localizedDescription)"
         }
     }
 

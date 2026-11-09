@@ -137,7 +137,7 @@ struct LogCareUpdateView: View {
         defer { isSaving = false }
         do {
             let service = PlantIntakeService(repository: session.repository)
-            _ = try await service.logCareUpdate(draft)
+            _ = try await service.logCareUpdate(session.attributed(draft))
             onSaved?()
             dismiss()
         } catch {

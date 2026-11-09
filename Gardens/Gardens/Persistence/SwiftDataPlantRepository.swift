@@ -67,7 +67,9 @@ final class SwiftDataPlantRepository: PlantRepository {
                 arrivedOn: arrivedOn,
                 vendor: vendor,
                 photoData: draft.photoData,
-                photoCredit: draft.photoCredit
+                photoCredit: draft.photoCredit,
+                createdByName: draft.createdByName,
+                createdByRecordName: draft.createdByRecordName
             )
             modelContext.insert(instance)
             guard let detail = instance.toDetail() else {

@@ -83,6 +83,9 @@ struct PlantDetailView: View {
                         "Arrived",
                         value: destination.instance.arrivedOn.formatted(date: .long, time: .omitted)
                     )
+                    if !destination.instance.createdByName.isEmpty {
+                        LabeledContent("Added by", value: destination.instance.createdByName)
+                    }
                 }
 
                 careSection(destination)
@@ -202,6 +205,11 @@ struct PlantDetailView: View {
                         Text(event.performedAt.formatted(date: .abbreviated, time: .shortened))
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                        if !event.performedByName.isEmpty {
+                            Label("Logged by \(event.performedByName)", systemImage: "person.crop.circle")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                         if !event.wateringObservation.isEmpty {
                             Text("Watering: \(event.wateringObservation)")
                                 .font(.caption)

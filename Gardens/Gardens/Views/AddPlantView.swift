@@ -427,7 +427,7 @@ struct AddPlantView: View {
         defer { isSaving = false }
         do {
             let service = PlantIntakeService(repository: session.repository)
-            let batch = try await service.saveNewArrival(draft)
+            let batch = try await service.saveNewArrival(session.attributed(draft))
             onSaved?(batch)
             dismiss()
         } catch {

@@ -33,6 +33,9 @@ struct PlantScanCover: View {
                     .padding()
                     .frame(maxHeight: .infinity, alignment: .bottom)
             }
+
+            viewfinder
+                .allowsHitTesting(false)
         }
         .overlay(alignment: .topLeading) {
             Button("Close") { dismiss() }
@@ -43,6 +46,28 @@ struct PlantScanCover: View {
         .task {
             allowed = await CameraPermission.ensureAuthorized()
         }
+    }
+
+    /// Square guide over the camera, matching the Intake scan screen.
+    private var viewfinder: some View {
+        VStack(spacing: 10) {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .strokeBorder(.white.opacity(0.85), lineWidth: 2)
+                .frame(width: 240, height: 240)
+                .background(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(.white.opacity(0.04))
+                )
+                .padding(.top, 24)
+
+            Text("Point at a plant label QR")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(.black.opacity(0.45), in: Capsule())
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private func handle(_ raw: String) {

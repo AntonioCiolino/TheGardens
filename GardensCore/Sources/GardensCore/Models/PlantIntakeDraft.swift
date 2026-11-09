@@ -21,6 +21,10 @@ public struct PlantIntakeDraft: Hashable, Sendable {
     public var careProfile: PlantCareProfile
     /// Number of physical plants in this arrival (each becomes its own instance + QR).
     public var quantity: Int
+    /// Display name of the team member logging this arrival.
+    public var createdByName: String
+    /// Stable CloudKit user record name of the team member logging this arrival.
+    public var createdByRecordName: String?
 
     public init(
         catalogMode: IntakeCatalogMode = .newOrMatchType,
@@ -31,7 +35,9 @@ public struct PlantIntakeDraft: Hashable, Sendable {
         photoData: Data? = nil,
         photoCredit: String? = nil,
         careProfile: PlantCareProfile = .empty,
-        quantity: Int = 1
+        quantity: Int = 1,
+        createdByName: String = "",
+        createdByRecordName: String? = nil
     ) {
         self.catalogMode = catalogMode
         self.name = name
@@ -42,6 +48,8 @@ public struct PlantIntakeDraft: Hashable, Sendable {
         self.photoCredit = photoCredit
         self.careProfile = careProfile
         self.quantity = max(1, quantity)
+        self.createdByName = createdByName
+        self.createdByRecordName = createdByRecordName
     }
 
     public var isValid: Bool {

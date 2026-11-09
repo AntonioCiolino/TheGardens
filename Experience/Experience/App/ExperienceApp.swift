@@ -4,12 +4,20 @@ import SwiftData
 @main
 struct ExperienceApp: App {
     private let modelContainer = LocalFeedStore.makeContainer()
-    @StateObject private var session = ExperienceSession()
+    @StateObject private var moderation: ModerationStore
+    @StateObject private var session: ExperienceSession
     @StateObject private var geofence = GardenGeofenceMonitor()
+
+    init() {
+        let moderation = ModerationStore()
+        _moderation = StateObject(wrappedValue: moderation)
+        _session = StateObject(wrappedValue: ExperienceSession(moderation: moderation))
+    }
 
     var body: some Scene {
         WindowGroup {
             FeedRoot(session: session, geofence: geofence)
+                .environmentObject(moderation)
         }
         .modelContainer(modelContainer)
     }
@@ -36,14 +44,44 @@ private struct FeedRoot: View {
     @ObservedObject var session: ExperienceSession
     @ObservedObject var geofence: GardenGeofenceMonitor
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var showSplash = true
+    @State private var splashRun = 0
 
     var body: some View {
-        FeedView()
-            .environmentObject(session)
-            .environmentObject(geofence)
-            .task {
-                session.attach(modelContext: modelContext)
-                geofence.start()
+        ZStack {
+            FeedView()
+                .opacity(showSplash ? 0 : 1)
+                .allowsHitTesting(!showSplash)
+
+            if showSplash {
+                SplashView(placeName: geofence.welcomePlace?.name)
+                    .id(splashRun)
+                    .transition(.opacity)
+                    .zIndex(1)
             }
+        }
+        .animation(.easeInOut(duration: 0.55), value: showSplash)
+        .environmentObject(session)
+        .environmentObject(geofence)
+        .onAppear {
+            geofence.start()
+            session.attach(modelContext: modelContext)
+        }
+        .task(id: splashRun) {
+            try? await Task.sleep(for: .seconds(5.5))
+            showSplash = false
+            geofence.dismissWelcome()
+        }
+        .onChange(of: geofence.splashReplayID) { _, replay in
+            guard replay > 0 else { return }
+            showSplash = true
+            splashRun = replay
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active, !showSplash {
+                geofence.appBecameActive()
+            }
+        }
     }
 }

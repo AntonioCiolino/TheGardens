@@ -13,6 +13,10 @@ public struct PlantInstance: Identifiable, Hashable, Codable, Sendable {
     /// Set when the photo is a reference image rather than a picture of this plant.
     public var photoCredit: String?
     public var createdAt: Date
+    /// Display name of the team member who logged this arrival. Empty when unknown (older records).
+    public var createdByName: String
+    /// Stable CloudKit user record name of the team member who logged this arrival.
+    public var createdByRecordName: String?
 
     public init(
         id: UUID = UUID(),
@@ -21,7 +25,9 @@ public struct PlantInstance: Identifiable, Hashable, Codable, Sendable {
         vendor: String,
         photoData: Data? = nil,
         photoCredit: String? = nil,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        createdByName: String = "",
+        createdByRecordName: String? = nil
     ) {
         self.id = id
         self.catalogItemID = catalogItemID
@@ -30,6 +36,8 @@ public struct PlantInstance: Identifiable, Hashable, Codable, Sendable {
         self.photoData = photoData
         self.photoCredit = photoCredit
         self.createdAt = createdAt
+        self.createdByName = createdByName.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.createdByRecordName = createdByRecordName
     }
 }
 
@@ -37,11 +45,20 @@ public struct PlantInstance: Identifiable, Hashable, Codable, Sendable {
 public struct PlantInstanceDetail: Identifiable, Hashable, Codable, Sendable {
     public var instance: PlantInstance
     public var catalog: PlantCatalogItem
+    /// When this plant was last cared for (latest care event), if any. Used to surface
+    /// the plants most overdue for attention. `nil` means no care has been logged yet.
+    public var lastCaredAt: Date?
 
     public var id: UUID { instance.id }
 
-    public init(instance: PlantInstance, catalog: PlantCatalogItem) {
+    public init(instance: PlantInstance, catalog: PlantCatalogItem, lastCaredAt: Date? = nil) {
         self.instance = instance
         self.catalog = catalog
+        self.lastCaredAt = lastCaredAt
+    }
+
+    /// The date used to rank attention: the last care date, or arrival date if never cared for.
+    public var attentionDate: Date {
+        lastCaredAt ?? instance.arrivedOn
     }
 }

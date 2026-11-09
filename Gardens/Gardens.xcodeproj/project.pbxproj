@@ -3,76 +3,78 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		28C5A96BD9FF4F9B8DB19AAC /* GardensApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F38854A31EC4EE4BEA8DED0 /* GardensApp.swift */; };
-		9C37951D9A204234B79849D1 /* PlantListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D09732F4683647F991629D3C /* PlantListView.swift */; };
-		DE84C174F62C42D1947A6C4B /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2AC03ED2C4141C2B07FF9AB /* SplashView.swift */; };
-		B21EF9EA577049A7A9462F65 /* AddPlantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 497F8E156F1E487D96C3B314 /* AddPlantView.swift */; };
-		B8B96F2514F14EBDB7FDF99D /* BatchLabelPrintView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E5172D9BBB4DB4AA9D58BA /* BatchLabelPrintView.swift */; };
-		A6421800E0FF4732898C1D8C /* PlantDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69375AC8E2CC46DCBEF3B660 /* PlantDetailView.swift */; };
 		11EE402376174148B736F78F /* LogCareUpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B350954A98F34C8F88A4D742 /* LogCareUpdateView.swift */; };
-		E5C51205FF3A480B843D9599 /* ScanPlantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB76F0BFB6D4AC8B5AC26A5 /* ScanPlantView.swift */; };
-		970DA46BDDFE4D9CBB09082D /* PlantPhotoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B763501CD146B6858D5E7D /* PlantPhotoPicker.swift */; };
-		7F141139316F4752A87CC2D6 /* QRCodeImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7063F8BCEB604AC288FC74C8 /* QRCodeImageView.swift */; };
-		86A8D9B5ED03459E95A8345D /* BrandWatermark.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4B4157423B0466CBD29D054 /* BrandWatermark.swift */; };
-		5178BEFEF5E642928333351F /* SwiftDataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0028F7F188EB4BAA9609F0F2 /* SwiftDataModels.swift */; };
-		4F3E46DDF2984D87BEE52CC0 /* SwiftDataPlantRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E277E42F1F4676BEA88A61 /* SwiftDataPlantRepository.swift */; };
-		2E96E2D9DADF4E1988847624 /* CoreImageQRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */; };
-		A11BRANDEDQR000000000002 /* BrandedQRImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11BRANDEDQR000000000001 /* BrandedQRImage.swift */; };
-		94AFC090BA7A461EAC2B5E40 /* UIKitPlantLabelPrinter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 651C84A8EE9D423B8BEECF87 /* UIKitPlantLabelPrinter.swift */; };
 		1EA70580002F467A8E3FA025 /* PlantQRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D488314D7F3D4988A311217C /* PlantQRScannerView.swift */; };
+		28C5A96BD9FF4F9B8DB19AAC /* GardensApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F38854A31EC4EE4BEA8DED0 /* GardensApp.swift */; };
+		2E96E2D9DADF4E1988847624 /* CoreImageQRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */; };
+		4F3E46DDF2984D87BEE52CC0 /* SwiftDataPlantRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E277E42F1F4676BEA88A61 /* SwiftDataPlantRepository.swift */; };
+		5178BEFEF5E642928333351F /* SwiftDataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0028F7F188EB4BAA9609F0F2 /* SwiftDataModels.swift */; };
+		7F141139316F4752A87CC2D6 /* QRCodeImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7063F8BCEB604AC288FC74C8 /* QRCodeImageView.swift */; };
 		8385BA678B1C48AD9F964661 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A4952323A68541608D1A286F /* Assets.xcassets */; };
-		DAA181E0D7EC4AA29A35F4FB /* GardensCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9C580D26CA894853A6AB79B9 /* GardensCore */; };
+		86A8D9B5ED03459E95A8345D /* BrandWatermark.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4B4157423B0466CBD29D054 /* BrandWatermark.swift */; };
 		87B70E6D4AAB45D0B80C6B0D /* GardensSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4888A886DDCE446FAD929AEA /* GardensSession.swift */; };
+		94AFC090BA7A461EAC2B5E40 /* UIKitPlantLabelPrinter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 651C84A8EE9D423B8BEECF87 /* UIKitPlantLabelPrinter.swift */; };
+		94FB69B830A2257500DFC10F /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94FB69B730A2257500DFC10F /* ProfileView.swift */; };
+		970DA46BDDFE4D9CBB09082D /* PlantPhotoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B763501CD146B6858D5E7D /* PlantPhotoPicker.swift */; };
+		9C37951D9A204234B79849D1 /* PlantListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D09732F4683647F991629D3C /* PlantListView.swift */; };
 		A08E2174BEBE4C18B01C1656 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF49E4DF803244D9B1691A54 /* SignInView.swift */; };
-		D63295D02D5A4983A63C7A53 /* CloudKitPlantRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899F6D6A3D214902BDB2C832 /* CloudKitPlantRepository.swift */; };
-		D4E2B9F35C7E401B8F2D8E66 /* PlantReferenceLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3F1A8E24B6D4F0A9E1C7D55 /* PlantReferenceLoader.swift */; };
+		A11BRANDEDQR000000000002 /* BrandedQRImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11BRANDEDQR000000000001 /* BrandedQRImage.swift */; };
+		A11CPUARCHSOURCE000000002 /* CpuArch.c in Sources */ = {isa = PBXBuildFile; fileRef = A11CPUARCHSOURCE000000001 /* CpuArch.c */; settings = {COMPILER_FLAGS = "-DZ7_ST"; }; };
 		A11LABEL0JOB00000000002 /* SupvanLabelJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11LABEL0JOB00000000001 /* SupvanLabelJob.swift */; };
-		A11T50BTPRINTER000000002 /* T50BluetoothPrinter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11T50BTPRINTER000000001 /* T50BluetoothPrinter.swift */; };
 		A11LABELSHEET00000000002 /* LabelPrinterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11LABELSHEET00000000001 /* LabelPrinterSheet.swift */; };
+		A11LZFINDSOURCE0000000002 /* LzFind.c in Sources */ = {isa = PBXBuildFile; fileRef = A11LZFINDSOURCE0000000001 /* LzFind.c */; settings = {COMPILER_FLAGS = "-DZ7_ST"; }; };
 		A11LZMACSOURCE0000000002 /* gardens_lzma.c in Sources */ = {isa = PBXBuildFile; fileRef = A11LZMACSOURCE0000000001 /* gardens_lzma.c */; settings = {COMPILER_FLAGS = "-DZ7_ST"; }; };
 		A11LZMAENCSOURCE000000002 /* LzmaEnc.c in Sources */ = {isa = PBXBuildFile; fileRef = A11LZMAENCSOURCE000000001 /* LzmaEnc.c */; settings = {COMPILER_FLAGS = "-DZ7_ST"; }; };
-		A11LZFINDSOURCE0000000002 /* LzFind.c in Sources */ = {isa = PBXBuildFile; fileRef = A11LZFINDSOURCE0000000001 /* LzFind.c */; settings = {COMPILER_FLAGS = "-DZ7_ST"; }; };
-		A11CPUARCHSOURCE000000002 /* CpuArch.c in Sources */ = {isa = PBXBuildFile; fileRef = A11CPUARCHSOURCE000000001 /* CpuArch.c */; settings = {COMPILER_FLAGS = "-DZ7_ST"; }; };
+		A11T50BTPRINTER000000002 /* T50BluetoothPrinter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11T50BTPRINTER000000001 /* T50BluetoothPrinter.swift */; };
+		A6421800E0FF4732898C1D8C /* PlantDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69375AC8E2CC46DCBEF3B660 /* PlantDetailView.swift */; };
+		B21EF9EA577049A7A9462F65 /* AddPlantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 497F8E156F1E487D96C3B314 /* AddPlantView.swift */; };
+		B8B96F2514F14EBDB7FDF99D /* BatchLabelPrintView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E5172D9BBB4DB4AA9D58BA /* BatchLabelPrintView.swift */; };
+		D4E2B9F35C7E401B8F2D8E66 /* PlantReferenceLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3F1A8E24B6D4F0A9E1C7D55 /* PlantReferenceLoader.swift */; };
+		D63295D02D5A4983A63C7A53 /* CloudKitPlantRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899F6D6A3D214902BDB2C832 /* CloudKitPlantRepository.swift */; };
+		DAA181E0D7EC4AA29A35F4FB /* GardensCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9C580D26CA894853A6AB79B9 /* GardensCore */; };
+		DE84C174F62C42D1947A6C4B /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2AC03ED2C4141C2B07FF9AB /* SplashView.swift */; };
+		E5C51205FF3A480B843D9599 /* ScanPlantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB76F0BFB6D4AC8B5AC26A5 /* ScanPlantView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		5F38854A31EC4EE4BEA8DED0 /* GardensApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GardensApp.swift; sourceTree = "<group>"; };
-		D09732F4683647F991629D3C /* PlantListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantListView.swift; sourceTree = "<group>"; };
-		E2AC03ED2C4141C2B07FF9AB /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
-		497F8E156F1E487D96C3B314 /* AddPlantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPlantView.swift; sourceTree = "<group>"; };
-		F5E5172D9BBB4DB4AA9D58BA /* BatchLabelPrintView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchLabelPrintView.swift; sourceTree = "<group>"; };
-		69375AC8E2CC46DCBEF3B660 /* PlantDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantDetailView.swift; sourceTree = "<group>"; };
-		B350954A98F34C8F88A4D742 /* LogCareUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogCareUpdateView.swift; sourceTree = "<group>"; };
-		6BB76F0BFB6D4AC8B5AC26A5 /* ScanPlantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanPlantView.swift; sourceTree = "<group>"; };
-		F7B763501CD146B6858D5E7D /* PlantPhotoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantPhotoPicker.swift; sourceTree = "<group>"; };
-		7063F8BCEB604AC288FC74C8 /* QRCodeImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeImageView.swift; sourceTree = "<group>"; };
-		E4B4157423B0466CBD29D054 /* BrandWatermark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandWatermark.swift; sourceTree = "<group>"; };
 		0028F7F188EB4BAA9609F0F2 /* SwiftDataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataModels.swift; sourceTree = "<group>"; };
-		80E277E42F1F4676BEA88A61 /* SwiftDataPlantRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataPlantRepository.swift; sourceTree = "<group>"; };
-		90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreImageQRCodeGenerator.swift; sourceTree = "<group>"; };
-		A11BRANDEDQR000000000001 /* BrandedQRImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandedQRImage.swift; sourceTree = "<group>"; };
-		651C84A8EE9D423B8BEECF87 /* UIKitPlantLabelPrinter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIKitPlantLabelPrinter.swift; sourceTree = "<group>"; };
-		D488314D7F3D4988A311217C /* PlantQRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantQRScannerView.swift; sourceTree = "<group>"; };
-		A4952323A68541608D1A286F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		395FA4407F2946F0A3384929 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0E5744733B714F3CB94858AF /* Gardens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gardens.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		395FA4407F2946F0A3384929 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4888A886DDCE446FAD929AEA /* GardensSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GardensSession.swift; sourceTree = "<group>"; };
-		AF49E4DF803244D9B1691A54 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		497F8E156F1E487D96C3B314 /* AddPlantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPlantView.swift; sourceTree = "<group>"; };
 		4C6798F5A79C4A21B92A8219 /* Gardens.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Gardens.entitlements; sourceTree = "<group>"; };
+		5F38854A31EC4EE4BEA8DED0 /* GardensApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GardensApp.swift; sourceTree = "<group>"; };
+		651C84A8EE9D423B8BEECF87 /* UIKitPlantLabelPrinter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIKitPlantLabelPrinter.swift; sourceTree = "<group>"; };
+		69375AC8E2CC46DCBEF3B660 /* PlantDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantDetailView.swift; sourceTree = "<group>"; };
+		6BB76F0BFB6D4AC8B5AC26A5 /* ScanPlantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanPlantView.swift; sourceTree = "<group>"; };
+		7063F8BCEB604AC288FC74C8 /* QRCodeImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeImageView.swift; sourceTree = "<group>"; };
+		80E277E42F1F4676BEA88A61 /* SwiftDataPlantRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataPlantRepository.swift; sourceTree = "<group>"; };
 		899F6D6A3D214902BDB2C832 /* CloudKitPlantRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitPlantRepository.swift; sourceTree = "<group>"; };
-		C3F1A8E24B6D4F0A9E1C7D55 /* PlantReferenceLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantReferenceLoader.swift; sourceTree = "<group>"; };
-		A11LABEL0JOB00000000001 /* SupvanLabelJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupvanLabelJob.swift; sourceTree = "<group>"; };
-		A11T50BTPRINTER000000001 /* T50BluetoothPrinter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = T50BluetoothPrinter.swift; sourceTree = "<group>"; };
-		A11LABELSHEET00000000001 /* LabelPrinterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelPrinterSheet.swift; sourceTree = "<group>"; };
+		90FD48E1E31E420D94564C4D /* CoreImageQRCodeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreImageQRCodeGenerator.swift; sourceTree = "<group>"; };
+		94FB69B730A2257500DFC10F /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		A11BRANDEDQR000000000001 /* BrandedQRImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandedQRImage.swift; sourceTree = "<group>"; };
 		A11BRIDGEHEADER0000000001 /* Gardens-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Gardens-Bridging-Header.h"; sourceTree = "<group>"; };
+		A11CPUARCHSOURCE000000001 /* CpuArch.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = CpuArch.c; sourceTree = "<group>"; };
+		A11LABEL0JOB00000000001 /* SupvanLabelJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupvanLabelJob.swift; sourceTree = "<group>"; };
+		A11LABELSHEET00000000001 /* LabelPrinterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelPrinterSheet.swift; sourceTree = "<group>"; };
+		A11LZFINDSOURCE0000000001 /* LzFind.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = LzFind.c; sourceTree = "<group>"; };
 		A11LZMACSOURCE0000000001 /* gardens_lzma.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = gardens_lzma.c; sourceTree = "<group>"; };
 		A11LZMAENCSOURCE000000001 /* LzmaEnc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = LzmaEnc.c; sourceTree = "<group>"; };
-		A11LZFINDSOURCE0000000001 /* LzFind.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = LzFind.c; sourceTree = "<group>"; };
-		A11CPUARCHSOURCE000000001 /* CpuArch.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = CpuArch.c; sourceTree = "<group>"; };
+		A11T50BTPRINTER000000001 /* T50BluetoothPrinter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = T50BluetoothPrinter.swift; sourceTree = "<group>"; };
+		A4952323A68541608D1A286F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AF49E4DF803244D9B1691A54 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		B350954A98F34C8F88A4D742 /* LogCareUpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogCareUpdateView.swift; sourceTree = "<group>"; };
+		C3F1A8E24B6D4F0A9E1C7D55 /* PlantReferenceLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantReferenceLoader.swift; sourceTree = "<group>"; };
+		D09732F4683647F991629D3C /* PlantListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantListView.swift; sourceTree = "<group>"; };
+		D488314D7F3D4988A311217C /* PlantQRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantQRScannerView.swift; sourceTree = "<group>"; };
+		E2AC03ED2C4141C2B07FF9AB /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
+		E4B4157423B0466CBD29D054 /* BrandWatermark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandWatermark.swift; sourceTree = "<group>"; };
+		F5E5172D9BBB4DB4AA9D58BA /* BatchLabelPrintView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchLabelPrintView.swift; sourceTree = "<group>"; };
+		F7B763501CD146B6858D5E7D /* PlantPhotoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantPhotoPicker.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -87,44 +89,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		5BAA9EE3C7764DB19A71BC62 = {
-			isa = PBXGroup;
-			children = (
-				600C18023E5542A987DDBA08 /* Gardens */,
-				AF97D29386CE49269C083036 /* Products */,
-			);
-			sourceTree = "<group>";
-		};
-		AF97D29386CE49269C083036 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				0E5744733B714F3CB94858AF /* Gardens.app */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		600C18023E5542A987DDBA08 /* Gardens */ = {
-			isa = PBXGroup;
-			children = (
-				EA52A30A1BD14AA6ADB58C0B /* App */,
-				0321DBACCE684689A7B352BE /* Persistence */,
-				47A234BD5B5E417388D989D3 /* Sync */,
-				E5F3C0A46D8F412C903E9F77 /* Reference */,
-				159390E6470D415AA0ECCE8C /* Platform */,
-				374309B2DCEA46E19A86607B /* Views */,
-				D54AC062733645CD9FCB638C /* Resources */,
-			);
-			path = Gardens;
-			sourceTree = "<group>";
-		};
-		EA52A30A1BD14AA6ADB58C0B /* App */ = {
-			isa = PBXGroup;
-			children = (
-				5F38854A31EC4EE4BEA8DED0 /* GardensApp.swift */,
-			);
-			path = App;
-			sourceTree = "<group>";
-		};
 		0321DBACCE684689A7B352BE /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
@@ -149,17 +113,6 @@
 			path = Platform;
 			sourceTree = "<group>";
 		};
-		A11LZMAGROUP0000000000001 /* LZMA */ = {
-			isa = PBXGroup;
-			children = (
-				A11LZMACSOURCE0000000001 /* gardens_lzma.c */,
-				A11LZMAENCSOURCE000000001 /* LzmaEnc.c */,
-				A11LZFINDSOURCE0000000001 /* LzFind.c */,
-				A11CPUARCHSOURCE000000001 /* CpuArch.c */,
-			);
-			path = LZMA;
-			sourceTree = "<group>";
-		};
 		374309B2DCEA46E19A86607B /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -173,8 +126,51 @@
 				6BB76F0BFB6D4AC8B5AC26A5 /* ScanPlantView.swift */,
 				AF49E4DF803244D9B1691A54 /* SignInView.swift */,
 				A15B324A6C5643BD9306039A /* Components */,
+				94FB69B730A2257500DFC10F /* ProfileView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		47A234BD5B5E417388D989D3 /* Sync */ = {
+			isa = PBXGroup;
+			children = (
+				899F6D6A3D214902BDB2C832 /* CloudKitPlantRepository.swift */,
+				4888A886DDCE446FAD929AEA /* GardensSession.swift */,
+			);
+			path = Sync;
+			sourceTree = "<group>";
+		};
+		5BAA9EE3C7764DB19A71BC62 = {
+			isa = PBXGroup;
+			children = (
+				600C18023E5542A987DDBA08 /* Gardens */,
+				AF97D29386CE49269C083036 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		600C18023E5542A987DDBA08 /* Gardens */ = {
+			isa = PBXGroup;
+			children = (
+				EA52A30A1BD14AA6ADB58C0B /* App */,
+				0321DBACCE684689A7B352BE /* Persistence */,
+				47A234BD5B5E417388D989D3 /* Sync */,
+				E5F3C0A46D8F412C903E9F77 /* Reference */,
+				159390E6470D415AA0ECCE8C /* Platform */,
+				374309B2DCEA46E19A86607B /* Views */,
+				D54AC062733645CD9FCB638C /* Resources */,
+			);
+			path = Gardens;
+			sourceTree = "<group>";
+		};
+		A11LZMAGROUP0000000000001 /* LZMA */ = {
+			isa = PBXGroup;
+			children = (
+				A11LZMACSOURCE0000000001 /* gardens_lzma.c */,
+				A11LZMAENCSOURCE000000001 /* LzmaEnc.c */,
+				A11LZFINDSOURCE0000000001 /* LzFind.c */,
+				A11CPUARCHSOURCE000000001 /* CpuArch.c */,
+			);
+			path = LZMA;
 			sourceTree = "<group>";
 		};
 		A15B324A6C5643BD9306039A /* Components */ = {
@@ -185,6 +181,14 @@
 				E4B4157423B0466CBD29D054 /* BrandWatermark.swift */,
 			);
 			path = Components;
+			sourceTree = "<group>";
+		};
+		AF97D29386CE49269C083036 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0E5744733B714F3CB94858AF /* Gardens.app */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 		D54AC062733645CD9FCB638C /* Resources */ = {
@@ -205,13 +209,12 @@
 			path = Reference;
 			sourceTree = "<group>";
 		};
-		47A234BD5B5E417388D989D3 /* Sync */ = {
+		EA52A30A1BD14AA6ADB58C0B /* App */ = {
 			isa = PBXGroup;
 			children = (
-				899F6D6A3D214902BDB2C832 /* CloudKitPlantRepository.swift */,
-				4888A886DDCE446FAD929AEA /* GardensSession.swift */,
+				5F38854A31EC4EE4BEA8DED0 /* GardensApp.swift */,
 			);
-			path = Sync;
+			path = App;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -245,7 +248,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1500;
-				LastUpgradeCheck = 1500;
+				LastUpgradeCheck = 2710;
 			};
 			buildConfigurationList = AFF3072B27184FBA8083C733 /* Build configuration list for PBXProject "Gardens" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -295,6 +298,7 @@
 				970DA46BDDFE4D9CBB09082D /* PlantPhotoPicker.swift in Sources */,
 				7F141139316F4752A87CC2D6 /* QRCodeImageView.swift in Sources */,
 				86A8D9B5ED03459E95A8345D /* BrandWatermark.swift in Sources */,
+				94FB69B830A2257500DFC10F /* ProfileView.swift in Sources */,
 				5178BEFEF5E642928333351F /* SwiftDataModels.swift in Sources */,
 				4F3E46DDF2984D87BEE52CC0 /* SwiftDataPlantRepository.swift in Sources */,
 				2E96E2D9DADF4E1988847624 /* CoreImageQRCodeGenerator.swift in Sources */,
@@ -318,34 +322,72 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		D8E4A6532E3F475FB19C9FE5 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ENABLE_MODULES = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				ENABLE_TESTABILITY = YES;
-				GCC_DYNAMIC_NO_PIC = NO;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-			};
-			name = Debug;
-		};
 		7CB21F10A4DC45658CFF6468 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B31EF654C9C54BC995191BC5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = Gardens/Resources/Gardens.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 3;
+				DEVELOPMENT_TEAM = 7KKBC86UX7;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Gardens/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.gardens.intake;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Gardens/Platform/Gardens-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -353,13 +395,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = Gardens/Resources/Gardens.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 3;
-				DEVELOPMENT_TEAM = "";
-				CODE_SIGN_ENTITLEMENTS = Gardens/Resources/Gardens.entitlements;
+				DEVELOPMENT_TEAM = 7KKBC86UX7;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Gardens/Resources/Info.plist;
-				SWIFT_OBJC_BRIDGING_HEADER = Gardens/Platform/Gardens-Bridging-Header.h;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -369,53 +411,75 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Gardens/Platform/Gardens-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
-		B31EF654C9C54BC995191BC5 /* Release */ = {
+		D8E4A6532E3F475FB19C9FE5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
-				DEVELOPMENT_TEAM = "";
-				CODE_SIGN_ENTITLEMENTS = Gardens/Resources/Gardens.entitlements;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Gardens/Resources/Info.plist;
-				SWIFT_OBJC_BRIDGING_HEADER = Gardens/Platform/Gardens-Bridging-Header.h;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.gardens.intake;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
-			name = Release;
+			name = Debug;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AFF3072B27184FBA8083C733 /* Build configuration list for PBXProject "Gardens" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				D8E4A6532E3F475FB19C9FE5 /* Debug */,
-				7CB21F10A4DC45658CFF6468 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		6ECB543CBCEB487191785C03 /* Build configuration list for PBXNativeTarget "Gardens" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CAD94BBF52364CEEAA462310 /* Debug */,
 				B31EF654C9C54BC995191BC5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFF3072B27184FBA8083C733 /* Build configuration list for PBXProject "Gardens" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D8E4A6532E3F475FB19C9FE5 /* Debug */,
+				7CB21F10A4DC45658CFF6468 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -428,7 +492,6 @@
 			relativePath = ../GardensCore;
 		};
 /* End XCLocalSwiftPackageReference section */
-
 
 /* Begin XCSwiftPackageProductDependency section */
 		9C580D26CA894853A6AB79B9 /* GardensCore */ = {

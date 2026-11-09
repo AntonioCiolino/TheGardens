@@ -14,9 +14,23 @@ struct ExperienceUser: Equatable {
 final class ExperienceSession: ObservableObject {
     @Published private(set) var user: ExperienceUser?
     @Published private(set) var posts: [Post] = []
+    @Published private(set) var messageOfTheDay = AppVoice.seededMessage()
     @Published private(set) var isLoading = true
     @Published var statusMessage: String?
     @Published var errorMessage: String?
+
+    /// All posts known from the cache before moderation filtering is applied.
+    private var allPosts: [Post] = []
+    /// Per-device blocked authors and hidden posts. Injected so the UI can share the same instance.
+    private let moderation: ModerationStore
+    /// Report tally per post id, used for automatic threshold hiding.
+    private var reportCounts: [UUID: Int] = [:]
+    /// The shared moderator roster.
+    private var roster = ModeratorRoster()
+    /// This device's CloudKit user record name, once known.
+    @Published private(set) var currentUserRecordName: String?
+    /// True when the signed-in guest is a moderator and may take posts down.
+    @Published private(set) var isModerator = false
 
     /// Keeps GardensCore linked for a later plant screen.
     let sharedPlantDomain = PlantDomainLink.moduleName
@@ -28,7 +42,129 @@ final class ExperienceSession: ObservableObject {
     private var hasDisplayedCloudList = false
     private var didAttach = false
 
+    init(moderation: ModerationStore) {
+        self.moderation = moderation
+    }
+
     var usesSharedCloud: Bool { user != nil }
+
+    /// Applies the current block/hide choices to the cached posts and republishes `posts`.
+    /// Posts at or over the report threshold are hidden for everyone except moderators,
+    /// who keep seeing them so they can remove or keep them.
+    private func applyModeration() {
+        posts = allPosts.filter { post in
+            if moderation.isHidden(postID: post.id) { return false }
+            if moderation.isBlocked(authorRecordName: post.authorRecordName) { return false }
+            if !isModerator, reportCount(for: post) >= ModerationPolicy.autoHideReportThreshold {
+                return false
+            }
+            return true
+        }
+    }
+
+    /// Reports accumulated for a post across all guests.
+    func reportCount(for post: Post) -> Int {
+        reportCounts[post.id] ?? 0
+    }
+
+    /// True when a post is being shown to a moderator only because it is over the report threshold.
+    func isAwaitingReview(_ post: Post) -> Bool {
+        isModerator && reportCount(for: post) >= ModerationPolicy.autoHideReportThreshold
+    }
+
+    /// Posts currently over the report threshold, newest first — the moderator review queue.
+    var flaggedPosts: [Post] {
+        guard isModerator else { return [] }
+        return allPosts
+            .filter { reportCount(for: $0) >= ModerationPolicy.autoHideReportThreshold }
+            .sorted { $0.createdAt > $1.createdAt }
+    }
+
+    /// The current moderator roster, sorted for display.
+    var moderatorRecordNames: [String] {
+        roster.recordNames.sorted()
+    }
+
+    /// Reports a post to the shared feed and immediately hides it on this device.
+    func report(_ post: Post, reason: ReportReason) async {
+        moderation.hide(postID: post.id)
+        applyModeration()
+        let report = FeedReport(
+            postID: post.id,
+            authorRecordName: post.authorRecordName,
+            reason: reason
+        )
+        do {
+            try await cloudRepo.submitReport(report)
+            statusMessage = "Thanks — we’ll review this within 24 hours."
+        } catch {
+            // The post stays hidden locally even if the report upload fails.
+            statusMessage = "Hidden on this iPhone. We’ll review it when iCloud reconnects."
+        }
+    }
+
+    /// Blocks a post's author so none of their posts appear on this device, and reports the post.
+    func block(_ post: Post) async {
+        moderation.block(authorRecordName: post.authorRecordName)
+        moderation.hide(postID: post.id)
+        applyModeration()
+        statusMessage = "You won’t see posts from this person anymore."
+    }
+
+    /// Operator takedown. Hard-deletes the post from the shared feed for every guest.
+    /// Only has effect for moderators; the UI only exposes it to them.
+    func removePost(_ post: Post) async {
+        guard isModerator else { return }
+        do {
+            try await cloudRepo.deletePost(id: post.id)
+            allPosts.removeAll { $0.id == post.id }
+            applyModeration()
+            statusMessage = "Removed from the feed."
+        } catch {
+            errorMessage = "Couldn’t remove the post: \(error.localizedDescription)"
+        }
+    }
+
+    /// Operator "keep": clears every report against a post so it drops below the auto-hide
+    /// threshold and returns to the public feed. The post itself is left in place.
+    /// Only has effect for moderators; the UI only exposes it to them.
+    func reinstate(_ post: Post) async {
+        guard isModerator else { return }
+        do {
+            try await cloudRepo.clearReports(forPostID: post.id)
+            reportCounts[post.id] = 0
+            moderation.unhide(postID: post.id)
+            applyModeration()
+            statusMessage = "Reinstated to the feed."
+        } catch {
+            errorMessage = "Couldn’t reinstate the post: \(error.localizedDescription)"
+        }
+    }
+
+    /// Adds another guest as a moderator by their CloudKit user record name.
+    func promoteModerator(userRecordName: String) async {
+        guard isModerator else { return }
+        do {
+            roster = try await cloudRepo.addModerator(userRecordName: userRecordName)
+            statusMessage = "Added a moderator."
+        } catch {
+            errorMessage = "Couldn’t add the moderator: \(error.localizedDescription)"
+        }
+    }
+
+    /// Loads the report tally and moderator roster, then recomputes moderator status.
+    /// If the roster is empty (fresh install, no seeds), the current guest bootstraps as
+    /// the first moderator so the garden is never left without one.
+    private func refreshModerationState() async {
+        reportCounts = (try? await cloudRepo.fetchReportCounts()) ?? reportCounts
+        if let loaded = try? await cloudRepo.fetchOrSeedModerators() {
+            roster = loaded
+        }
+        if roster.isEmpty, let me = currentUserRecordName, !me.isEmpty {
+            roster = (try? await cloudRepo.addModerator(userRecordName: me)) ?? roster
+        }
+        isModerator = roster.contains(currentUserRecordName)
+    }
 
     func attach(modelContext: ModelContext) {
         guard !didAttach else { return }
@@ -46,10 +182,10 @@ final class ExperienceSession: ObservableObject {
         }
     }
 
-    func publish(text: String, imageData: Data?) async throws {
+    func publish(text: String, imageData: Data?, authorName: String = "") async throws {
         guard let localRepo else { throw FeedError.saveFailed }
         errorMessage = nil
-        var draft = PostDraft(text: text, imageData: imageData)
+        var draft = PostDraft(text: text, imageData: imageData, authorName: authorName)
         if usesSharedCloud {
             draft.authorRecordName = try? await cloudRepo.userRecordName()
         }
@@ -70,7 +206,8 @@ final class ExperienceSession: ObservableObject {
             try localRepo.upsert(post)
             statusMessage = "Saved on this iPhone"
         }
-        posts = try await localRepo.fetchPosts()
+        allPosts = try await localRepo.fetchPosts()
+        applyModeration()
     }
 
     private func refreshAccount() async {
@@ -84,6 +221,9 @@ final class ExperienceSession: ObservableObject {
                 await refreshCloud()
                 if let name = try? await cloudRepo.userRecordName() {
                     user = ExperienceUser(id: name, displayName: "iCloud")
+                    currentUserRecordName = name
+                    await refreshModerationState()
+                    applyModeration()
                 }
             case .noAccount:
                 fallBackLocal(status: "Sign into iCloud in Settings to share the feed")
@@ -119,20 +259,30 @@ final class ExperienceSession: ObservableObject {
         let flushError = await flushPending()
         do {
             let remote = try await cloudRepo.fetchPosts()
-            try localRepo.replaceCache(with: remote)
-            posts = try await localRepo.fetchPosts()
+            try localRepo.replaceCache(with: remote.filter(Self.isGuestPost))
+            allPosts = try await localRepo.fetchPosts()
+            applyModeration()
+            await refreshMessageOfTheDay()
             hasDisplayedCloudList = true
             isLoading = false
-            statusMessage = "iCloud · \(posts.count) post\(posts.count == 1 ? "" : "s")"
-            if let flushError {
-                errorMessage = flushError
+            if currentUserRecordName != nil {
+                reportCounts = (try? await cloudRepo.fetchReportCounts()) ?? reportCounts
+                applyModeration()
             }
+            statusMessage = "iCloud · \(posts.count) post\(posts.count == 1 ? "" : "s")"
+            errorMessage = flushError
         } catch {
             isLoading = false
-            posts = (try? await localRepo.fetchPosts()) ?? posts
+            allPosts = (try? await localRepo.fetchPosts())?.filter(Self.isGuestPost) ?? allPosts
+            applyModeration()
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            statusMessage = message
-            if !hasDisplayedCloudList {
+            if hasDisplayedCloudList {
+                // We already have posts on screen; show the hiccup once as a quiet status line.
+                statusMessage = message
+                errorMessage = nil
+            } else {
+                // Nothing shown yet; surface it once as the error line.
+                statusMessage = nil
                 errorMessage = message
             }
         }
@@ -158,10 +308,34 @@ final class ExperienceSession: ObservableObject {
         return nil
     }
 
+    func refreshMessageOfTheDay() async {
+        if let saved = UserDefaults.standard.string(forKey: Self.messageCacheKey),
+           !saved.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            var note = AppVoice.seededMessage()
+            note.text = saved
+            messageOfTheDay = note
+        }
+        guard usesSharedCloud else { return }
+        do {
+            let remote = try await cloudRepo.fetchOrSeedMessageOfTheDay()
+            messageOfTheDay = remote
+            UserDefaults.standard.set(remote.text, forKey: Self.messageCacheKey)
+        } catch {
+            // The seeded note stays on screen when iCloud has no message yet.
+        }
+    }
+
+    private static func isGuestPost(_ post: Post) -> Bool {
+        post.authorRecordName != AppVoice.recordName && post.id != AppVoice.messageID
+    }
+
+    private static let messageCacheKey = "experience.messageOfTheDay"
+
     private func refreshLocal() async {
         guard let localRepo else { return }
         do {
-            posts = try await localRepo.fetchPosts()
+            allPosts = try await localRepo.fetchPosts().filter(Self.isGuestPost)
+            applyModeration()
             isLoading = false
             if statusMessage == nil || user == nil {
                 statusMessage = posts.isEmpty

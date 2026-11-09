@@ -55,6 +55,8 @@ final class PlantInstanceEntity {
     @Attribute(.externalStorage) var photoData: Data?
     var photoCredit: String?
     var createdAt: Date
+    var createdByName: String = ""
+    var createdByRecordName: String?
     var catalog: CatalogItemEntity?
 
     @Relationship(deleteRule: .cascade, inverse: \CareEventEntity.instance)
@@ -67,7 +69,9 @@ final class PlantInstanceEntity {
         vendor: String,
         photoData: Data?,
         photoCredit: String? = nil,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        createdByName: String = "",
+        createdByRecordName: String? = nil
     ) {
         self.id = id
         self.catalog = catalog
@@ -76,6 +80,8 @@ final class PlantInstanceEntity {
         self.photoData = photoData
         self.photoCredit = photoCredit
         self.createdAt = createdAt
+        self.createdByName = createdByName
+        self.createdByRecordName = createdByRecordName
         self.careEvents = []
     }
 
@@ -88,13 +94,16 @@ final class PlantInstanceEntity {
             vendor: vendor,
             photoData: photoData,
             photoCredit: photoCredit,
-            createdAt: createdAt
+            createdAt: createdAt,
+            createdByName: createdByName,
+            createdByRecordName: createdByRecordName
         )
     }
 
     func toDetail() -> PlantInstanceDetail? {
         guard let catalog, let instance = toDomain() else { return nil }
-        return PlantInstanceDetail(instance: instance, catalog: catalog.toDomain())
+        let lastCaredAt = careEvents.map(\.performedAt).max()
+        return PlantInstanceDetail(instance: instance, catalog: catalog.toDomain(), lastCaredAt: lastCaredAt)
     }
 }
 
@@ -106,6 +115,8 @@ final class CareEventEntity {
     var wateringObservation: String
     var healthObservation: String
     var notes: String
+    var performedByName: String = ""
+    var performedByRecordName: String?
     var instance: PlantInstanceEntity?
 
     init(from event: CareEvent, instance: PlantInstanceEntity) {
@@ -115,6 +126,8 @@ final class CareEventEntity {
         self.wateringObservation = event.wateringObservation
         self.healthObservation = event.healthObservation
         self.notes = event.notes
+        self.performedByName = event.performedByName
+        self.performedByRecordName = event.performedByRecordName
         self.instance = instance
     }
 
@@ -127,7 +140,9 @@ final class CareEventEntity {
             performedAt: performedAt,
             wateringObservation: wateringObservation,
             healthObservation: healthObservation,
-            notes: notes
+            notes: notes,
+            performedByName: performedByName,
+            performedByRecordName: performedByRecordName
         )
     }
 }

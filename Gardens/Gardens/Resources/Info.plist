@@ -33,16 +33,18 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Gardens uses Bluetooth to print a plant label on the T50M.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Gardens uses the camera to scan plant label QR codes and to photograph plants at intake.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Gardens needs photo library access to attach plant photos to inventory records.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Gardens may save plant photos you capture to your library when you choose.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Gardens needs photo library access to attach plant photos to inventory records.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -53,15 +55,11 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 </dict>
 </plist>

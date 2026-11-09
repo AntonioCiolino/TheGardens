@@ -25,7 +25,8 @@ struct GuestPlantView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.systemBackground))
+            .foregroundStyle(.white)
+            .background(GardensSplashGreen.ignoresSafeArea())
             .navigationTitle(loader.destination?.catalog.name ?? "Plant")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -45,10 +46,12 @@ struct GuestPlantView: View {
                 photo(destination)
                 Text(destination.catalog.name)
                     .font(.largeTitle.bold())
+                    .foregroundStyle(.white)
                 careSection(destination)
             }
             .padding()
         }
+        .scrollContentBackground(.hidden)
         .background { BrandWatermark(opacity: 0.14) }
     }
 
@@ -63,7 +66,7 @@ struct GuestPlantView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         } else {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
+                .fill(Color(red: 0.96, green: 0.97, blue: 0.95))
                 .frame(maxWidth: .infinity)
                 .frame(height: 180)
                 .overlay {
@@ -73,7 +76,7 @@ struct GuestPlantView: View {
                         Text("No photo yet")
                             .font(.subheadline)
                     }
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color(red: 0.12, green: 0.18, blue: 0.13))
                 }
         }
     }
@@ -85,7 +88,8 @@ struct GuestPlantView: View {
             group(title: "Health check", body: destination.careProfile.healthCheckGuidance)
         }
         .padding(16)
-        .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color(red: 0.96, green: 0.97, blue: 0.95), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .foregroundStyle(Color(red: 0.12, green: 0.18, blue: 0.13))
     }
 
     private func group(title: String, body: String) -> some View {
@@ -94,7 +98,7 @@ struct GuestPlantView: View {
                 .font(.headline)
             Text(body.isEmpty ? "Not set yet." : body)
                 .font(.body)
-                .foregroundStyle(body.isEmpty ? .secondary : .primary)
+                .foregroundStyle(body.isEmpty ? Color(red: 0.12, green: 0.18, blue: 0.13).opacity(0.55) : Color(red: 0.12, green: 0.18, blue: 0.13))
         }
     }
 }

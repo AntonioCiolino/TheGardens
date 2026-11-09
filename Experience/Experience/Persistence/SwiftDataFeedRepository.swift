@@ -24,6 +24,10 @@ final class SwiftDataFeedRepository: FeedRepository {
         return post
     }
 
+    /// The local store has no shared feed to moderate, so reports are handled by the cloud
+    /// repository instead. Required for `FeedRepository` conformance.
+    func submitReport(_ report: FeedReport) async throws {}
+
     func pendingPosts() throws -> [Post] {
         let descriptor = FetchDescriptor<PostEntity>(
             predicate: #Predicate { $0.pendingUpload },

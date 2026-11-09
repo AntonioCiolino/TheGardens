@@ -6,9 +6,6 @@ struct SignInView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
-    @State private var testResult: String?
-    @State private var isTesting = false
-
     var body: some View {
         List {
             Section {
@@ -42,39 +39,6 @@ struct SignInView: View {
                     }
                 } footer: {
                     Text("If you aren’t signed into iCloud, open Settings → [your name] and sign in with your Apple ID. Then return here and tap Connect iCloud.")
-                }
-            }
-
-            if session.instances.isEmpty {
-                Section {
-                    Button {
-                        isTesting = true
-                        testResult = nil
-                        Task {
-                            let result = await session.writeTestRecord()
-                            testResult = result
-                            isTesting = false
-                        }
-                    } label: {
-                        HStack {
-                            Label("Write test plant + care note", systemImage: "leaf.circle")
-                            if isTesting {
-                                Spacer()
-                                ProgressView()
-                            }
-                        }
-                    }
-                    .disabled(isTesting)
-
-                    if let testResult {
-                        Text(testResult)
-                            .font(.footnote)
-                            .foregroundStyle(testResult.hasPrefix("Test OK") ? Color.primary : Color.red)
-                    }
-                } header: {
-                    Text("Test a record")
-                } footer: {
-                    Text("Creates one “Gardens Sync Test” plant. This section hides once any plant is already in the list.")
                 }
             }
 

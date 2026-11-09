@@ -1,6 +1,6 @@
 import Foundation
 
-/// One guest post on the shared feed: a caption, an image, or both.
+/// One guest post on the shared feed: a photo with words under it.
 public struct Post: Identifiable, Hashable, Codable, Sendable {
     public var id: UUID
     public var text: String
@@ -44,13 +44,14 @@ public struct PostDraft: Hashable, Sendable {
         self.authorRecordName = authorRecordName
     }
 
-    /// A caption, a photo, or both. Whitespace-only text does not count.
+    /// A photo plus a caption. Whitespace-only text does not count.
     public func makePost(id: UUID = UUID(), createdAt: Date = Date()) throws -> Post {
         let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let author = authorName.trimmingCharacters(in: .whitespacesAndNewlines)
         let recordName = authorRecordName?.trimmingCharacters(in: .whitespacesAndNewlines)
         let image = (imageData?.isEmpty == false) ? imageData : nil
-        guard !text.isEmpty || image != nil else { throw FeedError.emptyPost }
+        guard image != nil else { throw FeedError.missingPhoto }
+        guard !text.isEmpty else { throw FeedError.missingCaption }
         return Post(
             id: id,
             text: text,
@@ -64,14 +65,17 @@ public struct PostDraft: Hashable, Sendable {
 }
 
 public enum FeedError: LocalizedError, Equatable {
-    case emptyPost
+    case missingPhoto
+    case missingCaption
     case notSignedIn
     case saveFailed
 
     public var errorDescription: String? {
         switch self {
-        case .emptyPost:
-            return "Add a photo or a few words before posting."
+        case .missingPhoto:
+            return "Take a photo before posting."
+        case .missingCaption:
+            return "Write a few words under the photo."
         case .notSignedIn:
             return "Sign into iCloud on this iPhone to share posts."
         case .saveFailed:

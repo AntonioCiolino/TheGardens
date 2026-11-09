@@ -21,6 +21,8 @@ Record types the app creates:
 | --- | --- | --- |
 | `FeedManifest` | `visit-feed` | `postIDs` (String list; omitted until the first post) |
 | `VisitPost` | the post UUID | `id`, `text`, `authorName`, `createdAt`, `image` (Asset, optional) |
+| `VisitPost` | `message-of-the-day` | Jen’s note. Edit `text`. `authorName` is Jen. This id is not in `postIDs`. |
+| `GardenCatalog` | `garden-places` | `placesJSON`, the fence list. Same shape as the seed file. |
 
 Public database, default zone, one record per save. Same limit as Intake: no change-token fetch, no atomic batch.
 
@@ -30,11 +32,13 @@ CloudKit Console → Schema → Security Roles, Development:
 - **Authenticated**: Create
 - **Creator**: Read and Write
 
-on `VisitPost` and `FeedManifest`.
+on `VisitPost`, `FeedManifest`, and `GardenCatalog`.
+
+Jen’s note and the fence list are edited in CloudKit Console, public database of `iCloud.com.gardens.experience`. The copy in the app is only the first seed, used when that record does not exist yet, and the last copy kept on the phone when iCloud is unreachable.
 
 ## Places
 
-`Experience/Experience/Resources/garden-places.json` is the whole fence list. One circle per enabled place. iOS watches at most 20. The app does not run continuous GPS.
+The live fence list is record `garden-places`, field `placesJSON`. `Experience/Experience/Resources/garden-places.json` is written there once, if the record is missing. Later edits belong in the console. One circle per enabled place. iOS watches at most 20. The app does not run continuous GPS.
 
 Radius is 100 meters, the smallest size region monitoring treats as reliable. Home and The Gardens are about 190 meters apart, so these circles stay on different buildings and only meet at the edges. A larger radius will overlap them. The welcome names whichever place was entered.
 
@@ -44,7 +48,7 @@ Radius is 100 meters, the smallest size region monitoring treats as reliable. Ho
 | The Gardens | yes | 39.1289487, -84.4768209 | 2800 Woodburn Avenue, Cincinnati, OH 45206. OpenStreetMap building way 1473478916 via Nominatim. Indoor primary space. |
 | The Garden Park | no | none | Outdoor lot with no street address. Left off so it is not given the Woodburn or Hackberry pin. Public write-ups of The Gardens describe outdoor greenery at the Woodburn venue and do not identify a separate lot. Add `latitude` and `longitude`, then set `enabled` to true. The welcome already uses the place name. |
 
-Arrival uses Always location and the location background mode so the system can deliver the enter event when the app is not in front. The popup is suppressed for an hour after it has been shown for that place.
+Arrival uses Always location and the location background mode so the system can deliver the enter event when the app is not in front. Outside every fence, the splash has no place greeting. Inside, the splash says we’re glad you’re here and names the place. For now that plays on each launch while you are inside.
 
 ## Run
 

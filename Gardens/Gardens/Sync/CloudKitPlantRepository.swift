@@ -128,6 +128,12 @@ final class CloudKitPlantRepository: PlantRepository {
             record["arrivedOn"] = arrivedOn
             record["vendor"] = vendor
             record["createdAt"] = Date()
+            if !draft.createdByName.isEmpty {
+                record["createdByName"] = draft.createdByName
+            }
+            if let createdByRecordName = draft.createdByRecordName, !createdByRecordName.isEmpty {
+                record["createdByRecordName"] = createdByRecordName
+            }
             if let photoData = draft.photoData {
                 record["photo"] = try Self.asset(from: photoData, name: instanceID.uuidString)
                 photoCache[instanceID] = photoData
@@ -144,7 +150,9 @@ final class CloudKitPlantRepository: PlantRepository {
                         arrivedOn: arrivedOn,
                         vendor: vendor,
                         photoData: draft.photoData,
-                        photoCredit: draft.photoCredit
+                        photoCredit: draft.photoCredit,
+                        createdByName: draft.createdByName,
+                        createdByRecordName: draft.createdByRecordName
                     ),
                     catalog: catalog
                 )
@@ -171,6 +179,12 @@ final class CloudKitPlantRepository: PlantRepository {
         care["wateringObservation"] = event.wateringObservation
         care["healthObservation"] = event.healthObservation
         care["notes"] = event.notes
+        if !event.performedByName.isEmpty {
+            care["performedByName"] = event.performedByName
+        }
+        if let performedByRecordName = event.performedByRecordName, !performedByRecordName.isEmpty {
+            care["performedByRecordName"] = performedByRecordName
+        }
         try await saveRecord(care)
 
         var lastError: Error = CloudSaveError(message: "Saved the care note but couldn’t attach it to the plant.")
@@ -541,7 +555,7 @@ final class CloudKitPlantRepository: PlantRepository {
         "id", "name", "genus", "careInstructions", "wateringCheckGuidance", "healthCheckGuidance", "createdAt"
     ]
     private static let instanceKeys = [
-        "id", "catalogItemID", "arrivedOn", "vendor", "photoCredit", "createdAt"
+        "id", "catalogItemID", "arrivedOn", "vendor", "photoCredit", "createdAt", "createdByName", "createdByRecordName"
     ]
 
     private func verifySaved(_ id: CKRecord.ID, type: String, keys: [String]) async throws {
@@ -739,7 +753,9 @@ final class CloudKitPlantRepository: PlantRepository {
             vendor: record["vendor"] as? String ?? "",
             photoData: photoData,
             photoCredit: record["photoCredit"] as? String,
-            createdAt: record["createdAt"] as? Date ?? Date()
+            createdAt: record["createdAt"] as? Date ?? Date(),
+            createdByName: record["createdByName"] as? String ?? "",
+            createdByRecordName: record["createdByRecordName"] as? String
         )
     }
 
@@ -759,7 +775,9 @@ final class CloudKitPlantRepository: PlantRepository {
             performedAt: record["performedAt"] as? Date ?? Date(),
             wateringObservation: record["wateringObservation"] as? String ?? "",
             healthObservation: record["healthObservation"] as? String ?? "",
-            notes: record["notes"] as? String ?? ""
+            notes: record["notes"] as? String ?? "",
+            performedByName: record["performedByName"] as? String ?? "",
+            performedByRecordName: record["performedByRecordName"] as? String
         )
     }
 }

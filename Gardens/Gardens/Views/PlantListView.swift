@@ -11,6 +11,8 @@ struct PlantListView: View {
     @State private var showingAdd = false
     @State private var showingScan = false
     @State private var showingSync = false
+    @State private var showingProfile = false
+    @State private var sortMode: PlantSortMode = .recent
     @State private var batchToPrint: PlantArrivalBatch?
     @State private var path = NavigationPath()
     @State private var pendingDelete: PlantInstanceDetail?
@@ -43,18 +45,8 @@ struct PlantListView: View {
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
                     } else {
-                        ForEach(session.instances) { detail in
-                            NavigationLink(value: detail.instance.id) {
-                                PlantRowView(detail: detail)
-                            }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                deleteSwipe(for: detail)
-                            }
-                            .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                                deleteSwipe(for: detail)
-                            }
-                            .listRowBackground(Color(.secondarySystemGroupedBackground))
-                        }
+                        sortControlSection
+                        plantSections
                     }
                 }
                 .listStyle(.insetGrouped)
@@ -93,6 +85,13 @@ struct PlantListView: View {
                                 ? "checkmark.icloud"
                                 : "icloud.and.arrow.up"
                         )
+                    }
+                }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showingProfile = true
+                    } label: {
+                        Label("Profile", systemImage: "person.crop.circle")
                     }
                 }
                 ToolbarItem(placement: .primaryAction) {
@@ -135,6 +134,11 @@ struct PlantListView: View {
             .sheet(isPresented: $showingSync) {
                 NavigationStack {
                     SignInView()
+                }
+            }
+            .sheet(isPresented: $showingProfile) {
+                NavigationStack {
+                    ProfileView()
                 }
             }
             .sheet(item: $batchToPrint) { batch in
@@ -187,6 +191,53 @@ struct PlantListView: View {
         }
     }
 
+    @ViewBuilder
+    private var sortControlSection: some View {
+        Section {
+            Picker("Sort", selection: $sortMode) {
+                ForEach(PlantSortMode.allCases) { mode in
+                    Text(mode.title).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+        }
+    }
+
+    @ViewBuilder
+    private var plantSections: some View {
+        ForEach(groupedSections) { group in
+            if group.title.isEmpty {
+                Section {
+                    ForEach(group.items) { detail in
+                        plantRow(for: detail)
+                    }
+                }
+            } else {
+                Section(group.title) {
+                    ForEach(group.items) { detail in
+                        plantRow(for: detail)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func plantRow(for detail: PlantInstanceDetail) -> some View {
+        NavigationLink(value: detail.instance.id) {
+            PlantRowView(detail: detail)
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            deleteSwipe(for: detail)
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            deleteSwipe(for: detail)
+        }
+        .listRowBackground(Color(.secondarySystemGroupedBackground))
+    }
+
     private func deleteSwipe(for detail: PlantInstanceDetail) -> some View {
         Button(role: .destructive) {
             pendingDelete = detail
@@ -219,6 +270,95 @@ struct PlantListView: View {
         }
         return "Log an arrival — one plant or a whole carton."
     }
+
+    /// Sorts (and for some modes, groups) the current inventory for display.
+    private var groupedSections: [PlantGroup] {
+        let items = session.instances
+        switch sortMode {
+        case .recent:
+            // Newest arrivals first. Many plants share one arrival date, so a stable
+            // name → id tiebreaker keeps tied rows from reshuffling on each refresh.
+            let sorted = items.sorted { lhs, rhs in
+                if lhs.instance.arrivedOn != rhs.instance.arrivedOn {
+                    return lhs.instance.arrivedOn > rhs.instance.arrivedOn
+                }
+                return Self.stableBefore(lhs, rhs)
+            }
+            return [PlantGroup(id: "recent", title: "", items: sorted)]
+
+        case .alphabetical:
+            let sorted = items.sorted { lhs, rhs in Self.stableBefore(lhs, rhs) }
+            return [PlantGroup(id: "alpha", title: "", items: sorted)]
+
+        case .genus:
+            let grouped = Dictionary(grouping: items) { detail -> String in
+                let genus = detail.catalog.genus.trimmingCharacters(in: .whitespacesAndNewlines)
+                return genus.isEmpty ? "Unknown genus" : genus
+            }
+            return grouped.keys
+                .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+                .map { key in
+                    let sorted = grouped[key, default: []].sorted { lhs, rhs in Self.stableBefore(lhs, rhs) }
+                    return PlantGroup(id: key, title: key, items: sorted)
+                }
+
+        case .needsCare:
+            // Most overdue first: rank by last care date (or arrival date if never cared for).
+            // A name + id tiebreaker keeps equal/undated plants in a stable order instead of
+            // shuffling on each refresh.
+            let sorted = items.sorted { lhs, rhs in
+                if lhs.attentionDate != rhs.attentionDate {
+                    return lhs.attentionDate < rhs.attentionDate
+                }
+                let names = lhs.catalog.name.localizedCaseInsensitiveCompare(rhs.catalog.name)
+                if names != .orderedSame {
+                    return names == .orderedAscending
+                }
+                return lhs.instance.id.uuidString < rhs.instance.id.uuidString
+            }
+            return [PlantGroup(id: "needsCare", title: "", items: sorted)]
+        }
+    }
+
+    /// Deterministic ordering for rows whose primary sort key is equal: name, then genus,
+    /// then the stable instance id. Prevents tied rows from reshuffling between refreshes.
+    private static func stableBefore(_ lhs: PlantInstanceDetail, _ rhs: PlantInstanceDetail) -> Bool {
+        let names = lhs.catalog.name.localizedCaseInsensitiveCompare(rhs.catalog.name)
+        if names != .orderedSame {
+            return names == .orderedAscending
+        }
+        let genera = lhs.catalog.genus.localizedCaseInsensitiveCompare(rhs.catalog.genus)
+        if genera != .orderedSame {
+            return genera == .orderedAscending
+        }
+        return lhs.instance.id.uuidString < rhs.instance.id.uuidString
+    }
+}
+
+/// How the plant list is ordered (and for genus, grouped).
+enum PlantSortMode: String, CaseIterable, Identifiable {
+    case needsCare
+    case recent
+    case genus
+    case alphabetical
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .recent: return "Recent"
+        case .alphabetical: return "A–Z"
+        case .genus: return "Genus"
+        case .needsCare: return "Needs care"
+        }
+    }
+}
+
+/// One rendered section of the plant list.
+private struct PlantGroup: Identifiable {
+    let id: String
+    let title: String
+    let items: [PlantInstanceDetail]
 }
 
 private struct PlantRowView: View {
@@ -236,6 +376,11 @@ private struct PlantRowView: View {
                 Text("\(detail.instance.vendor) · \(detail.instance.arrivedOn.formatted(date: .abbreviated, time: .omitted))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                if !detail.instance.createdByName.isEmpty {
+                    Label("Added by \(detail.instance.createdByName)", systemImage: "person.crop.circle")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .padding(.vertical, 4)

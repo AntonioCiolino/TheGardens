@@ -53,6 +53,10 @@ public struct CareEvent: Identifiable, Hashable, Codable, Sendable {
     public var healthObservation: String
     /// Extra free-form notes about the maintenance just performed.
     public var notes: String
+    /// Display name of the team member who logged this update. Empty when unknown (older records).
+    public var performedByName: String
+    /// Stable CloudKit user record name of the team member who logged this update.
+    public var performedByRecordName: String?
 
     public init(
         id: UUID = UUID(),
@@ -61,7 +65,9 @@ public struct CareEvent: Identifiable, Hashable, Codable, Sendable {
         performedAt: Date = Date(),
         wateringObservation: String = "",
         healthObservation: String = "",
-        notes: String = ""
+        notes: String = "",
+        performedByName: String = "",
+        performedByRecordName: String? = nil
     ) {
         self.id = id
         self.instanceID = instanceID
@@ -70,6 +76,8 @@ public struct CareEvent: Identifiable, Hashable, Codable, Sendable {
         self.wateringObservation = wateringObservation.trimmingCharacters(in: .whitespacesAndNewlines)
         self.healthObservation = healthObservation.trimmingCharacters(in: .whitespacesAndNewlines)
         self.notes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.performedByName = performedByName.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.performedByRecordName = performedByRecordName
     }
 
     public var hasContent: Bool {
@@ -88,6 +96,8 @@ public struct CareUpdateDraft: Hashable, Sendable {
     public var wateringObservation: String
     public var healthObservation: String
     public var notes: String
+    public var performedByName: String
+    public var performedByRecordName: String?
 
     public init(
         instanceID: UUID,
@@ -95,7 +105,9 @@ public struct CareUpdateDraft: Hashable, Sendable {
         performedAt: Date = Date(),
         wateringObservation: String = "",
         healthObservation: String = "",
-        notes: String = ""
+        notes: String = "",
+        performedByName: String = "",
+        performedByRecordName: String? = nil
     ) {
         self.instanceID = instanceID
         self.kind = kind
@@ -103,6 +115,8 @@ public struct CareUpdateDraft: Hashable, Sendable {
         self.wateringObservation = wateringObservation
         self.healthObservation = healthObservation
         self.notes = notes
+        self.performedByName = performedByName
+        self.performedByRecordName = performedByRecordName
     }
 
     public var isValid: Bool {
@@ -119,7 +133,9 @@ public struct CareUpdateDraft: Hashable, Sendable {
             performedAt: performedAt,
             wateringObservation: wateringObservation,
             healthObservation: healthObservation,
-            notes: notes
+            notes: notes,
+            performedByName: performedByName,
+            performedByRecordName: performedByRecordName
         )
     }
 }
